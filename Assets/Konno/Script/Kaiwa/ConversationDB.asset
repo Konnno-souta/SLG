@@ -14,14 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationDatabase
   characters:
   - id: yonesima
-    displayName: "\u7C73\u5CF6"
-    affiliation: "\u8FB2\u696D\u5354\u540C\u7D44\u5408"
+    displayName: Player1
+    affiliation: 
     expressions:
     - name: normal
-      sprite: {fileID: 21300000, guid: 2713c3a2aae724843a5615265a0f68e1, type: 3}
-      logIcon: {fileID: 0}
-    scale: 0
-    offset: {x: 0, y: 0}
+      sprite: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
+      logIcon: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
+    scale: 0.7
+    offset: {x: 0, y: 50}
+    emoteAnchor: {x: 0, y: 0}
+    faceCenter: {x: 0, y: 0}
+    logIconZoom: 0
+  - id: kanade
+    displayName: Player2
+    affiliation: 
+    expressions:
+    - name: normal
+      sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
+      logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
+    scale: 0.5
+    offset: {x: 0, y: 150}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0, y: 0}
     logIconZoom: 0
