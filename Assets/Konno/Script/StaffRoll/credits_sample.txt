@@ -1,0 +1,27 @@
+// スタッフロールのテキスト形式サンプル
+// # 見出し / 役職: 名前, 名前 / インデントで名前を列挙 / --- 空白 / ! ラストの文字
+
+# STAFF
+
+Director: 山田 太郎
+Producer: 佐藤 花子
+
+Programmer:
+  鈴木 一郎
+  高橋 次郎
+  田中 三郎
+
+Art: 伊藤 美咲, 渡辺 健
+--- 80
+
+# MUSIC
+
+Composer: 中村 響
+Sound Effects: 小林 音
+
+# SPECIAL THANKS
+
+テストプレイに協力してくれたみなさん
+そして遊んでくれたあなたへ
+
+! Thank you for playing!

@@ -1,0 +1,155 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89c99a69db444014d81e1f77e845c65a, type: 3}
+  m_Name: StaffRollData
+  m_EditorClassIdentifier: Assembly-CSharp::StaffRoll.StaffRollData
+  sections:
+  - title: STAFF
+    entries:
+    - type: 1
+      role: 
+      names: "\u30D7\u30E9\u30F3\u30CA\u30FC"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 300
+      fontSizeOverride: 50
+    - type: 0
+      role: "\u30E1\u30A4\u30F3\u30D7\u30E9\u30F3\u30CA\u30FC"
+      names: Satou Tomohiko
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 400
+      fontSizeOverride: 50
+    - type: 0
+      role: "\u30B5\u30D6\u30D7\u30E9\u30F3\u30CA\u30FC"
+      names: Kikuti Syuu
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 100
+      fontSizeOverride: 50
+    - type: 3
+      role: 
+      names: 
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 300
+      fontSizeOverride: 50
+    - type: 1
+      role: 
+      names: "\u30D7\u30ED\u30B0\u30E9\u30DE\u30FC"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 300
+      fontSizeOverride: 50
+    - type: 0
+      role: "\u30E1\u30A4\u30F3\u30D7\u30ED\u30B0\u30E9\u30E0"
+      names: Kumagai Kokoro
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 400
+      fontSizeOverride: 50
+    - type: 0
+      role: "\u30B5\u30D6\u30D7\u30ED\u30B0\u30E9\u30E0"
+      names: Konno Souta
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 400
+      fontSizeOverride: 50
+    - type: 1
+      role: 
+      names: "Sugawara Sousi                                                    \nDekura
+        yuuhi "
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 200
+      fontSizeOverride: 50
+    - type: 3
+      role: 
+      names: 
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 300
+      fontSizeOverride: 0
+    - type: 1
+      role: 
+      names: "\u30C7\u30B6\u30A4\u30CA\u30FC"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 200
+      fontSizeOverride: 50
+    - type: 1
+      role: 
+      names: "\u7CDF\u8C37\u83DC\u3005\u7F8E"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 200
+      fontSizeOverride: 50
+    - type: 1
+      role: 
+      names: "\u4E2D\u91CE\u308C\u3044\u306A"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 200
+      fontSizeOverride: 50
+    - type: 1
+      role: 
+      names: "\u4E09\u6D66\u771F\u7DD2"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 200
+      fontSizeOverride: 50
+    - type: 3
+      role: 
+      names: 
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 300
+      fontSizeOverride: 50
+    - type: 1
+      role: 
+      names: "3D\u30C7\u30B6\u30A4\u30CA\u30FC"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 200
+      fontSizeOverride: 50
+    - type: 0
+      role: "3D\u30C7\u30B6\u30A4\u30CA\u30FC"
+      names: "\u9234\u6728\u6D77\u512A"
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 200
+      fontSizeOverride: 50
+    - type: 3
+      role: 
+      names: 
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 500
+      fontSizeOverride: 0
+    - type: 2
+      role: 
+      names: 
+      image: {fileID: 21300000, guid: dfaafd57f668e5949a351850a3340fb2, type: 3}
+      imageSize: {x: 500, y: 500}
+      spaceHeight: 500
+      fontSizeOverride: 0
+    - type: 3
+      role: 
+      names: 
+      image: {fileID: 0}
+      imageSize: {x: 0, y: 0}
+      spaceHeight: 500
+      fontSizeOverride: 0
+    spacingAfter: 0
+  finalImage: {fileID: 0}
+  finalImageSize: {x: 600, y: 300}
+  finalText: Thank you for playing!

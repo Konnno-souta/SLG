@@ -1,0 +1,42 @@
+// 会話スクリプトのサンプル
+// Database に yonesima（表情: normal, smile, trouble）と kanade（normal）、
+// 背景 classroom を登録しておく
+
+@bg classroom 0
+@fade in 1.0
+
+: 放課後の教室。窓から夕日が差し込んでいる。
+
+@show yonesima normal center
+yonesima: あ、来てくれたんですね！
+@jump yonesima
+yonesima(smile): 待ってたんですよ。ちょっと相談したいことがあって。
+
+@show yonesima left
+@show kanade normal right
+@wait 0.3
+kanade: ……ユズキ、また厄介ごとを持ち込む気？
+@emote yonesima !?
+yonesima(trouble): や、厄介ごとじゃないよ！
+  ほんのちょっと、手伝ってほしいだけで……
+@shake kanade
+kanade: その「ちょっと」が一番信用できないんだけど。
+
+@choice
+- 手伝うよ -> help
+- 内容による -> depends
+
+*help
+@face yonesima smile
+yonesima: ほんとですか！？ ありがとうございます！
+@jump yonesima 2
+@goto finish
+
+*depends
+kanade: ……賢明な判断ね。
+@emote yonesima …
+yonesima(trouble): うう、まずは話だけでも聞いてください〜
+
+*finish
+@fade out 1.0
+@end
