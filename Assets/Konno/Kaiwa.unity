@@ -367,8 +367,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb22ec95635e33c41ada0543eb7d491a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationPlayer
-  database: {fileID: 11400000, guid: a817b81d4ef3ded4692a8f98f67fc3b8, type: 2}
-  scriptAsset: {fileID: 4900000, guid: 4c258d1e7ca17fc4b81124d592b63ac7, type: 3}
+  database: {fileID: 11400000, guid: fce6425f1cdf18047868b58640e547b1, type: 2}
+  scriptAsset: {fileID: 4900000, guid: 642e311c22041e14ab68a9ddd2b69a4c, type: 3}
   playOnStart: 1
   hideOnFinish: 1
   referenceResolution: {x: 1920, y: 1080}

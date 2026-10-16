@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8660481a9737334fbc02535d387cd93, type: 3}
+  m_Name: ConversationDB 1
+  m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationDatabase
+  characters:
+  - id: yonesima
+    displayName: "\u53CB\u5F66"
+    affiliation: "\u8FB2\u696D\u5354\u540C\u7D44\u5408"
+    expressions:
+    - name: normal
+      sprite: {fileID: 21300000, guid: df1f1abae82c7994b8bc001587afb846, type: 3}
+      logIcon: {fileID: 21300000, guid: df1f1abae82c7994b8bc001587afb846, type: 3}
+    scale: 0.7
+    offset: {x: 0, y: 50}
+    emoteAnchor: {x: 0, y: 0}
+    faceCenter: {x: 0, y: 0}
+    logIconZoom: 0
+  - id: kanade
+    displayName: "\u3053\u3053\u308D"
+    affiliation: "\u8FB2\u696D\u5354\u540C\u7D44\u5408"
+    expressions:
+    - name: normal
+      sprite: {fileID: 21300000, guid: 2713c3a2aae724843a5615265a0f68e1, type: 3}
+      logIcon: {fileID: 21300000, guid: 2713c3a2aae724843a5615265a0f68e1, type: 3}
+    scale: 0.7
+    offset: {x: 0, y: 50}
+    emoteAnchor: {x: 0, y: 0}
+    faceCenter: {x: 0, y: 0}
+    logIconZoom: 0
+  backgrounds:
+  - name: classroom
+    sprite: {fileID: 21300000, guid: d9219180ee22c214e9b550425456c4c4, type: 3}
