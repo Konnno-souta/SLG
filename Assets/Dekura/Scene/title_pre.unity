@@ -285,13 +285,14 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1561917852}
   m_Father: {fileID: 1074250948}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1272.5161, y: 316.8316}
+  m_AnchoredPosition: {x: -5.1569, y: 0}
+  m_SizeDelta: {x: 1708.2021, y: 316.8316}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &201052045
 MonoBehaviour:
@@ -759,7 +760,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -204}
+  m_AnchoredPosition: {x: -465, y: -204}
   m_SizeDelta: {x: 100, y: 293.8167}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &508170910
@@ -1700,6 +1701,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Title.Title_ButtonAction
   buttons:
+  - button: {fileID: 508170912}
+    window: {fileID: 8497243740302241713, guid: fa1f757200cd33c4ea7d2d8a4cb25ff7, type: 3}
+  - button: {fileID: 1924783520}
+    window: {fileID: 8497243740302241713, guid: fa1f757200cd33c4ea7d2d8a4cb25ff7, type: 3}
   - button: {fileID: 1601638448}
     window: {fileID: 8497243740302241713, guid: 0d90d4905d4d23041bb0bad88c6ed930, type: 3}
 --- !u!1 &1074250947
@@ -1731,13 +1736,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 201052044}
-  - {fileID: 1561917852}
   m_Father: {fileID: 2091081405}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 272}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1436867084
 GameObject:
@@ -1906,7 +1910,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1074250948}
+  m_Father: {fileID: 201052044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}

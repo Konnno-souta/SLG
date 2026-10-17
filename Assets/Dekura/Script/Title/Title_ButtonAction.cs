@@ -42,7 +42,7 @@ namespace Title
 
             foreach (var b in buttons) 
             {
-                if (b.button != btn) return;
+                if (b.button != btn) continue;
                 openingWindow = Instantiate(b.window, gameObject.GetComponent<Transform>());
                 openingWindow.GetComponent<ICloseButton>()?.InitCloseButton(this);
 
@@ -52,7 +52,6 @@ namespace Title
 
         public void Close()
         {
-            Debug.Log("close");
             if (!isOpen) return;
 
             Destroy(openingWindow);

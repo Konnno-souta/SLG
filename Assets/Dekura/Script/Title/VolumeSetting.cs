@@ -44,6 +44,8 @@ namespace Volume
 
         private void Start()
         {
+            Debug.Log("voluuuuum");
+
             volume_MASTER.onChanged += vol => VolumeChange(Rule.MASTER, vol);
             volume_BGM.onChanged += vol => VolumeChange(Rule.BGM, vol);
             volume_SE.onChanged += vol => VolumeChange(Rule.SE, vol);
