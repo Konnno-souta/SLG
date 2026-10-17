@@ -65,11 +65,62 @@ namespace Conversation
         public Sprite sprite;
     }
 
+    [Serializable]
+    public class BgmEntry
+    {
+        [Tooltip("スクリプトで使う名前（例: town）")]
+        public string name;
+        public AudioClip clip;
+        [Range(0f, 1f)] public float volume = 1f;
+        [Range(0.1f, 3f)] public float pitch = 1f;
+        public bool loop = true;
+        [Tooltip("再生開始位置（秒）")]
+        public float startTime = 0f;
+
+        [Header("イントロ付きループ（両方0なら曲全体をループ）")]
+        [Tooltip("ループで戻る位置（秒）")]
+        public float loopStart = 0f;
+        [Tooltip("ここまで来たら Loop Start に戻る（秒）")]
+        public float loopEnd = 0f;
+    }
+
+    [Serializable]
+    public class SeEntry
+    {
+        [Tooltip("スクリプトで使う名前（例: door）")]
+        public string name;
+        public AudioClip clip;
+        [Range(0f, 1f)] public float volume = 1f;
+        [Range(0.1f, 3f)] public float pitch = 1f;
+        [Tooltip("鳴らすたびにピッチを揺らす幅（0.05 = ±5%）。足音などの単調さ防止")]
+        [Range(0f, 0.5f)] public float pitchRandom = 0f;
+        [Tooltip("ループ再生（雨音・環境音など）。止めるには @se stop 名前")]
+        public bool loop = false;
+    }
+
     [CreateAssetMenu(menuName = "Conversation/Database", fileName = "ConversationDatabase")]
     public class ConversationDatabase : ScriptableObject
     {
         public List<CharacterProfile> characters = new List<CharacterProfile>();
         public List<BackgroundEntry> backgrounds = new List<BackgroundEntry>();
+        public List<BgmEntry> bgms = new List<BgmEntry>();
+        public List<SeEntry> ses = new List<SeEntry>();
+
+        public BgmEntry FindBgm(string name)
+        {
+            foreach (var b in bgms)
+                if (string.Equals(b.name, name, StringComparison.OrdinalIgnoreCase))
+                    return b;
+            return null;
+        }
+
+        public SeEntry FindSe(string name)
+        {
+            foreach (var s in ses)
+                if (string.Equals(s.name, name, StringComparison.OrdinalIgnoreCase))
+                    return s;
+            return null;
+        }
 
         public CharacterProfile FindCharacter(string id)
         {

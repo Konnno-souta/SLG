@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 18974634}
   - component: {fileID: 18974633}
   - component: {fileID: 18974632}
+  - component: {fileID: 18974635}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -211,6 +212,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &18974635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 18974631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &597707145
 GameObject:
   m_ObjectHideFlags: 0
@@ -371,6 +416,20 @@ MonoBehaviour:
   scriptAsset: {fileID: 4900000, guid: 642e311c22041e14ab68a9ddd2b69a4c, type: 3}
   playOnStart: 1
   hideOnFinish: 1
+  source: 1
+  csvAsset: {fileID: 4900000, guid: 9fcda719daffbaa4fa05abd02e6fd771, type: 3}
+  storyId: story_001
+  csvColumns:
+    storyId: story_id
+    textId: text_id
+    characterId: character_id
+    visual: visual
+    characterName: name
+    text: text
+    bgm: bgm
+    se: se
+    delimiter: ','
+  autoShowSpeakers: 1
   referenceResolution: {x: 1920, y: 1080}
   sortingOrder: 100
   font: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
@@ -419,7 +478,7 @@ MonoBehaviour:
   bodyLineSpacing: 12
   cursorSprite: {fileID: 0}
   cursorColor: {r: 0.45, g: 0.78, b: 1, a: 1}
-  cursorSize: {x: 30, y: 22}
+  cursorSize: {x: 33, y: 24}
   cursorOffset: {x: 150, y: 100}
   cursorBobHeight: 6
   cursorBobSpeed: 1.5
@@ -444,17 +503,17 @@ MonoBehaviour:
   defaultScreenFadeTime: 0.6
   screenFadeColor: {r: 0, g: 0, b: 0, a: 1}
   showUiBar: 1
-  uiBarColor: {r: 0, g: 0, b: 0, a: 0.55}
+  uiBarColor: {r: 0.7905838, g: 0.8182798, b: 0.8867924, a: 0}
   uiBarHeight: 56
   uiItemWidth: 190
   uiBarMargin: {x: 24, y: 20}
-  uiTextSize: 24
+  uiTextSize: 30
   uiTextColor: {r: 1, g: 1, b: 1, a: 1}
   uiBadgeColor: {r: 1, g: 1, b: 1, a: 0.9}
   uiBadgeTextColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
   logLabel: "\u30ED\u30B0"
   skipLabel: "\u30B9\u30AD\u30C3\u30D7"
-  logKeyLabel: L2
+  logKeyLabel: L
   skipKeyLabel: OPT
   logButtonIcon: {fileID: 0}
   skipButtonIcon: {fileID: 0}
@@ -473,7 +532,7 @@ MonoBehaviour:
   logWindowSprite: {fileID: 0}
   logWindowColor: {r: 0.06, g: 0.1, b: 0.18, a: 0.92}
   logCurrentWindowColor: {r: 0.1, g: 0.2, b: 0.36, a: 0.96}
-  logNameTabColor: {r: 0.22, g: 0.5, b: 0.88, a: 1}
+  logNameTabColor: {r: 1, g: 1, b: 1, a: 0}
   logIconBackColor: {r: 1, g: 1, b: 1, a: 0.08}
   logScrollSpeed: 1400
   logWheelStep: 160
@@ -647,6 +706,17 @@ MonoBehaviour:
       m_Action: LogScroll
       m_Flags: 8
     m_Flags: 0
+  audioPlayer: {fileID: 0}
+  stopBgmOnFinish: 1
+  finishBgmFadeOut: 1.5
+  stopSeOnFinish: 1
+  skipSoundFadeOut: 0.5
+  advanceSe: {fileID: 0}
+  logOpenSe: {fileID: 0}
+  logCloseSe: {fileID: 0}
+  skipSe: {fileID: 0}
+  choiceSelectSe: {fileID: 0}
+  uiSeVolume: 1
   onStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -657,6 +727,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onChoiceSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onTextShown:
     m_PersistentCalls:
       m_Calls: []
 --- !u!4 &1479874247

@@ -1,0 +1,18 @@
+﻿story_id,text_id,character_id,visual,name,bgm,se,text
+story_001,,,,,school fade=0,,@bg classroom 0
+,,,,,,,@fade in 1.0
+,T001_001,,,,,chime,放課後の教室。窓から夕日が差し込んでいる。
+,T001_002,yuzuki,normal,,,door,あ、来てくれたんですね！
+,T001_003,yuzuki,smile,,,,待ってたんですよ。ちょっと相談したいことがあって。
+,T001_004,kanade,normal,,volume 0.5 time=1,,……ユズキ、また厄介ごとを持ち込む気？
+,,,,,,,@emote yuzuki !?
+,T001_005,yuzuki,trouble,,,surprise,"や、厄介ごとじゃないよ！
+ほんのちょっと、手伝ってほしいだけで……"
+,T001_006,kanade,normal,,volume 1 time=1,,その「ちょっと」が一番信用できないんだけど。
+,T001_007,,,？？？,,footsteps / door delay=0.8,ふたりとも、廊下まで聞こえてるよ。
+,,,,,stop fade=2,,@fade out 1.0
+story_002,,,,,calm,rain loop vol=0.4,@bg classroom 0
+,,,,,,,@fade in 1.0
+,T002_001,kanade,normal,,,,それで、相談っていうのは？
+,T002_002,yuzuki,smile,,,,えへへ、実はですね……
+,,,,,,stop rain fade=1,@fade out 1.0
