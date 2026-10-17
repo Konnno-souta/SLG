@@ -138,7 +138,7 @@ MonoBehaviour:
     - type: 2
       role: 
       names: 
-      image: {fileID: 21300000, guid: dfaafd57f668e5949a351850a3340fb2, type: 3}
+      image: {fileID: 21300000, guid: 2713c3a2aae724843a5615265a0f68e1, type: 3}
       imageSize: {x: 500, y: 500}
       spaceHeight: 500
       fontSizeOverride: 0

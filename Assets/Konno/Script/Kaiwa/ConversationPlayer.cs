@@ -15,6 +15,7 @@ using UnityEngine.InputSystem.UI;
 namespace Conversation
 {
     [Serializable] public class ChoiceEvent : UnityEvent<string> { }
+    [Serializable] public class StringEvent : UnityEvent<string> { }
 
     /// <summary>
     /// 会話パート。空の GameObject にアタッチするだけで動く。
@@ -32,6 +33,17 @@ namespace Conversation
         public bool playOnStart = true;
         [Tooltip("終了時に会話UIを消す")]
         public bool hideOnFinish = true;
+
+        [Header("CSV")]
+        [Tooltip("Text: Script Asset を再生 / Csv: Csv Asset の Story Id を再生")]
+        public ScriptSource source = ScriptSource.Text;
+        public TextAsset csvAsset;
+        [Tooltip("再生するストーリーID")]
+        public string storyId;
+        [Tooltip("CSVの見出し名（1行目）。表に合わせて変更")]
+        public CsvColumns csvColumns = new CsvColumns();
+        [Tooltip("話者が画面にいなければ自動で登場させる")]
+        public bool autoShowSpeakers = true;
 
         [Header("画面")]
         public Vector2 referenceResolution = new Vector2(1920, 1080);
@@ -166,6 +178,28 @@ namespace Conversation
         public KeyCode logCloseKey = KeyCode.Backspace;
 #endif
 
+        [Header("サウンド")]
+        [Tooltip("空なら同じ GameObject の ConversationAudio を使う（無ければ自動で追加）")]
+        public ConversationAudio audioPlayer;
+        [Tooltip("会話が終わった時にBGMを止める")]
+        public bool stopBgmOnFinish = true;
+        public float finishBgmFadeOut = 1.5f;
+        [Tooltip("会話が終わった時に鳴っているSEを止める")]
+        public bool stopSeOnFinish = true;
+        [Tooltip("ストーリースキップ時のBGM・SEのフェードアウト秒数")]
+        public float skipSoundFadeOut = 0.5f;
+
+        [Header("UI効果音（空なら鳴らない）")]
+        [Tooltip("テキスト送り")]
+        public AudioClip advanceSe;
+        public AudioClip logOpenSe;
+        public AudioClip logCloseSe;
+        [Tooltip("ストーリースキップ実行")]
+        public AudioClip skipSe;
+        [Tooltip("選択肢の決定")]
+        public AudioClip choiceSelectSe;
+        [Range(0f, 1f)] public float uiSeVolume = 1f;
+
         [Header("イベント")]
         public UnityEvent onStarted;
         public UnityEvent onFinished;
@@ -173,6 +207,8 @@ namespace Conversation
         public UnityEvent onSkipped;
         [Tooltip("選んだ選択肢の文字列が渡される")]
         public ChoiceEvent onChoiceSelected;
+        [Tooltip("テキストが表示された時。テキストIDが渡される")]
+        public StringEvent onTextShown;
 
         // =====================================================================
         // 内部
@@ -180,6 +216,12 @@ namespace Conversation
 
         public bool IsPlaying { get; private set; }
         public bool IsLogOpen => logOpen;
+        /// <summary>再生中のストーリーID（CSV再生時）</summary>
+        public string CurrentStoryId { get; private set; }
+        /// <summary>表示中のテキストID（CSV再生時）</summary>
+        public string CurrentTextId { get; private set; }
+        /// <summary>最後に読み込んだCSV（ストーリーID一覧などの取得用）</summary>
+        public ConversationCsv LoadedCsv { get; private set; }
 
         class StageCharacter
         {
@@ -231,7 +273,12 @@ namespace Conversation
         // =====================================================================
 
         void Reset() => SetDefaultBindings(true);
-        void Awake() => SetDefaultBindings(false);
+        void Awake()
+        {
+            SetDefaultBindings(false);
+            if (!audioPlayer && !TryGetComponent(out audioPlayer))
+                audioPlayer = gameObject.AddComponent<ConversationAudio>();
+        }
 
         void OnEnable()
         {
@@ -277,20 +324,43 @@ namespace Conversation
         // 公開API
         // =====================================================================
 
-        public void Play() => Play(scriptAsset);
+        /// <summary>インスペクターの設定（source）に従って再生</summary>
+        public void Play()
+        {
+            if (source == ScriptSource.Csv) PlayStory(csvAsset, storyId);
+            else Play(scriptAsset);
+        }
 
         public void Play(TextAsset asset)
         {
             if (asset == null) { Debug.LogWarning("[Conversation] スクリプトが設定されていません", this); return; }
+            CurrentStoryId = null;
             Play(asset.text);
         }
 
-        public void Play(string scriptText)
+        public void Play(string scriptText) => Play(ConversationScript.Parse(scriptText));
+
+        /// <summary>Csv Asset から指定ストーリーを再生</summary>
+        public void PlayStory(string id) => PlayStory(csvAsset, id);
+
+        public void PlayStory(TextAsset csv, string id)
         {
+            if (csv == null) { Debug.LogWarning("[Conversation] CSVが設定されていません", this); return; }
+            LoadedCsv = ConversationCsv.Parse(csv.text, csvColumns);
+            var s = LoadedCsv.BuildScript(id);
+            if (s == null) return;
+            CurrentStoryId = id;
+            Play(s);
+        }
+
+        public void Play(ConversationScript s)
+        {
+            if (s == null) return;
+            if (audioPlayer && !audioPlayer.database) audioPlayer.database = database;
             EnsureUI();
             Stop();
             ResetStage();
-            script = ConversationScript.Parse(scriptText);
+            script = s;
             root.gameObject.SetActive(true);
             rootGroup.alpha = 1f;
             runRoutine = StartCoroutine(Run());
@@ -310,6 +380,7 @@ namespace Conversation
             if (!IsPlaying || finishing) return;
             if (runRoutine != null) StopCoroutine(runRoutine);
             CloseLog();
+            PlayUiSe(skipSe);
             runRoutine = StartCoroutine(FinishRoutine(true));
         }
 
@@ -322,6 +393,7 @@ namespace Conversation
             BuildLogEntries();
             logRoot.gameObject.SetActive(true);
             logScroll = 0f;
+            PlayUiSe(logOpenSe);
             StartCoroutine(LogOpenRoutine());
         }
 
@@ -331,6 +403,7 @@ namespace Conversation
             logOpen = false;
             logRoot.gameObject.SetActive(false);
             Deselect();
+            if (IsPlaying && !finishing) PlayUiSe(logCloseSe);
         }
 
         // =====================================================================
@@ -361,6 +434,16 @@ namespace Conversation
             choosing = false;
             choicePanel.gameObject.SetActive(false);
             cursor.gameObject.SetActive(false);
+
+            if (audioPlayer)
+            {
+                if (skipped) audioPlayer.StopAll(skipSoundFadeOut);
+                else
+                {
+                    if (stopBgmOnFinish) audioPlayer.StopBgm(finishBgmFadeOut);
+                    if (stopSeOnFinish) audioPlayer.StopAllSe();
+                }
+            }
 
             if (skipped)
             {
@@ -435,6 +518,12 @@ namespace Conversation
                 case CommandType.Goto:
                     GotoLabel(c.Arg(0), c.lineNumber);
                     break;
+                case CommandType.Bgm:
+                    yield return DoBgm(c);
+                    break;
+                case CommandType.Se:
+                    yield return DoSe(c);
+                    break;
             }
         }
 
@@ -447,10 +536,13 @@ namespace Conversation
                 id = c.speaker;
                 prof = database ? database.FindCharacter(id) : null;
             }
-            if (!string.IsNullOrEmpty(c.expression)) SetFace(id, c.expression);
+            if (autoShowSpeakers && prof != null && !stage.ContainsKey(id)) AutoShow(id, c.expression);
+            else if (!string.IsNullOrEmpty(c.expression)) SetFace(id, c.expression);
 
             currentSpeakerId = id;
-            string displayName = prof != null ? prof.displayName : c.speaker;
+            CurrentTextId = c.textId;
+            string displayName = !string.IsNullOrEmpty(c.displayName) ? c.displayName
+                               : prof != null ? prof.displayName : c.speaker;
             string affiliation = prof?.affiliation;
             SetName(displayName, affiliation);
             yield return ShowBox();
@@ -463,6 +555,7 @@ namespace Conversation
                 StartCoroutine(HopRoutine(sc, hopHeight, hopDuration, 1));
 
             AddLog(prof, id, displayName, affiliation, c);
+            onTextShown?.Invoke(c.textId ?? "");
 
             // 入力待ち
             cursor.gameObject.SetActive(true);
@@ -470,6 +563,7 @@ namespace Conversation
             while (!advanceRequested) yield return null;
             advanceRequested = false;
             cursor.gameObject.SetActive(false);
+            PlayUiSe(advanceSe);
         }
 
         void SetName(string displayName, string affiliation)
@@ -542,7 +636,7 @@ namespace Conversation
             {
                 var o = opt;
                 var btn = CreateButton(choicePanel, o.text, choiceTextSize, choiceColor, choiceTextColor,
-                    () => { selected = o; Deselect(); });
+                    () => { selected = o; Deselect(); PlayUiSe(choiceSelectSe); });
                 var le = btn.gameObject.AddComponent<LayoutElement>();
                 le.preferredHeight = le.minHeight = choiceHeight;
             }
@@ -571,6 +665,121 @@ namespace Conversation
             {
                 if (!logOpen) t += Dt;
                 yield return null;
+            }
+        }
+
+        // =====================================================================
+        // BGM・SE
+        // =====================================================================
+
+        IEnumerator DoBgm(Command c)
+        {
+            if (!audioPlayer) yield break;
+            var opt = SoundOptions.Parse(c.args);
+            string first = opt.Positional(0);
+            if (string.IsNullOrEmpty(first)) yield break;
+
+            switch (first.ToLowerInvariant())
+            {
+                case "stop":
+                    {
+                        float fade = opt.Float("fade", ParseF(opt.Positional(1), audioPlayer.defaultBgmFadeOut));
+                        audioPlayer.StopBgm(fade);
+                        if (opt.Has("wait")) yield return WaitSeconds(fade);
+                        break;
+                    }
+                case "volume":
+                    {
+                        float v = ParseF(opt.Positional(1), opt.Float("vol", 1f));
+                        float time = opt.Float("time", opt.Float("fade", 0f));
+                        audioPlayer.SetBgmVolume(v, time);
+                        if (opt.Has("wait")) yield return WaitSeconds(time);
+                        break;
+                    }
+                case "pause":
+                    audioPlayer.PauseBgm();
+                    break;
+                case "resume":
+                    audioPlayer.ResumeBgm();
+                    break;
+                default:
+                    {
+                        float fade = opt.Float("fade", ParseF(opt.Positional(1), -1f));
+                        audioPlayer.PlayBgm(first, fade, opt.Float("vol", 1f), opt.Float("start", -1f), opt.Float("pitch", 1f));
+                        if (opt.Has("wait")) yield return WaitSeconds(fade >= 0f ? fade : audioPlayer.defaultBgmFadeIn);
+                        break;
+                    }
+            }
+        }
+
+        IEnumerator DoSe(Command c)
+        {
+            if (!audioPlayer) yield break;
+            var opt = SoundOptions.Parse(c.args);
+            string first = opt.Positional(0);
+            if (string.IsNullOrEmpty(first)) yield break;
+
+            if (string.Equals(first, "stop", StringComparison.OrdinalIgnoreCase))
+            {
+                audioPlayer.StopSe(opt.Positional(1), opt.Float("fade", -1f));
+                yield break;
+            }
+
+            bool? loop = opt.Has("loop") ? opt.Bool("loop", true) : (bool?)null;
+            audioPlayer.PlaySe(first, opt.Float("vol", 1f), opt.Float("pitch", 1f),
+                opt.Float("delay", 0f), loop, opt.Float("fade", 0f));
+
+            // wait: 鳴り終わるまで次に進まない（ループSEでは無視）
+            if (opt.Has("wait") && loop != true)
+            {
+                yield return null;
+                while (audioPlayer.IsSePlaying(first)) yield return null;
+            }
+        }
+
+        void PlayUiSe(AudioClip clip)
+        {
+            if (audioPlayer && clip) audioPlayer.PlayUi(clip, uiSeVolume);
+        }
+
+        /// <summary>「名前 fade=1 vol=0.5 loop wait」のような引数を読む</summary>
+        class SoundOptions
+        {
+            readonly List<string> positional = new List<string>();
+            readonly Dictionary<string, string> named =
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            public static SoundOptions Parse(string[] args)
+            {
+                var o = new SoundOptions();
+                foreach (var a in args)
+                {
+                    int eq = a.IndexOf('=');
+                    if (eq > 0)
+                    {
+                        string key = a.Substring(0, eq).Trim().ToLowerInvariant();
+                        if (key == "volume") key = "vol";
+                        o.named[key] = a.Substring(eq + 1).Trim();
+                    }
+                    else if (string.Equals(a, "loop", StringComparison.OrdinalIgnoreCase)) o.named["loop"] = "true";
+                    else if (string.Equals(a, "noloop", StringComparison.OrdinalIgnoreCase)) o.named["loop"] = "false";
+                    else if (string.Equals(a, "wait", StringComparison.OrdinalIgnoreCase)) o.named["wait"] = "true";
+                    else o.positional.Add(a);
+                }
+                return o;
+            }
+
+            public string Positional(int i) => i < positional.Count ? positional[i] : null;
+            public bool Has(string key) => named.ContainsKey(key);
+
+            public float Float(string key, float def) =>
+                named.TryGetValue(key, out var v) ? ParseF(v, def) : def;
+
+            public bool Bool(string key, bool def)
+            {
+                if (!named.TryGetValue(key, out var v)) return def;
+                v = v.ToLowerInvariant();
+                return v == "true" || v == "1" || v == "on" || v == "yes";
             }
         }
 
@@ -693,21 +902,27 @@ namespace Conversation
             // 名前タブ
             if (hasName)
             {
-                var nameT = CreateText(entry, "Name", logNameSize, nameColor, TextAlignmentOptions.Center);
-                nameT.text = FormatName(e.name, e.affiliation, logNameSize * 0.75f);
-                float nameW = nameT.GetPreferredValues(nameT.text).x + 60f;
-
                 var tab = CreateImage(entry, "NameTab", roundSprite);
                 tab.type = Image.Type.Sliced;
                 tab.color = logNameTabColor;
+
+                var nameT = CreateText(tab.transform, "Name", logNameSize, nameColor, TextAlignmentOptions.MidlineLeft);
+                nameT.textWrappingMode = TextWrappingModes.NoWrap;
+                nameT.text = FormatName(e.name, e.affiliation, logNameSize * 0.75f);
+                // 折り返さない状態での幅を測る
+                float nameW = nameT.GetPreferredValues(nameT.text, float.PositiveInfinity, float.PositiveInfinity).x;
+
+                const float tabPad = 24f;
                 var trt = tab.rectTransform;
                 trt.anchorMin = trt.anchorMax = new Vector2(0f, 0f);
                 trt.pivot = new Vector2(0f, 0.5f);
                 trt.anchoredPosition = new Vector2(winLeft + 30f, winH);
-                trt.sizeDelta = new Vector2(nameW, 48f);
+                trt.sizeDelta = new Vector2(nameW + tabPad * 2f, 48f);
 
-                nameT.transform.SetParent(tab.transform, false);
-                Stretch(nameT.rectTransform);
+                var nrt = nameT.rectTransform;
+                Stretch(nrt);
+                nrt.offsetMin = new Vector2(tabPad, 0f);
+                nrt.offsetMax = new Vector2(-tabPad, 0f);
             }
 
             // キャラの顔
@@ -814,6 +1029,40 @@ namespace Conversation
             StartCoroutine(AppearRoutine(sc));
         }
 
+        /// <summary>話者を空いている位置に自動で登場させる</summary>
+        void AutoShow(string id, string expr)
+        {
+            var others = new List<StageCharacter>(stage.Values);
+            float x;
+            if (others.Count == 0)
+            {
+                x = centerX;
+            }
+            else if (others.Count == 1)
+            {
+                var o = others[0];
+                float ox = o.holder.anchorMin.x;
+                if (Mathf.Abs(ox - centerX) < 0.05f) { MoveTo(o, leftX); x = rightX; }
+                else x = ox < centerX ? rightX : leftX;
+            }
+            else
+            {
+                // 既存キャラから一番離れた位置
+                x = centerX;
+                float best = -1f;
+                foreach (var cand in new[] { leftX, centerX, rightX })
+                {
+                    float min = float.MaxValue;
+                    foreach (var o in others) min = Mathf.Min(min, Mathf.Abs(o.holder.anchorMin.x - cand));
+                    if (min > best) { best = min; x = cand; }
+                }
+            }
+
+            string pos = x.ToString(CultureInfo.InvariantCulture);
+            var args = string.IsNullOrEmpty(expr) ? new[] { id, pos } : new[] { id, expr, pos };
+            DoShow(new Command { type = CommandType.Show, args = args });
+        }
+
         void DoHide(string id)
         {
             if (string.IsNullOrEmpty(id) || !stage.TryGetValue(id, out var sc)) return;
@@ -871,8 +1120,13 @@ namespace Conversation
 
             return new StageCharacter
             {
-                id = prof.id, profile = prof, holder = holder, motion = motion,
-                image = img, dimOverlay = overlay, group = group
+                id = prof.id,
+                profile = prof,
+                holder = holder,
+                motion = motion,
+                image = img,
+                dimOverlay = overlay,
+                group = group
             };
         }
 
@@ -1066,6 +1320,7 @@ namespace Conversation
             if (currentBg) Destroy(currentBg.gameObject);
             currentBg = null;
             currentSpeakerId = null;
+            CurrentTextId = null;
             boxVisible = false;
             boxGroup.alpha = 0f;
             choosing = false;
@@ -1509,14 +1764,14 @@ namespace Conversation
         {
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
             for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-            {
-                float px = x + 0.5f, py = y + 0.5f;
-                float cx = Mathf.Clamp(px, radius, size - radius);
-                float cy = Mathf.Clamp(py, radius, size - radius);
-                float d = Vector2.Distance(new Vector2(px, py), new Vector2(cx, cy));
-                tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(radius - d + 0.5f)));
-            }
+                for (int x = 0; x < size; x++)
+                {
+                    float px = x + 0.5f, py = y + 0.5f;
+                    float cx = Mathf.Clamp(px, radius, size - radius);
+                    float cy = Mathf.Clamp(py, radius, size - radius);
+                    float d = Vector2.Distance(new Vector2(px, py), new Vector2(cx, cy));
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(radius - d + 0.5f)));
+                }
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0,
                 SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
@@ -1528,14 +1783,14 @@ namespace Conversation
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
             float r = size * 0.5f;
             for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-            {
-                float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(r, r));
-                float outer = r - 1f - d;
-                float inner = d - (r - 1f - thickness);
-                float a = Mathf.Clamp01(Mathf.Min(outer, inner) + 0.5f);
-                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
-            }
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(r, r));
+                    float outer = r - 1f - d;
+                    float inner = d - (r - 1f - thickness);
+                    float a = Mathf.Clamp01(Mathf.Min(outer, inner) + 0.5f);
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
         }
@@ -1545,12 +1800,12 @@ namespace Conversation
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
             float cx = w / 2f;
             for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++)
-            {
-                float half = (y + 0.5f) / h * cx; // 下が尖った▼
-                float a = Mathf.Clamp01(half - Mathf.Abs(x + 0.5f - cx) + 0.5f);
-                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
-            }
+                for (int x = 0; x < w; x++)
+                {
+                    float half = (y + 0.5f) / h * cx; // 下が尖った▼
+                    float a = Mathf.Clamp01(half - Mathf.Abs(x + 0.5f - cx) + 0.5f);
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f));
         }

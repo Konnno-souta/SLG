@@ -6,7 +6,7 @@ namespace Conversation
 {
     public enum CommandType
     {
-        Line, Background, Show, Hide, Face, Jump, Shake, Emote, Wait, Fade, Choice, Goto, Clear, End
+        Line, Background, Show, Hide, Face, Jump, Shake, Emote, Wait, Fade, Choice, Goto, Clear, End, Bgm, Se
     }
 
     public class ChoiceOption
@@ -24,6 +24,12 @@ namespace Conversation
         public string text;
         public List<ChoiceOption> options;
         public int lineNumber;
+
+        // CSV から読み込んだ時の情報
+        public string storyId;
+        public string textId;
+        /// <summary>表示名の上書き（空なら Database の表示名）</summary>
+        public string displayName;
 
         public string Arg(int i, string def = null) => i < args.Length ? args[i] : def;
     }
@@ -43,6 +49,10 @@ namespace Conversation
     ///   @emote id 記号        頭の上に記号（!  ?  !?  … など）
     ///   @wait 秒
     ///   @fade out|in [秒]     画面暗転
+    ///   @bgm 名前 [fade=秒] [vol=0〜1] [start=秒] [pitch=倍率] [wait]
+    ///   @bgm stop [fade=秒] / @bgm volume 0〜1 [time=秒] / @bgm pause / @bgm resume
+    ///   @se 名前 [vol=0〜1] [pitch=倍率] [delay=秒] [fade=秒] [loop] [wait]
+    ///   @se stop [名前] [fade=秒]
     ///   @choice               選択肢（次の行から「- 文 -> ラベル」）
     ///   *ラベル / @goto ラベル
     ///   @end
@@ -107,6 +117,8 @@ namespace Conversation
                         case "goto": cmd.type = CommandType.Goto; break;
                         case "clear": cmd.type = CommandType.Clear; break;
                         case "end": cmd.type = CommandType.End; break;
+                        case "bgm": cmd.type = CommandType.Bgm; break;
+                        case "se": cmd.type = CommandType.Se; break;
                         case "choice":
                             cmd.type = CommandType.Choice;
                             cmd.options = new List<ChoiceOption>();
