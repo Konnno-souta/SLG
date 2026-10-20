@@ -6,7 +6,7 @@ namespace Conversation
 {
     public enum CommandType
     {
-        Line, Background, Show, Hide, Face, Jump, Shake, Emote, Wait, Fade, Choice, Goto, Clear, End, Bgm, Se
+        Line, Background, Show, Hide, Face, Jump, Shake, Emote, Wait, Fade, Choice, Goto, Clear, End, Bgm, Se, Title
     }
 
     public class ChoiceOption
@@ -53,6 +53,8 @@ namespace Conversation
     ///   @bgm stop [fade=秒] / @bgm volume 0〜1 [time=秒] / @bgm pause / @bgm resume
     ///   @se 名前 [vol=0〜1] [pitch=倍率] [delay=秒] [fade=秒] [loop] [wait]
     ///   @se stop [名前] [fade=秒]
+    ///   @title ID                                   Database のタイトルを表示
+    ///   @title 題名 | 第1部〇〇 | 章名 | bg=名前 emblem=off frame=off vignette=off hold=秒 wait=on bgm=名前 se=名前
     ///   @choice               選択肢（次の行から「- 文 -> ラベル」）
     ///   *ラベル / @goto ラベル
     ///   @end
@@ -101,7 +103,15 @@ namespace Conversation
 
                     var args = new string[parts.Length - 1];
                     Array.Copy(parts, 1, args, 0, args.Length);
-                    var cmd = new Command { args = args, lineNumber = i + 1 };
+                    // コマンド名より後ろの文字をそのまま残す（@title の題名にスペースが入るため）
+                    string rest = line.Substring(1).Trim();
+                    int firstSpace = rest.IndexOfAny(Spaces);
+                    var cmd = new Command
+                    {
+                        args = args,
+                        lineNumber = i + 1,
+                        text = firstSpace >= 0 ? rest.Substring(firstSpace + 1).Trim() : ""
+                    };
 
                     switch (parts[0].ToLowerInvariant())
                     {
@@ -119,6 +129,7 @@ namespace Conversation
                         case "end": cmd.type = CommandType.End; break;
                         case "bgm": cmd.type = CommandType.Bgm; break;
                         case "se": cmd.type = CommandType.Se; break;
+                        case "title": cmd.type = CommandType.Title; break;
                         case "choice":
                             cmd.type = CommandType.Choice;
                             cmd.options = new List<ChoiceOption>();

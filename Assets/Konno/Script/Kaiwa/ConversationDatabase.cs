@@ -98,6 +98,48 @@ namespace Conversation
         public bool loop = false;
     }
 
+    /// <summary>会話開始前に出す章タイトル</summary>
+    [Serializable]
+    public class TitleCardEntry
+    {
+        [Tooltip("ID。CSVのストーリーIDと同じにすると、そのストーリー開始時に自動で表示される。@title ID でも呼べる")]
+        public string id;
+        [Tooltip("オフにするとこのタイトルは表示しない")]
+        public bool enabled = true;
+
+        [Header("文字（チェックを外すとその行だけ非表示）")]
+        public bool showTitle = true;
+        [Tooltip("中央の大きい文字（例: 本戦試合 レダとの戦い）")]
+        public string title;
+        public bool showChapter = true;
+        [Tooltip("下の1行目（例: 第1部 カイ篇 8章）")]
+        public string chapter;
+        public bool showChapterName = true;
+        [Tooltip("下の2行目（例: 譲れぬ想い）")]
+        public string chapterName;
+
+        [Header("背景（画像が空なら ConversationPlayer の Default Background）")]
+        public bool showBackground = true;
+        public Sprite background;
+        [Tooltip("周りを暗くする")]
+        public bool showVignette = true;
+
+        [Header("飾り（画像が空なら ConversationPlayer の初期設定）")]
+        [Tooltip("中央の紋章など")]
+        public bool showEmblem = true;
+        public Sprite emblem;
+        [Tooltip("上下の装飾枠など（画面全体に引き伸ばす画像）")]
+        public bool showFrame = true;
+        public Sprite frame;
+
+        [Header("サウンド（Database の名前。空なら鳴らさない）")]
+        public string bgm;
+        public string se;
+
+        [Tooltip("表示し続ける秒数。負なら ConversationPlayer の Hold Time")]
+        public float holdTime = -1f;
+    }
+
     [CreateAssetMenu(menuName = "Conversation/Database", fileName = "ConversationDatabase")]
     public class ConversationDatabase : ScriptableObject
     {
@@ -105,6 +147,16 @@ namespace Conversation
         public List<BackgroundEntry> backgrounds = new List<BackgroundEntry>();
         public List<BgmEntry> bgms = new List<BgmEntry>();
         public List<SeEntry> ses = new List<SeEntry>();
+        public List<TitleCardEntry> titles = new List<TitleCardEntry>();
+
+        public TitleCardEntry FindTitle(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            foreach (var t in titles)
+                if (string.Equals(t.id, id, StringComparison.OrdinalIgnoreCase))
+                    return t;
+            return null;
+        }
 
         public BgmEntry FindBgm(string name)
         {
