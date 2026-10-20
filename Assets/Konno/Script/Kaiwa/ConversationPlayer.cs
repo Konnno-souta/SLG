@@ -178,6 +178,9 @@ namespace Conversation
         public KeyCode logCloseKey = KeyCode.Backspace;
 #endif
 
+        [Header("章タイトル（会話開始前の演出）")]
+        public TitleCardStyle titleCard = new TitleCardStyle();
+
         [Header("サウンド")]
         [Tooltip("空なら同じ GameObject の ConversationAudio を使う（無ければ自動で追加）")]
         public ConversationAudio audioPlayer;
@@ -216,6 +219,8 @@ namespace Conversation
 
         public bool IsPlaying { get; private set; }
         public bool IsLogOpen => logOpen;
+        /// <summary>章タイトルを表示中か</summary>
+        public bool IsTitleShowing => titleShowing;
         /// <summary>再生中のストーリーID（CSV再生時）</summary>
         public string CurrentStoryId { get; private set; }
         /// <summary>表示中のテキストID（CSV再生時）</summary>
@@ -253,7 +258,17 @@ namespace Conversation
         Image currentBg, fadeOverlay, separator, skipRing, skipRingBack;
         TextMeshProUGUI nameText, bodyText;
         HoldButton skipHoldButton;
-        Sprite roundSprite, gradientSprite, triangleSprite, circleSprite, ringSprite;
+        Sprite roundSprite, gradientSprite, triangleSprite, circleSprite, ringSprite, vignetteSprite;
+
+        // 章タイトル
+        RectTransform titleRoot;
+        CanvasGroup titleGroup, titleVisualGroup;
+        Image titleBgSolid, titleBgImage, titleVignette, titleEmblem, titleFrame;
+        AspectRatioFitter titleBgFitter;
+        TextMeshProUGUI titleText, chapterText, chapterNameText;
+        float titleBaseY, chapterBaseY, chapterNameBaseY;
+        bool titleShowing;
+        GameObject uiBarObject;
 
         ConversationScript script;
         int index;
@@ -386,7 +401,7 @@ namespace Conversation
 
         public void OpenLog()
         {
-            if (logOpen || logEntries.Count == 0 || finishing) return;
+            if (logOpen || logEntries.Count == 0 || finishing || titleShowing) return;
             logOpen = true;
             skipTimer = 0f;
             UpdateSkipRing();
@@ -415,6 +430,13 @@ namespace Conversation
             IsPlaying = true;
             onStarted?.Invoke();
             index = 0;
+
+            // ストーリーIDと同じIDのタイトルがあれば、最初に表示
+            if (titleCard.enabled && titleCard.autoShowOnStoryStart && database && !string.IsNullOrEmpty(CurrentStoryId))
+            {
+                var entry = database.FindTitle(CurrentStoryId);
+                if (entry != null && entry.enabled) yield return ShowTitleCard(TitleFromEntry(entry));
+            }
 
             while (index < script.commands.Count)
             {
@@ -461,6 +483,7 @@ namespace Conversation
                 yield return HideBox();
             }
 
+            HideTitleImmediate();
             IsPlaying = false;
             if (hideOnFinish)
             {
@@ -523,6 +546,9 @@ namespace Conversation
                     break;
                 case CommandType.Se:
                     yield return DoSe(c);
+                    break;
+                case CommandType.Title:
+                    yield return DoTitleCommand(c);
                     break;
             }
         }
@@ -666,6 +692,374 @@ namespace Conversation
                 if (!logOpen) t += Dt;
                 yield return null;
             }
+        }
+
+        // =====================================================================
+        // 章タイトル
+        // =====================================================================
+
+        class TitleCardData
+        {
+            public string title, chapter, chapterName, bgm, se;
+            public bool showBackground = true, vignette = true, waitForInput;
+            public Sprite background, emblem, frame;
+            public float hold;
+        }
+
+        TitleCardData DefaultTitleData()
+        {
+            var s = titleCard;
+            return new TitleCardData
+            {
+                showBackground = true,
+                background = s.defaultBackground,
+                emblem = s.defaultEmblem,
+                frame = s.defaultFrame,
+                vignette = true,
+                hold = s.holdTime,
+                waitForInput = s.waitForInput
+            };
+        }
+
+        TitleCardData TitleFromEntry(TitleCardEntry e)
+        {
+            var d = DefaultTitleData();
+            d.title = e.showTitle ? e.title : null;
+            d.chapter = e.showChapter ? e.chapter : null;
+            d.chapterName = e.showChapterName ? e.chapterName : null;
+            d.showBackground = e.showBackground;
+            if (e.background) d.background = e.background;
+            d.vignette = e.showVignette;
+            d.emblem = e.showEmblem ? (e.emblem ? e.emblem : titleCard.defaultEmblem) : null;
+            d.frame = e.showFrame ? (e.frame ? e.frame : titleCard.defaultFrame) : null;
+            d.bgm = e.bgm;
+            d.se = e.se;
+            if (e.holdTime >= 0f) d.hold = e.holdTime;
+            return d;
+        }
+
+        IEnumerator DoTitleCommand(Command c)
+        {
+            if (!titleCard.enabled) yield break;
+            string raw = (c.text ?? "").Trim();
+            if (raw.Length == 0) yield break;
+
+            // 「@title ID」→ Database のタイトル
+            if (raw.IndexOf('|') < 0 && database)
+            {
+                var entry = database.FindTitle(raw);
+                if (entry != null)
+                {
+                    if (entry.enabled) yield return ShowTitleCard(TitleFromEntry(entry));
+                    yield break;
+                }
+            }
+
+            // 「@title 題名 | 第1部〇〇 | 章名 | オプション」
+            yield return ShowTitleCard(ParseInlineTitle(raw));
+        }
+
+        TitleCardData ParseInlineTitle(string raw)
+        {
+            var d = DefaultTitleData();
+            int pos = 0;
+            foreach (var part in raw.Split('|'))
+            {
+                string p = part.Trim();
+                var tokens = p.Split(new[] { ' ', '\t', '　' }, StringSplitOptions.RemoveEmptyEntries);
+                bool allOptions = tokens.Length > 0 && Array.TrueForAll(tokens, t => t.IndexOf('=') > 0);
+                if (allOptions)
+                {
+                    foreach (var t in tokens) ApplyTitleOption(d, t);
+                    continue;
+                }
+
+                string value = p == "-" ? "" : p;   // 空欄か - でその行は非表示
+                if (pos == 0) d.title = value;
+                else if (pos == 1) d.chapter = value;
+                else if (pos == 2) d.chapterName = value;
+                pos++;
+            }
+            return d;
+        }
+
+        void ApplyTitleOption(TitleCardData d, string token)
+        {
+            int eq = token.IndexOf('=');
+            string key = token.Substring(0, eq).Trim().ToLowerInvariant();
+            string val = token.Substring(eq + 1).Trim();
+            string lv = val.ToLowerInvariant();
+            bool off = lv == "off" || lv == "none" || lv == "false" || lv == "0" || lv == "no";
+            bool on = lv == "on" || lv == "true" || lv == "1" || lv == "yes";
+
+            switch (key)
+            {
+                case "bg":
+                    if (off) { d.showBackground = false; break; }
+                    d.showBackground = true;
+                    if (!on) d.background = FindTitleSprite(val) ?? d.background;
+                    break;
+                case "emblem":
+                    d.emblem = off ? null : on ? titleCard.defaultEmblem : FindTitleSprite(val);
+                    break;
+                case "frame":
+                    d.frame = off ? null : on ? titleCard.defaultFrame : FindTitleSprite(val);
+                    break;
+                case "vignette":
+                    d.vignette = !off;
+                    break;
+                case "bgm": d.bgm = val; break;
+                case "se": d.se = val; break;
+                case "hold":
+                case "time":
+                    d.hold = ParseF(val, d.hold);
+                    break;
+                case "wait":
+                    d.waitForInput = !off;
+                    break;
+                default:
+                    Debug.LogWarning($"[Conversation] @title の不明なオプション '{key}'");
+                    break;
+            }
+        }
+
+        /// <summary>Database の背景リストから名前で画像を探す</summary>
+        Sprite FindTitleSprite(string spriteName)
+        {
+            var sp = database ? database.FindBackground(spriteName) : null;
+            if (sp == null) Debug.LogWarning($"[Conversation] @title: 画像 '{spriteName}' が Database の背景にありません");
+            return sp;
+        }
+
+        IEnumerator ShowTitleCard(TitleCardData d)
+        {
+            var s = titleCard;
+            titleShowing = true;
+            yield return HideBox();
+            if (s.hideUiBar && uiBarObject) uiBarObject.SetActive(false);
+
+            SetupTitle(d);
+            titleRoot.gameObject.SetActive(true);
+            titleGroup.alpha = 1f;
+
+            if (audioPlayer)
+            {
+                if (!string.IsNullOrEmpty(d.bgm)) audioPlayer.PlayBgm(d.bgm);
+                if (!string.IsNullOrEmpty(d.se)) audioPlayer.PlaySe(d.se);
+            }
+
+            // 表示（背景 → 題名 → 第1部・章名）
+            float titleStart = s.backgroundFadeIn * 0.5f + s.titleDelay;
+            float subStart = titleStart + s.subtitleDelay;
+            float total = Mathf.Max(s.backgroundFadeIn, subStart + s.textFadeIn);
+
+            advanceRequested = false;
+            float t = 0f;
+            ApplyTitleTimeline(0f, titleStart, subStart);
+            while (t < total)
+            {
+                if (s.skippable && advanceRequested) { advanceRequested = false; t = total; }
+                else t += Dt;
+                ApplyTitleTimeline(t, titleStart, subStart);
+                yield return null;
+            }
+            ApplyTitleTimeline(total, titleStart, subStart);
+
+            // 表示し続ける
+            advanceRequested = false;
+            float h = 0f;
+            while (true)
+            {
+                bool input = advanceRequested;
+                advanceRequested = false;
+                if (d.waitForInput) { if (input) break; }
+                else if (h >= d.hold || (input && s.skippable)) break;
+                h += Dt;
+                yield return null;
+            }
+
+            // 消える
+            float o = 0f;
+            while (o < s.fadeOut)
+            {
+                o += Dt;
+                titleGroup.alpha = 1f - Mathf.Clamp01(o / s.fadeOut);
+                yield return null;
+            }
+
+            HideTitleImmediate();
+            advanceRequested = false;
+        }
+
+        void ApplyTitleTimeline(float t, float titleStart, float subStart)
+        {
+            var s = titleCard;
+            titleVisualGroup.alpha = s.backgroundFadeIn > 0f ? Mathf.Clamp01(t / s.backgroundFadeIn) : 1f;
+
+            float tk = TitleEase(t - titleStart);
+            SetTitleTextState(titleText, titleBaseY, tk);
+
+            float sk = TitleEase(t - subStart);
+            SetTitleTextState(chapterText, chapterBaseY, sk);
+            SetTitleTextState(chapterNameText, chapterNameBaseY, sk);
+        }
+
+        float TitleEase(float x)
+        {
+            float d = titleCard.textFadeIn;
+            float k = d > 0f ? Mathf.Clamp01(x / d) : (x >= 0f ? 1f : 0f);
+            return 1f - (1f - k) * (1f - k);
+        }
+
+        void SetTitleTextState(TextMeshProUGUI tmp, float baseY, float k)
+        {
+            tmp.alpha = k;
+            tmp.rectTransform.anchoredPosition = new Vector2(0f, baseY - titleCard.textRise * (1f - k));
+        }
+
+        void SetupTitle(TitleCardData d)
+        {
+            var s = titleCard;
+
+            // 背景
+            titleBgSolid.enabled = d.showBackground;
+            titleBgSolid.color = s.backgroundColor;
+
+            bool hasImage = d.showBackground && d.background;
+            titleBgImage.enabled = hasImage;
+            if (hasImage)
+            {
+                titleBgImage.sprite = d.background;
+                titleBgImage.color = s.backgroundTint;
+                titleBgFitter.aspectRatio = d.background.rect.width / d.background.rect.height;
+            }
+
+            titleVignette.enabled = d.vignette && s.vignetteStrength > 0f;
+            titleVignette.color = new Color(0f, 0f, 0f, s.vignetteStrength);
+
+            // 紋章
+            titleEmblem.enabled = d.emblem;
+            if (d.emblem)
+            {
+                titleEmblem.sprite = d.emblem;
+                titleEmblem.color = new Color(1f, 1f, 1f, s.emblemAlpha);
+                titleEmblem.rectTransform.sizeDelta = s.emblemSize;
+                titleEmblem.rectTransform.anchoredPosition = s.emblemOffset;
+            }
+
+            // 枠
+            titleFrame.enabled = d.frame;
+            if (d.frame)
+            {
+                titleFrame.sprite = d.frame;
+                titleFrame.color = s.frameColor;
+                titleFrame.type = d.frame.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+            }
+
+            // 文字
+            var f = s.font ? s.font : font;
+            SetupTitleText(titleText, d.title, f, s.titleSize, s.titleColor, s.titleSpacing);
+            SetupTitleText(chapterText, d.chapter, f, s.chapterSize, s.chapterColor, s.chapterSpacing);
+            SetupTitleText(chapterNameText, d.chapterName, f, s.chapterNameSize, s.chapterNameColor, s.chapterSpacing);
+            titleBaseY = s.titleOffsetY;
+            chapterBaseY = s.chapterOffsetY;
+            chapterNameBaseY = s.chapterNameOffsetY;
+        }
+
+        static void SetupTitleText(TextMeshProUGUI tmp, string text, TMP_FontAsset f, float size, Color color, float spacing)
+        {
+            bool show = !string.IsNullOrEmpty(text);
+            tmp.gameObject.SetActive(show);
+            if (!show) return;
+            if (f) tmp.font = f;
+            tmp.fontSize = size;
+            tmp.color = color;
+            tmp.characterSpacing = spacing;
+            tmp.text = text;
+            tmp.rectTransform.sizeDelta = new Vector2(1800f, size * 1.8f);
+        }
+
+        void HideTitleImmediate()
+        {
+            if (titleRoot) titleRoot.gameObject.SetActive(false);
+            titleShowing = false;
+            if (uiBarObject) uiBarObject.SetActive(showUiBar);
+        }
+
+        void BuildTitleUI()
+        {
+            titleRoot = NewRect("TitleCard", root);
+            Stretch(titleRoot);
+            titleGroup = titleRoot.gameObject.AddComponent<CanvasGroup>();
+
+            // クリックで先へ進む
+            var hit = CreateImage(titleRoot, "ClickArea", null);
+            Stretch(hit.rectTransform);
+            hit.color = Color.clear;
+            hit.raycastTarget = true;
+            var hb = hit.gameObject.AddComponent<Button>();
+            hb.transition = Selectable.Transition.None;
+            hb.navigation = new Navigation { mode = Navigation.Mode.None };
+            hb.onClick.AddListener(() => { Deselect(); if (titleShowing) advanceRequested = true; });
+
+            var visual = NewRect("Visual", titleRoot);
+            Stretch(visual);
+            titleVisualGroup = visual.gameObject.AddComponent<CanvasGroup>();
+            titleVisualGroup.blocksRaycasts = false;
+            titleVisualGroup.interactable = false;
+
+            titleBgSolid = CreateImage(visual, "BackgroundColor", null);
+            Stretch(titleBgSolid.rectTransform);
+
+            titleBgImage = CreateImage(visual, "Background", null);
+            Stretch(titleBgImage.rectTransform);
+            titleBgFitter = titleBgImage.gameObject.AddComponent<AspectRatioFitter>();
+            titleBgFitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+
+            titleVignette = CreateImage(visual, "Vignette", vignetteSprite);
+            Stretch(titleVignette.rectTransform);
+
+            titleEmblem = CreateImage(visual, "Emblem", null);
+            titleEmblem.preserveAspect = true;
+            var ert = titleEmblem.rectTransform;
+            ert.anchorMin = ert.anchorMax = new Vector2(0.5f, 0.5f);
+            ert.pivot = new Vector2(0.5f, 0.5f);
+
+            titleFrame = CreateImage(visual, "Frame", null);
+            Stretch(titleFrame.rectTransform);
+
+            titleText = CreateTitleText("Title");
+            chapterText = CreateTitleText("Chapter");
+            chapterNameText = CreateTitleText("ChapterName");
+
+            titleRoot.gameObject.SetActive(false);
+        }
+
+        TextMeshProUGUI CreateTitleText(string objName)
+        {
+            var t = CreateText(titleRoot, objName, 36f, Color.white, TextAlignmentOptions.Center);
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            var rt = t.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            return t;
+        }
+
+        /// <summary>中央が透明で、外側ほど不透明になる円</summary>
+        static Sprite MakeVignetteSprite(int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            float r = size * 0.5f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x + 0.5f - r) / r, dy = (y + 0.5f - r) / r;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy) / 1.41421f;
+                    float a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.3f, 1f, d));
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
         }
 
         // =====================================================================
@@ -1326,6 +1720,7 @@ namespace Conversation
             choosing = false;
             choicePanel.gameObject.SetActive(false);
             cursor.gameObject.SetActive(false);
+            HideTitleImmediate();
             skipTimer = 0f;
             UpdateSkipRing();
             SetFadeAlpha(0f);
@@ -1344,6 +1739,7 @@ namespace Conversation
             triangleSprite = MakeTriangleSprite(32, 24);
             circleSprite = MakeRingSprite(128, 64f);
             ringSprite = MakeRingSprite(128, 10f);
+            vignetteSprite = MakeVignetteSprite(256);
             BuildUI();
         }
 
@@ -1447,6 +1843,9 @@ namespace Conversation
             choicePanel.gameObject.AddComponent<CanvasGroup>();
             choicePanel.gameObject.SetActive(false);
 
+            // ---- 章タイトル ----
+            BuildTitleUI();
+
             // ---- ログ ----
             BuildLogUI();
 
@@ -1497,6 +1896,7 @@ namespace Conversation
             }
             UpdateSkipRing();
 
+            uiBarObject = bar.gameObject;
             bar.gameObject.SetActive(showUiBar);
         }
 
@@ -1809,5 +2209,73 @@ namespace Conversation
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f));
         }
+    }
+
+    /// <summary>章タイトルの見た目・タイミング（全タイトル共通）</summary>
+    [Serializable]
+    public class TitleCardStyle
+    {
+        [Tooltip("オフにすると章タイトルを一切表示しない")]
+        public bool enabled = true;
+        [Tooltip("CSV再生時、ストーリーIDと同じIDのタイトルが Database にあれば最初に自動で表示")]
+        public bool autoShowOnStoryStart = true;
+        [Tooltip("タイトル表示中は右下のログ・スキップUIを隠す")]
+        public bool hideUiBar = true;
+
+        [Header("背景（各タイトルで画像を指定しない時に使う）")]
+        public Sprite defaultBackground;
+        [Tooltip("背景画像が無い時の色")]
+        public Color backgroundColor = new Color(0.12f, 0.06f, 0.04f, 1f);
+        [Tooltip("背景画像の色味（白でそのまま。暗くしたい時は灰色に）")]
+        public Color backgroundTint = Color.white;
+        [Tooltip("周りを暗くする強さ（0で無し）")]
+        [Range(0f, 1f)] public float vignetteStrength = 0.6f;
+
+        [Header("紋章（中央の飾り）")]
+        public Sprite defaultEmblem;
+        [Range(0f, 1f)] public float emblemAlpha = 0.35f;
+        public Vector2 emblemSize = new Vector2(560f, 680f);
+        public Vector2 emblemOffset = Vector2.zero;
+
+        [Header("枠（画面全体に重ねる装飾）")]
+        public Sprite defaultFrame;
+        public Color frameColor = Color.white;
+
+        [Header("文字")]
+        [Tooltip("空なら ConversationPlayer の Font を使う（明朝体のフォントアセットがおすすめ）")]
+        public TMP_FontAsset font;
+        public float titleSize = 76f;
+        public Color titleColor = new Color(1f, 0.95f, 0.88f);
+        [Tooltip("文字間隔")]
+        public float titleSpacing = 4f;
+        [Tooltip("画面中央からの高さ")]
+        public float titleOffsetY = 100f;
+
+        public float chapterSize = 34f;
+        public Color chapterColor = new Color(1f, 0.95f, 0.88f);
+        public float chapterSpacing = 6f;
+        public float chapterOffsetY = -170f;
+
+        public float chapterNameSize = 34f;
+        public Color chapterNameColor = new Color(1f, 0.95f, 0.88f);
+        public float chapterNameOffsetY = -222f;
+
+        [Tooltip("文字が出る時に下から浮き上がる距離")]
+        public float textRise = 16f;
+
+        [Header("タイミング（秒）")]
+        public float backgroundFadeIn = 0.8f;
+        [Tooltip("背景が半分出てから題名が出るまで")]
+        public float titleDelay = 0.3f;
+        [Tooltip("題名が出てから「第1部〜」が出るまで")]
+        public float subtitleDelay = 0.6f;
+        public float textFadeIn = 0.8f;
+        [Tooltip("全部出てから消えるまで")]
+        public float holdTime = 2.5f;
+        [Tooltip("オンにすると、クリック/決定ボタンを押すまで消えない")]
+        public bool waitForInput = false;
+        public float fadeOut = 0.8f;
+        [Tooltip("クリック/決定ボタンで演出を飛ばせる")]
+        public bool skippable = true;
     }
 }
