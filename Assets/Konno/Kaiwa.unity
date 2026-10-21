@@ -413,7 +413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationPlayer
   database: {fileID: 11400000, guid: fce6425f1cdf18047868b58640e547b1, type: 2}
-  scriptAsset: {fileID: 4900000, guid: 642e311c22041e14ab68a9ddd2b69a4c, type: 3}
+  scriptAsset: {fileID: 4900000, guid: 9fcda719daffbaa4fa05abd02e6fd771, type: 3}
   playOnStart: 1
   hideOnFinish: 1
   source: 1
@@ -718,7 +718,7 @@ MonoBehaviour:
     emblemAlpha: 0.35
     emblemSize: {x: 560, y: 680}
     emblemOffset: {x: 0, y: 0}
-    defaultFrame: {fileID: 21300000, guid: 6d77e527bab43084da05daf5d2f22c41, type: 3}
+    defaultFrame: {fileID: 0}
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     font: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
     titleSize: 76
