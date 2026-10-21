@@ -68,10 +68,46 @@ namespace Conversation
             char delim = string.IsNullOrEmpty(columns.delimiter) ? ','
                        : columns.delimiter == "\\t" ? '\t' : columns.delimiter[0];
 
+            // 見出し行を探す（上にタイトル行などがあっても、見出しのある行から読む）
             var table = SplitCsv(source, delim);
-            if (table.Count == 0) return csv;
+            int headerRow = FindHeaderRow(table, columns);
 
-            foreach (var h in table[0]) csv.headers.Add(h.Trim());
+            // 見つからなければ、区切り文字を変えて試す（タブ区切り・セミコロン区切り）
+            if (headerRow < 0)
+            {
+                foreach (var alt in new[] { '\t', ';', ',' })
+                {
+                    if (alt == delim) continue;
+                    var t2 = SplitCsv(source, alt);
+                    int h2 = FindHeaderRow(t2, columns);
+                    if (h2 < 0) continue;
+                    Debug.Log($"[ConversationCsv] 区切り文字を「{(alt == '\t' ? "タブ" : alt.ToString())}」として読み込みました");
+                    table = t2; headerRow = h2; delim = alt;
+                    break;
+                }
+            }
+
+            if (table.Count == 0)
+            {
+                Debug.LogWarning("[ConversationCsv] CSV が空です");
+                return csv;
+            }
+
+            if (headerRow < 0)
+            {
+                // どの列も見つからない → 実際の1行目を表示して原因を分かりやすくする
+                string first = "";
+                foreach (var row in table) if (!IsEmptyRow(row)) { first = string.Join(" | ", row); break; }
+                if (first.Length > 120) first = first.Substring(0, 120) + "…";
+                Debug.LogWarning(
+                    $"[ConversationCsv] 見出し行が見つかりません。見出しに「{columns.storyId}」と「{columns.text}」が必要です。\n" +
+                    $"実際の1行目: [{first}]\n" +
+                    "・会話テキスト（.txt）を Csv Asset に入れていないか\n" +
+                    "・見出しを日本語などに変えた場合は、ConversationPlayer の Csv Columns も同じ文字にする");
+                headerRow = 0;
+            }
+
+            foreach (var h in table[headerRow]) csv.headers.Add(h.Trim());
 
             int iStory = csv.FindColumn(columns.storyId);
             int iTextId = csv.FindColumn(columns.textId);
@@ -82,11 +118,12 @@ namespace Conversation
             int iBgm = csv.FindColumn(columns.bgm);
             int iSe = csv.FindColumn(columns.se);
 
-            if (iText < 0) Debug.LogWarning($"[ConversationCsv] テキスト列 '{columns.text}' が見つかりません");
-            if (iStory < 0) Debug.LogWarning($"[ConversationCsv] ストーリーID列 '{columns.storyId}' が見つかりません");
+            string found = $"（見つかった見出し: {string.Join(", ", csv.headers)}）";
+            if (iText < 0) Debug.LogWarning($"[ConversationCsv] テキスト列 '{columns.text}' が見つかりません{found}");
+            if (iStory < 0) Debug.LogWarning($"[ConversationCsv] ストーリーID列 '{columns.storyId}' が見つかりません{found}");
 
             string lastStory = "";
-            for (int r = 1; r < table.Count; r++)
+            for (int r = headerRow + 1; r < table.Count; r++)
             {
                 var cells = table[r];
                 if (IsEmptyRow(cells)) continue;
@@ -115,6 +152,21 @@ namespace Conversation
                 csv.rows.Add(row);
             }
             return csv;
+        }
+
+        /// <summary>上から20行以内で、ストーリーID列かテキスト列の見出しがある行を探す</summary>
+        static int FindHeaderRow(List<List<string>> table, CsvColumns columns)
+        {
+            int limit = Mathf.Min(table.Count, 20);
+            for (int r = 0; r < limit; r++)
+                foreach (var cell in table[r])
+                {
+                    string c = cell.Trim();
+                    if (string.Equals(c, columns.text?.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(c, columns.storyId?.Trim(), StringComparison.OrdinalIgnoreCase))
+                        return r;
+                }
+            return -1;
         }
 
         int FindColumn(string header)
@@ -174,7 +226,9 @@ namespace Conversation
             var target = GetRows(storyId);
             if (target.Count == 0)
             {
-                Debug.LogWarning($"[ConversationCsv] ストーリーID '{storyId}' の行がありません");
+                var ids = GetStoryIds();
+                Debug.LogWarning($"[ConversationCsv] ストーリーID '{storyId}' の行がありません" +
+                    (ids.Count > 0 ? $"（CSV にあるストーリーID: {string.Join(", ", ids)}）" : ""));
                 return null;
             }
 

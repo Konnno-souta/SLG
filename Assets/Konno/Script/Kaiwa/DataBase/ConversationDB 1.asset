@@ -20,8 +20,8 @@ MonoBehaviour:
     - name: normal
       sprite: {fileID: 21300000, guid: df1f1abae82c7994b8bc001587afb846, type: 3}
       logIcon: {fileID: 21300000, guid: df1f1abae82c7994b8bc001587afb846, type: 3}
-    scale: 0.7
-    offset: {x: 0, y: 50}
+    scale: 10
+    offset: {x: 0, y: -50}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0, y: 0}
     logIconZoom: 0
@@ -32,11 +32,14 @@ MonoBehaviour:
     - name: normal
       sprite: {fileID: 21300000, guid: 2713c3a2aae724843a5615265a0f68e1, type: 3}
       logIcon: {fileID: 21300000, guid: 2713c3a2aae724843a5615265a0f68e1, type: 3}
-    scale: 0.7
-    offset: {x: 0, y: 50}
+    scale: 10
+    offset: {x: 0, y: 0}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0, y: 0}
     logIconZoom: 0
   backgrounds:
   - name: classroom
     sprite: {fileID: 21300000, guid: d9219180ee22c214e9b550425456c4c4, type: 3}
+  bgms: []
+  ses: []
+  titles: []

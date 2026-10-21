@@ -32,8 +32,8 @@ MonoBehaviour:
     - name: normal
       sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
       logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 0.5
-    offset: {x: 0, y: 150}
+    scale: 1.4
+    offset: {x: 0, y: -500}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0, y: 0}
     logIconZoom: 0
@@ -42,3 +42,4 @@ MonoBehaviour:
     sprite: {fileID: 0}
   bgms: []
   ses: []
+  titles: []
