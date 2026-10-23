@@ -1,23 +1,15 @@
-
 using UnityEngine;
 
 /// <summary>
-/// í“¬ƒ}ƒbƒv‚ÌƒOƒŠƒbƒh‚ğŠÇ—‚·‚éB
-/// Œ©‚½–Ú‚Ìƒ}ƒbƒv‚Æ‚Í“Æ—§‚³‚¹‚éB
+/// ã‚°ãƒªãƒƒãƒ‰åº§æ¨™ã¯0å§‹ã¾ã‚Šã€‚StageConfig.csvã«å¾“ã†ã‚µã‚¤ã‚ºã¸å¤‰æ›´å¯èƒ½ã€‚
+/// åˆæœŸåŒ–ã¯BattleStageLoader.Awakeã‹ã‚‰è¡Œã†ã€‚
 /// </summary>
 public sealed class BattleGrid : MonoBehaviour
 {
-    [Header("ƒOƒŠƒbƒhİ’è")]
-    [SerializeField, Min(1)]
-    private int width = 8;
-
-    [SerializeField, Min(1)]
-    private int height = 8;
-
-    [SerializeField, Min(0.1f)]
-    private float cellSize = 1f;
-
-    // ƒOƒŠƒbƒh‚Ìî•ñ
+    [Header("ã‚¹ãƒ†ãƒ¼ã‚¸èª­è¾¼ãªã—ã®ã¨ãã®é–‹ç™ºç”¨ã‚µã‚¤ã‚º")]
+    [SerializeField, Min(1)] private int width = 8;
+    [SerializeField, Min(1)] private int height = 8;
+    [SerializeField, Min(0.1f)] private float cellSize = 1f;
     private GridCellData[,] cells;
 
     public int Width => width;
@@ -26,113 +18,60 @@ public sealed class BattleGrid : MonoBehaviour
 
     private void Awake()
     {
-        InitializeGrid();
+        // BattleStageLoader.AwakeãŒå…ˆã«å‘¼ã°ã‚Œã¦ã„ã¦ã‚‚ä¸Šæ›¸ãã—ãªã„ã€‚
+        if (cells == null) Initialize(width, height);
     }
 
-    /// <summary>
-    /// ƒ}ƒX‚Ìƒf[ƒ^‚ğ‰Šú‰»‚·‚éB
-    /// </summary>
-    private void InitializeGrid()
+    public void Initialize(int newWidth, int newHeight)
     {
-        cells = new GridCellData[width, height];
-
-        for (int x = 0; x < width; x++)
+        if (newWidth <= 0 || newHeight <= 0)
         {
-            for (int y = 0; y < height; y++)
-            {
-                Vector2Int position =
-                    new Vector2Int(x, y);
-
-                cells[x, y] =
-                    new GridCellData(position);
-            }
+            Debug.LogError("BattleGrid: ç¸¦æ¨ªã¯1ä»¥ä¸Šã«ã—ã¦ãã ã•ã„ã€‚", this);
+            return;
         }
+
+        width = newWidth;
+        height = newHeight;
+        cells = new GridCellData[width, height];
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+            cells[x, y] = new GridCellData(new Vector2Int(x, y));
     }
 
-    /// <summary>
-    /// w’è‚µ‚½À•W‚ªƒOƒŠƒbƒh“à‚É‚ ‚é‚©B
-    /// </summary>
-    public bool IsInside(Vector2Int position)
-    {
-        return position.x >= 0 &&
-               position.x < width &&
-               position.y >= 0 &&
-               position.y < height;
-    }
+    public bool IsInside(Vector2Int position) =>
+        position.x >= 0 && position.x < width &&
+        position.y >= 0 && position.y < height;
 
-    /// <summary>
-    /// ƒ}ƒX‚Ìƒf[ƒ^‚ğæ“¾‚·‚éB
-    /// </summary>
-    public bool TryGetCell(
-        Vector2Int position,
-        out GridCellData cell)
+    public bool TryGetCell(Vector2Int position, out GridCellData cell)
     {
         cell = null;
-
-        if (!IsInside(position) || cells == null)
-            return false;
-
+        if (!IsInside(position) || cells == null) return false;
         cell = cells[position.x, position.y];
         return true;
     }
 
-    /// <summary>
-    /// ƒ}ƒX‚ª’Ês‰Â”\‚©Šm”F‚·‚éB
-    /// </summary>
-    public bool IsWalkable(Vector2Int position)
-    {
-        return TryGetCell(position, out var cell)
-               && cell.IsWalkable;
-    }
+    public bool IsWalkable(Vector2Int position) =>
+        TryGetCell(position, out GridCellData cell) && cell.IsWalkable;
 
-    /// <summary>
-    /// ƒ}ƒX‚Ì’Ês‰Â”Û‚ğİ’è‚·‚éB
-    /// </summary>
-    public bool SetWalkable(
-        Vector2Int position,
-        bool walkable)
+    public bool SetWalkable(Vector2Int position, bool walkable)
     {
-        if (!TryGetCell(position, out var cell))
-            return false;
-
+        if (!TryGetCell(position, out GridCellData cell)) return false;
         cell.SetWalkable(walkable);
         return true;
     }
 
-    /// <summary>
-    /// ƒ}ƒXÀ•W‚ğ3D‹óŠÔ‚Ì’†SÀ•W‚Ö•ÏŠ·‚·‚éB
-    /// </summary>
-    public Vector3 CellToWorld(Vector2Int position)
-    {
-        Vector3 localPosition = new Vector3(
+    public Vector3 CellToWorld(Vector2Int position) =>
+        transform.TransformPoint(new Vector3(
             (position.x + 0.5f) * cellSize,
             0f,
-            (position.y + 0.5f) * cellSize
-        );
+            (position.y + 0.5f) * cellSize));
 
-        return transform.TransformPoint(localPosition);
-    }
-
-    /// <summary>
-    /// 3D‹óŠÔ‚ÌÀ•W‚ğƒ}ƒXÀ•W‚É•ÏŠ·‚·‚éB
-    /// </summary>
-    public bool TryWorldToCell(
-        Vector3 worldPosition,
-        out Vector2Int position)
+    public bool TryWorldToCell(Vector3 worldPosition, out Vector2Int position)
     {
-        Vector3 localPosition =
-            transform.InverseTransformPoint(worldPosition);
-
-        int x = Mathf.FloorToInt(
-            localPosition.x / cellSize
-        );
-
-        int y = Mathf.FloorToInt(
-            localPosition.z / cellSize
-        );
-
-        position = new Vector2Int(x, y);
-
+        Vector3 local = transform.InverseTransformPoint(worldPosition);
+        position = new Vector2Int(
+            Mathf.FloorToInt(local.x / cellSize),
+            Mathf.FloorToInt(local.z / cellSize));
         return IsInside(position);
     }
 }

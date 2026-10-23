@@ -1,0 +1,8 @@
+﻿,,,使用フィールド,
+StageID,Width,Height,3D_Name,Memo
+ST01,20,30,FIE_Castle,城
+ST02,20,30,FIE_Town,市街地
+ST03,20,30,FIE_Plain,平原
+ST04,20,30,FIE_Forest,森
+ST05,20,30,FIE_Town,市街地
+ST06,20,30,FIE_Castle,城

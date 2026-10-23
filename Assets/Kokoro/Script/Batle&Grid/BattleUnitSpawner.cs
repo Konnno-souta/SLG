@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// BattleUnit.csvから、指定した戦闘のユニットを配置する。
-/// ステージサイズ／障害物は引き続きBattleGrid（開発用）で管理。
+/// Stage_CharaLayout.csvからユニットを生成する。
+/// Startでの自動実行はしない。BattleStageLoader.Startから呼ぶ。
 /// </summary>
 public sealed class BattleUnitSpawner : MonoBehaviour
 {
@@ -12,97 +12,102 @@ public sealed class BattleUnitSpawner : MonoBehaviour
     [SerializeField] private GameDataRepository repository;
     [SerializeField] private BattleGrid grid;
     [SerializeField] private UnitSelectionController selectionController;
-    [SerializeField] private TextAsset battleUnitCsv;
     [SerializeField] private UnitView unitPrefab;
-
-    [Header("ステージ指定")]
-    [SerializeField] private string battleId = "B001";
     [SerializeField] private Transform unitContainer;
 
-    [Header("仮モデルの所属色（未設定ならPrefabの色を使う）")]
+    [Header("正式CSVに移動力列がない間だけ使う仮値")]
+    [SerializeField, Min(0)] private int temporaryMoveRange = 3;
+
+    [Header("Capsuleテスト用の色分け（未設定でも動く）")]
     [SerializeField] private Material allyMaterial;
     [SerializeField] private Material enemyMaterial;
 
-    private void Start()
-    {
-        SpawnBattleUnits();
-    }
-
-    public void SpawnBattleUnits()
+    /// <summary>ステージを指定してCSVの配置を行う。検証でエラーがあれば生成しない。</summary>
+    public bool SpawnStage(string stageId, TextAsset layoutCsv)
     {
         if (repository == null || !repository.IsLoaded ||
             grid == null || selectionController == null ||
-            battleUnitCsv == null || unitPrefab == null)
+            unitPrefab == null || layoutCsv == null)
         {
-            Debug.LogError("BattleUnitSpawner: Inspector参照またはCSV読み込み状態を確認してください。", this);
-            return;
+            Debug.LogError("BattleUnitSpawner: 参照かGameDataRepositoryの読み込みに失敗しました。", this);
+            return false;
         }
 
         List<CsvRow> rows;
         try
         {
-            rows = CsvReader.Read(battleUnitCsv, "BattleID");
+            rows = CsvReader.Read(layoutCsv, "StageID");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"BattleUnit.csvの解析に失敗: {ex.Message}", this);
-            return;
+            Debug.LogError($"{layoutCsv.name}: CSV解析失敗: {ex.Message}", this);
+            return false;
         }
 
-        var usedSpawns = new HashSet<string>(StringComparer.Ordinal);
-        var usedPositions = new HashSet<Vector2Int>();
-        int spawned = 0;
+        // 先に全行検証し、問題があれば中途半端な生成を避ける。
+        var records = new List<BattleUnitRecord>();
+        var positions = new HashSet<Vector2Int>();
         int errors = 0;
-        int foundRows = 0;
-
         foreach (CsvRow row in rows)
         {
-            // BattleIDが異なる行は別の戦闘に属する。
-            if (row.Get("BattleID") != battleId) continue;
-            foundRows++;
+            if (row.Get("StageID") != stageId) continue;
             try
             {
-                BattleUnitRecord data = BattleUnitRecord.FromCsv(row);
+                BattleUnitRecord record = BattleUnitRecord.FromCsv(row);
+                if (!repository.TryGetCharacter(record.CharacterId, out CharacterData character))
+                    throw new FormatException($"CharacterID={record.CharacterId} がCharacter.csvにありません。");
+                if (record.Team != character.Team)
+                    throw new FormatException($"Team={record.Team} とCharacter.csvのTeam={character.Team}が違います。");
+                if (!grid.IsWalkable(record.Position))
+                    throw new FormatException($"CSV座標=({record.SourceX},{record.SourceY}) → " +
+                        $"Unity座標={record.Position} はグリッド外または通行不可です。");
+                if (!positions.Add(record.Position))
+                    throw new FormatException($"座標({record.SourceX},{record.SourceY})に配置が重複しています。");
 
-                if (!usedSpawns.Add(data.SpawnId))
-                    throw new FormatException($"SpawnID={data.SpawnId} が重複しています。");
-                if (!usedPositions.Add(data.Position))
-                    throw new FormatException($"初期位置={data.Position} が重複しています。");
-                if (!grid.IsWalkable(data.Position))
-                    throw new FormatException($"初期位置={data.Position} は範囲外または通行不可です。");
-                if (!repository.TryGetCharacter(data.CharacterId, out CharacterData character))
-                    throw new FormatException($"Character_ID={data.CharacterId} がCharacter.csvにありません。");
-                if (character.PositionId != 1 && character.PositionId != 2)
-                    throw new FormatException($"Character_ID={character.Id} の所属ID={character.PositionId} が不正です。");
-
-                UnitView instance = Instantiate(unitPrefab, unitContainer);
-                if (!instance.Configure(character, data.SpawnId, data.Position, data.MoveRange) ||
-                    !selectionController.RegisterSpawnedUnit(instance))
-                {
-                    Destroy(instance.gameObject);
-                    throw new InvalidOperationException("ユニットの初期化・登録に失敗しました。");
-                }
-
-                // 仮のCapsuleだけを対象とした着色。正式モデル導入時は別方式へ移す。
-                Material material = character.PositionId == 1 ? allyMaterial : enemyMaterial;
-                Renderer visual = instance.GetComponentInChildren<Renderer>();
-                if (visual != null && material != null)
-                    visual.sharedMaterial = material;
-
-                spawned++;
-                Debug.Log($"生成: {data.SpawnId} / {character.Name} / " +
-                          $"HP={character.BaseHP} / {data.Position}", instance);
+                records.Add(record);
             }
             catch (Exception ex)
             {
                 errors++;
-                Debug.LogError($"{battleUnitCsv.name} {row.LineNumber}行目: {ex.Message}", this);
+                Debug.LogError($"{layoutCsv.name} {row.LineNumber}行目: {ex.Message}", this);
             }
         }
+        if (errors > 0)
+        {
+            Debug.LogError($"{stageId}: 配置CSVに{errors}件のエラー。生成を中止しました。", this);
+            return false;
+        }
+        if (records.Count == 0)
+        {
+            Debug.LogWarning($"{layoutCsv.name}: StageID={stageId} の配置がありません。", this);
+            return false;
+        }
 
-        if (foundRows == 0)
-            Debug.LogWarning($"BattleID={battleId} の配置データが見つかりません。", this);
+        int generated = 0;
+        foreach (BattleUnitRecord record in records)
+        {
+            repository.TryGetCharacter(record.CharacterId, out CharacterData character);
+            UnitView instance = Instantiate(unitPrefab, unitContainer);
 
-        Debug.Log($"BattleID={battleId}: {spawned}体生成、エラー{errors}件", this);
+            // 暫定ID。CSV行の並べ替えに弱いのでセーブ用には使わないこと。
+            string temporarySpawnId = $"{stageId}_Row{record.SourceLine:D3}";
+            if (!instance.Configure(character, temporarySpawnId,
+                    record.Position, temporaryMoveRange) ||
+                !selectionController.RegisterSpawnedUnit(instance))
+            {
+                Destroy(instance.gameObject);
+                Debug.LogError($"{stageId}: {record.CharacterId} の生成・登録に失敗。", this);
+                return false;
+            }
+
+            Material material = character.Team == "Player" ? allyMaterial : enemyMaterial;
+            Renderer visual = instance.GetComponentInChildren<Renderer>();
+            if (visual != null && material != null) visual.sharedMaterial = material;
+            generated++;
+            Debug.Log($"生成: {character.Id} {character.Name} ({record.SourceX},{record.SourceY}) " +
+                $"→ 内部{record.Position} [{character.Team}]", instance);
+        }
+        Debug.Log($"{stageId}: {generated}体生成成功", this);
+        return true;
     }
 }
