@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ユニットの3D表示と移動演出。初期配置は手動／CSVの両方式に対応。
+/// Stage5版のUnitViewを更新。自動配置と従来の手動配置の両方を保持。
+/// UnitState・GridPathfinder・UnitSelectionControllerは既存のまま使用できる。
 /// </summary>
 public sealed class UnitView : MonoBehaviour
 {
-    [Header("手動配置用（CSV自動生成時には上書きされます）")]
+    [Header("手動配置用（CSV生成時には上書き）")]
     [SerializeField] private UnitTeam team = UnitTeam.Ally;
     [SerializeField] private Vector2Int initialPosition = new Vector2Int(1, 1);
     [SerializeField, Min(0)] private int moveRange = 3;
@@ -17,30 +18,29 @@ public sealed class UnitView : MonoBehaviour
 
     public Vector2Int InitialPosition => initialPosition;
     public UnitState State { get; private set; }
-
-    // CSV読み込み後にセットされるマスター情報。
     public CharacterData MasterData { get; private set; }
     public string SpawnId { get; private set; }
 
-    /// <summary>自動生成直後、Initialize前に呼び出す。</summary>
-    public bool Configure(
-        CharacterData character, string spawnId,
-        Vector2Int position, int temporaryMoveRange)
+    /// <summary>
+    /// 自動生成されたPrefabをUnitSelectionControllerに登録する前に呼ぶ。
+    /// ※tempMoveRangeはCSV未確定の暫定値。
+    /// </summary>
+    public bool Configure(CharacterData character, string spawnId,
+        Vector2Int position, int tempMoveRange)
     {
         if (State != null || character == null || string.IsNullOrWhiteSpace(spawnId))
             return false;
-
-        if (character.PositionId != 1 && character.PositionId != 2)
+        if (character.Team != "Player" && character.Team != "Enemy")
         {
-            Debug.LogError($"{name}: 所属ID={character.PositionId}は未対応です。", this);
+            Debug.LogError($"{name}: CSVのTeamが不明: {character.Team}", this);
             return false;
         }
 
         MasterData = character;
         SpawnId = spawnId;
-        team = character.PositionId == 1 ? UnitTeam.Ally : UnitTeam.Enemy;
+        team = character.Team == "Player" ? UnitTeam.Ally : UnitTeam.Enemy;
         initialPosition = position;
-        moveRange = Mathf.Max(0, temporaryMoveRange);
+        moveRange = Mathf.Max(0, tempMoveRange);
         gameObject.name = $"{spawnId}_{character.Name}";
         return true;
     }
@@ -49,10 +49,9 @@ public sealed class UnitView : MonoBehaviour
     {
         if (grid == null || !grid.IsWalkable(initialPosition) || State != null)
         {
-            Debug.LogError($"{name}: 初期化できません。配置先または状態を確認してください。", this);
+            Debug.LogError($"{name}: 初期化失敗。座標や重複初期化を確認。", this);
             return false;
         }
-
         State = new UnitState(team, initialPosition, moveRange);
         SyncPosition(grid);
         return true;
@@ -60,17 +59,13 @@ public sealed class UnitView : MonoBehaviour
 
     public void SyncPosition(BattleGrid grid)
     {
-        if (grid == null || State == null)
-            return;
-
+        if (grid == null || State == null) return;
         transform.position = grid.CellToWorld(State.Position);
     }
 
     public IEnumerator MoveAlongPath(BattleGrid grid, IReadOnlyList<Vector2Int> path)
     {
-        if (grid == null || path == null)
-            yield break;
-
+        if (grid == null || path == null) yield break;
         for (int i = 1; i < path.Count; i++)
         {
             Vector3 target = grid.CellToWorld(path[i]);

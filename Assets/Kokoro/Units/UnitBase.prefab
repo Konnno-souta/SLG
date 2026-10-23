@@ -124,6 +124,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3890474188613965430}
   - component: {fileID: -447473251358801611}
+  - component: {fileID: 6840421057744293397}
   m_Layer: 0
   m_Name: UnitBase
   m_TagString: Untagged
@@ -163,3 +164,16 @@ MonoBehaviour:
   initialPosition: {x: 1, y: 1}
   moveRange: 3
   moveSpeed: 3
+--- !u!114 &6840421057744293397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6136205668839972636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5945ea0d4e881424aab5e2b127400583, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitActionVisual
+  finishedBrightness: 0.45

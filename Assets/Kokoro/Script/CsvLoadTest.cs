@@ -1,9 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// CSV読み込み結果をConsoleへ出す開発用テスト。
-/// 確認できたらコンポーネントを外してよい。
-/// </summary>
+/// <summary>開発用のデータ確認。正常に確認できたらコンポーネントを外してよい。</summary>
 public sealed class CsvLoadTest : MonoBehaviour
 {
     [SerializeField] private GameDataRepository repository;
@@ -12,36 +9,31 @@ public sealed class CsvLoadTest : MonoBehaviour
     {
         if (repository == null || !repository.IsLoaded)
         {
-            Debug.LogError("CsvLoadTest: GameDataRepositoryの設定またはCSV読み込みを確認してください。", this);
+            Debug.LogError("CsvLoadTest: GameDataRepositoryの読み込みに失敗しています。", this);
             return;
         }
-
-        ShowCharacter(1);  // クラン
-        ShowCharacter(14); // 敵兵1
+        ShowCharacter("Chara01");
+        ShowCharacter("Chara14");
     }
 
-    private void ShowCharacter(int id)
+    private void ShowCharacter(string id)
     {
         if (!repository.TryGetCharacter(id, out CharacterData character))
         {
             Debug.LogWarning($"Character_ID={id} が見つかりません。", this);
             return;
         }
+        repository.TryGetClass(character.LightClassId, out ClassData light);
+        repository.TryGetClass(character.DarkClassId, out ClassData dark);
 
-        string lightName = "見つからない";
-        string darkName = "見つからない";
+        string lightName = light != null ? light.Name : "参照エラー";
+        string darkName = dark != null ? dark.Name : "参照エラー";
+        string attackPreview = light != null
+            ? (character.BaseAttack * light.AttackRatio).ToString("0.##")
+            : "参照エラー";
 
-        if (repository.TryGetClass(character.LightClassId, out ClassData light))
-            lightName = light.Name;
-        if (repository.TryGetClass(character.DarkClassId, out ClassData dark))
-            darkName = dark.Name;
-
-        Debug.Log(
-            $"[Character_ID={character.Id}] {character.Name} " +
-            $"所属ID={character.PositionId} " +
-            $"HP={character.BaseHP} ATK={character.BaseAttack} " +
-            $"昼={lightName}(ID:{character.LightClassId}) " +
-            $"夜={darkName}(ID:{character.DarkClassId})",
-            this);
+        Debug.Log($"[{id}] {character.Name} Team={character.Team} HP_Basic={character.BaseHP} " +
+            $"ATK_Basic={character.BaseAttack} 朝={lightName} 夜={darkName} " +
+            $"朝ATK参考値(丸め前)={attackPreview}", this);
     }
 }
