@@ -4,13 +4,13 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// 攻撃対象の候補選択画面。
+/// 攻撃対象選択時の案内UI。
 ///
-/// 現段階では以下のみ担当する。
-/// ・選択方法の案内
-/// ・選択した敵の情報表示
+/// ・攻撃可能範囲の説明
+/// ・射程内の敵の情報表示
+/// ・射程外の敵への警告表示
 ///
-/// 攻撃射程判定・ダメージ処理は行わない。
+/// 実際の攻撃処理は行わない。
 /// </summary>
 public sealed class AttackTargetPreviewPanel : MonoBehaviour
 {
@@ -31,7 +31,8 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
             informationText == null)
         {
             Debug.LogError(
-                "AttackTargetPreviewPanelの参照が不足しています。",
+                "AttackTargetPreviewPanelの参照が" +
+                "不足しています。",
                 this
             );
 
@@ -42,47 +43,79 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
         panelRoot.SetActive(false);
     }
 
-    /// <summary>
-    /// 攻撃対象選択モードを表示する。
-    /// </summary>
+    // =====================================
+    // 表示開始
+    // =====================================
+
     public void Show()
     {
         if (!enabled || panelRoot == null)
+        {
             return;
+        }
 
         panelRoot.SetActive(true);
 
         ShowSearching();
     }
 
-    /// <summary>
-    /// 敵をまだ選択していない状態に戻す。
-    /// </summary>
+    // =====================================
+    // 対象を探している状態
+    // =====================================
+
     public void ShowSearching()
     {
-        if (!enabled || informationText == null)
+        if (informationText == null)
+        {
             return;
+        }
 
         informationText.text =
             "【攻撃対象の選択】\n\n" +
-            "敵を選んでください。\n\n" +
-            "左クリック / Enter：候補選択\n" +
+            "赤い枠が攻撃可能なマスです。\n\n" +
+            "範囲内にいる敵を選んでください。\n\n" +
+            "左クリック / Enter：対象選択\n" +
             "Esc / 右クリック：戻る\n\n" +
-            "※ 射程・攻撃形状は未判定\n" +
-            "※ 実際の攻撃はまだ行いません";
+            "※ ダメージ処理は未実装です。";
     }
 
     /// <summary>
-    /// 選んだ敵の情報を表示する。
+    /// RangeTypeが不明などで
+    /// 攻撃可能なマスを計算できない場合。
+    /// </summary>
+    public void ShowNoRange(
+        string className,
+        string rangeType)
+    {
+        if (informationText == null)
+        {
+            return;
+        }
+
+        informationText.text =
+            "【攻撃対象の選択】\n\n" +
+            "攻撃範囲を取得できません。\n\n" +
+            $"クラス：{className}\n" +
+            $"RangeType：{rangeType}\n\n" +
+            "CSVと攻撃範囲ルールを" +
+            "確認してください。\n\n" +
+            "Esc / 右クリック：戻る";
+    }
+
+    // =====================================
+    // 範囲内の敵を選択
+    // =====================================
+
+    /// <summary>
+    /// 攻撃可能範囲内にいる敵の情報を表示。
     ///
-    /// attacker：攻撃する味方
-    /// target：対象の敵
+    /// ※ この段階ではHPを減らさない。
     /// </summary>
     public void ShowCandidate(
         UnitView attacker,
         UnitView target)
     {
-        if (!enabled ||
+        if (informationText == null ||
             attacker == null ||
             target == null ||
             attacker.State == null ||
@@ -91,27 +124,25 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
             return;
         }
 
+        UnitBattleStats attackerStats =
+            attacker.State.CombatStats;
+
+        UnitBattleStats targetStats =
+            target.State.CombatStats;
+
         Vector2Int attackerPosition =
             attacker.State.Position;
 
         Vector2Int targetPosition =
             target.State.Position;
 
-        // 敵との縦横のマス距離。
-        // これは表示用であり射程判定ではない。
-        int manhattanDistance =
+        int distance =
             Mathf.Abs(
                 attackerPosition.x - targetPosition.x
             ) +
             Mathf.Abs(
                 attackerPosition.y - targetPosition.y
             );
-
-        UnitBattleStats attackerStats =
-            attacker.State.CombatStats;
-
-        UnitBattleStats targetStats =
-            target.State.CombatStats;
 
         string attackerName =
             attackerStats != null
@@ -124,9 +155,12 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
                 : target.name;
 
         StringBuilder builder =
-            new StringBuilder(300);
+            new StringBuilder();
 
-        builder.AppendLine("【攻撃対象の候補】");
+        builder.AppendLine(
+            "【攻撃対象：範囲内】"
+        );
+
         builder.AppendLine();
 
         builder.AppendLine(
@@ -137,14 +171,13 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
             $"対象：{targetName}"
         );
 
-        // CSVの座標は1始まり
         builder.AppendLine(
             $"対象座標：({targetPosition.x + 1}, " +
             $"{targetPosition.y + 1})"
         );
 
         builder.AppendLine(
-            $"縦横マス距離：{manhattanDistance}"
+            $"縦横距離：{distance}"
         );
 
         if (attackerStats != null)
@@ -156,18 +189,12 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
             );
 
             builder.AppendLine(
-                $"CSV射程値：{attackerStats.MinAttackRange}" +
-                $"～{attackerStats.MaxAttackRange}"
+                $"攻撃タイプ：{attackerStats.RangeType}"
             );
 
-            string rangeType =
-                string.IsNullOrWhiteSpace(
-                    attackerStats.RangeType)
-                    ? "未設定"
-                    : attackerStats.RangeType;
-
             builder.AppendLine(
-                $"RangeType：{rangeType}"
+                $"CSV射程：{attackerStats.MinAttackRange}" +
+                $"～{attackerStats.MaxAttackRange}"
             );
         }
 
@@ -182,12 +209,13 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
         }
 
         builder.AppendLine();
+
         builder.AppendLine(
-            "※ 攻撃可能かどうかは未判定"
+            "攻撃可能範囲内の敵です。"
         );
 
         builder.AppendLine(
-            "※ HPは減りません"
+            "※ 攻撃実行・ダメージは未実装"
         );
 
         builder.AppendLine(
@@ -198,9 +226,43 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
             builder.ToString();
     }
 
+    // =====================================
+    // 範囲外の敵を選択
+    // =====================================
+
     /// <summary>
-    /// 攻撃対象選択画面を閉じる。
+    /// 敵ではあるが、攻撃範囲外だった場合。
     /// </summary>
+    public void ShowOutOfRange(UnitView target)
+    {
+        if (informationText == null ||
+            target == null)
+        {
+            return;
+        }
+
+        string targetName = target.name;
+
+        if (target.State != null &&
+            target.State.CombatStats != null)
+        {
+            targetName =
+                target.State.CombatStats.CharacterName;
+        }
+
+        informationText.text =
+            "【攻撃対象：範囲外】\n\n" +
+            $"対象：{targetName}\n\n" +
+            "この敵は攻撃可能範囲の外にいます。\n\n" +
+            "赤い枠の中にいる敵を" +
+            "選択してください。\n\n" +
+            "Esc / 右クリック：戻る";
+    }
+
+    // =====================================
+    // 非表示
+    // =====================================
+
     public void Hide()
     {
         if (panelRoot != null)

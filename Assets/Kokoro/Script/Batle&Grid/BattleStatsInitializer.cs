@@ -1,15 +1,19 @@
 
+using System;
 using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// CSVから生成された各ユニットに
-/// 戦闘ステータスを設定する。
+/// Character.csvとClass.csvから
+/// 各ユニットの戦闘ステータスを初期化する。
 ///
-/// GameDataRepositoryに読み込み済みの
-/// Character.csvとClass.csvを使用する。
+/// ・CharacterDataから基礎ステータス取得
+/// ・ClassDataから朝夜クラス取得
+/// ・現在の朝夜で倍率計算
+/// ・UnitStateへ登録
+/// ・クラスの移動力も登録
 ///
-/// 既存のBattleUnitSpawnerは変更しない。
+/// すでに初期化したHPは再初期化しない。
 /// </summary>
 public sealed class BattleStatsInitializer : MonoBehaviour
 {
@@ -17,7 +21,11 @@ public sealed class BattleStatsInitializer : MonoBehaviour
     [SerializeField]
     private GameDataRepository repository;
 
-    [Header("初期クラス（動作確認用）")]
+    [Header("昼夜管理")]
+    [SerializeField]
+    private BattleTimeOfDayController timeOfDayController;
+
+    [Header("昼夜管理が未設定の場合の代替値")]
     [SerializeField]
     private BattleClassMode initialClassMode =
         BattleClassMode.Light;
@@ -26,32 +34,40 @@ public sealed class BattleStatsInitializer : MonoBehaviour
     [SerializeField]
     private bool showUnitLogs = true;
 
-    // =====================================
-    // 初期化タイミング
-    // =====================================
+    // ====================================
+    // 開始処理
+    // ====================================
 
     private IEnumerator Start()
     {
-        // BattleStageLoader.Startでの
-        // ユニット自動生成が終わるのを待つ。
-        //
-        // 現在のSpawnerは同期的に生成するため、
-        // 1フレーム後には生成が完了している。
+        // BattleStageLoaderがStartでユニットを
+        // 自動生成するのを待つ。
         yield return null;
 
         InitializeExistingUnits();
     }
 
-    // =====================================
-    // 全ユニットの初期化
-    // =====================================
+    // ====================================
+    // 現在の朝夜
+    // ====================================
+
+    private BattleClassMode GetCurrentMode()
+    {
+        if (timeOfDayController != null)
+        {
+            return timeOfDayController.CurrentMode;
+        }
+
+        return initialClassMode;
+    }
+
+    // ====================================
+    // 全ユニット初期化
+    // ====================================
 
     /// <summary>
-    /// シーン内の生成済みユニットへ
-    /// 戦闘ステータスを設定する。
-    ///
-    /// 将来、ステージ再読み込みや
-    /// 増援が発生する場合にも使用可能。
+    /// ステージ内の全ユニットに
+    /// 戦闘ステータスを登録する。
     /// </summary>
     public void InitializeExistingUnits()
     {
@@ -60,17 +76,14 @@ public sealed class BattleStatsInitializer : MonoBehaviour
         {
             Debug.LogError(
                 "BattleStatsInitializer: " +
-                "GameDataRepositoryが設定されていないか、" +
-                "CSVの読み込みに失敗しています。",
+                "CSVが正常に読み込まれていません。",
                 this
             );
-
             return;
         }
 
         UnitView[] foundUnits;
 
-        // UnityのバージョンによるAPIの違いに対応
 #if UNITY_2022_2_OR_NEWER
         foundUnits = FindObjectsByType<UnitView>(
             FindObjectsSortMode.None
@@ -91,20 +104,17 @@ public sealed class BattleStatsInitializer : MonoBehaviour
                 continue;
             }
 
-            // UnitView.Initializeがまだの場合
             if (unit.State == null)
             {
                 Debug.LogWarning(
                     $"{unit.name}: UnitStateが未初期化です。",
                     unit
                 );
-
                 errorCount++;
                 continue;
             }
 
-            // 既にステータス設定済みの場合は
-            // 再初期化しない（HPを保持するため）
+            // 初期化済みのHPを再設定しない
             if (unit.State.CombatStats != null)
             {
                 alreadyInitialized++;
@@ -128,41 +138,26 @@ public sealed class BattleStatsInitializer : MonoBehaviour
             $"失敗{errorCount}体",
             this
         );
-
-        if (successCount == 0 &&
-            alreadyInitialized == 0)
-        {
-            Debug.LogWarning(
-                "戦闘ステータスを設定できたユニットが" +
-                "ありません。CSV配置やUnitViewを" +
-                "確認してください。",
-                this
-            );
-        }
     }
 
-    // =====================================
-    // ユニット1体の初期化
-    // =====================================
+    // ====================================
+    // 1体分の初期化
+    // ====================================
 
     /// <summary>
-    /// 指定されたユニットに
-    /// CSVの戦闘ステータスを適用する。
+    /// 指定ユニットの戦闘ステータスを生成。
     ///
-    /// 今後、敵の増援を生成したときにも
-    /// この関数を呼べる。
+    /// 将来の増援生成時にも使用できる。
     /// </summary>
     public bool InitializeUnit(UnitView unit)
     {
-        if (unit == null ||
-            unit.State == null)
+        if (unit == null || unit.State == null)
         {
             Debug.LogError(
                 "BattleStatsInitializer: " +
-                "UnitViewまたはUnitStateが未設定です。",
+                "ユニットが初期化されていません。",
                 this
             );
-
             return false;
         }
 
@@ -171,123 +166,122 @@ public sealed class BattleStatsInitializer : MonoBehaviour
         {
             Debug.LogError(
                 "BattleStatsInitializer: " +
-                "CSVデータが読み込まれていません。",
+                "GameDataRepositoryを確認してください。",
                 this
             );
-
             return false;
         }
 
-        // 既に初期化済みならそのまま使う
+        // 登録済みならHPなどを初期化しない
         if (unit.State.CombatStats != null)
         {
             return true;
         }
 
-        // BattleUnitSpawner.Configureで設定した
-        // CharacterDataを取得する。
         CharacterData character = unit.MasterData;
 
         if (character == null)
         {
             Debug.LogError(
-                $"{unit.name}: MasterDataがありません。" +
-                "正式CSVから生成したユニットか" +
-                "確認してください。",
+                $"{unit.name}: CharacterDataがありません。",
                 unit
             );
-
             return false;
         }
 
-        // =================================
         // 朝のクラスを取得
-        // =================================
-
         if (!repository.TryGetClass(
             character.LightClassId,
             out ClassData lightClass))
         {
             Debug.LogError(
-                $"{unit.name}: 朝クラス " +
-                $"{character.LightClassId} が" +
-                "Class.csvにありません。",
+                $"{unit.name}: 朝クラス" +
+                $" {character.LightClassId} が存在しません。",
                 unit
             );
-
             return false;
         }
 
-        // =================================
         // 夜のクラスを取得
-        // =================================
-
         if (!repository.TryGetClass(
             character.DarkClassId,
             out ClassData darkClass))
         {
             Debug.LogError(
-                $"{unit.name}: 夜クラス " +
-                $"{character.DarkClassId} が" +
-                "Class.csvにありません。",
+                $"{unit.name}: 夜クラス" +
+                $" {character.DarkClassId} が存在しません。",
                 unit
             );
-
             return false;
         }
 
-        // =================================
-        // 最終ステータスを計算
-        // =================================
+        try
+        {
+            // 現在の朝夜を取得
+            BattleClassMode mode = GetCurrentMode();
 
-        UnitBattleStats stats = new UnitBattleStats(
-            character,
-            lightClass,
-            darkClass,
-            initialClassMode
-        );
+            // CSVから最終能力を計算
+            UnitBattleStats stats =
+                new UnitBattleStats(
+                    character,
+                    lightClass,
+                    darkClass,
+                    mode
+                );
 
-        // UnitStateに登録
-        if (!unit.State.TrySetCombatStats(stats))
+            // UnitStateへ登録。
+            // 登録時にMoveRangeも正式CSVの値になる。
+            if (!unit.State.TrySetCombatStats(stats))
+            {
+                Debug.LogError(
+                    $"{unit.name}: ステータス登録失敗。",
+                    unit
+                );
+                return false;
+            }
+
+            if (showUnitLogs)
+            {
+                string modeName =
+                    mode == BattleClassMode.Light
+                        ? "朝"
+                        : "夜";
+
+                Debug.Log(
+                    "【ステータス生成】" +
+                    $"\n名前: {stats.CharacterName}" +
+                    $"\nID: {stats.CharacterId}" +
+                    $"\nSpawnID: {unit.SpawnId}" +
+                    $"\n時間帯: {modeName}" +
+                    $"\nクラス: {stats.CurrentClassName}" +
+                    $" ({stats.CurrentClassId})" +
+                    $"\nHP: {stats.CurrentHP}/{stats.MaxHP}" +
+                    $"\nATK: {stats.Attack:0.##}" +
+                    $"\nMAGIC: {stats.Magic:0.##}" +
+                    $"\nATK_DEF: {stats.AttackDefense:0.##}" +
+                    $"\nMAGIC_DEF: {stats.MagicDefense:0.##}" +
+                    $"\nSPD: {stats.Speed:0.##}" +
+                    $"\nHIT: {stats.Hit:0.##}" +
+                    $"\nEVASION: {stats.Evasion:0.##}" +
+                    $"\n移動力: {unit.State.MoveRange}" +
+                    $"\n攻撃射程: " +
+                    $"{stats.MinAttackRange}～" +
+                    $"{stats.MaxAttackRange}" +
+                    $"\nRangeType: {stats.RangeType}",
+                    unit
+                );
+            }
+
+            return true;
+        }
+        catch (Exception ex)
         {
             Debug.LogError(
-                $"{unit.name}: 戦闘ステータスの" +
-                "登録に失敗しました。",
+                $"{unit.name}: ステータス生成エラー：" +
+                ex.Message,
                 unit
             );
-
             return false;
         }
-
-        // =================================
-        // デバッグ表示
-        // =================================
-
-        if (showUnitLogs)
-        {
-            Debug.Log(
-                "【ステータス生成】" +
-                $"\nキャラ: {stats.CharacterName}" +
-                $"\nCharacterID: {stats.CharacterId}" +
-                $"\nSpawnID: {unit.SpawnId}" +
-                $"\nクラス: {stats.CurrentClassName}" +
-                $" ({stats.CurrentClassId})" +
-                $"\nHP: {stats.CurrentHP}/{stats.MaxHP}" +
-                $"\nATK: {stats.Attack:0.##}" +
-                $"\nMAGIC: {stats.Magic:0.##}" +
-                $"\nATK_DEF: {stats.AttackDefense:0.##}" +
-                $"\nMAGIC_DEF: {stats.MagicDefense:0.##}" +
-                $"\nSPD: {stats.Speed:0.##}" +
-                $"\nHIT: {stats.Hit:0.##}" +
-                $"\nEVASION: {stats.Evasion:0.##}" +
-                $"\n攻撃射程: " +
-                $"{stats.MinAttackRange}～" +
-                $"{stats.MaxAttackRange}" +
-                $"\nRangeType: {stats.RangeType}",
-                unit
-            );
-        }
-
-        return true;
     }
 }
