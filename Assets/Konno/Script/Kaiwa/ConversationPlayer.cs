@@ -143,13 +143,50 @@ namespace Conversation
         public float logIconSize = 170f;
         public float logTextSize = 34f;
         public float logNameSize = 28f;
-        [Tooltip("ログのウィンドウ画像（空なら角丸を自動生成）")]
+        [Tooltip("一番新しいログ（今のセリフ）を置く高さ。画面中央からの距離（マイナスで下）")]
+        public float logCurrentOffsetY = -280f;
+        [Tooltip("今のセリフのログだけを大きくする倍率（ウィンドウ・文字・名前・キャラ画像をまとめて拡大）")]
+        [Range(1f, 1.6f)] public float logCurrentScale = 1.1f;
+        [Tooltip("今のセリフのウィンドウだけ、左にこの分だけ広げる (px)。左のキャラ画像も一緒に左へ動く")]
+        public float logCurrentExtendLeft = 0f;
+
+        [Header("ログ（ウィンドウの見た目）")]
+        [Tooltip("ウィンドウ画像（空なら形を自動で作る）。9スライス推奨")]
         public Sprite logWindowSprite;
-        public Color logWindowColor = new Color(0.06f, 0.1f, 0.18f, 0.92f);
-        [Tooltip("一番新しい（現在の）ログのウィンドウ色")]
-        public Color logCurrentWindowColor = new Color(0.1f, 0.2f, 0.36f, 0.96f);
-        public Color logNameTabColor = new Color(0.22f, 0.5f, 0.88f, 1f);
-        public Color logIconBackColor = new Color(1f, 1f, 1f, 0.08f);
+        [Tooltip("自動で作るウィンドウの形")]
+        public LogWindowShape logWindowShape = LogWindowShape.Angled;
+        public Color logWindowFill = new Color(0.08f, 0.17f, 0.19f, 0.9f);
+        [Tooltip("一番新しいログのウィンドウ色")]
+        public Color logWindowFillCurrent = new Color(0.1f, 0.22f, 0.24f, 0.96f);
+        [Tooltip("ウィンドウ内側の細い枠線（透明にすると無し）")]
+        public Color logWindowBorder = new Color(0.55f, 0.75f, 0.72f, 0.45f);
+        public Color logNameTabFill = new Color(0.1f, 0.16f, 0.18f, 0.96f);
+        public Color logNameTabBorder = new Color(0.7f, 0.82f, 0.78f, 0.6f);
+        public Color logNameColor = new Color(0.9f, 0.92f, 0.88f);
+        [Tooltip("名前タブの最小の幅")]
+        public float logNameTabMinWidth = 240f;
+        [Tooltip("ウィンドウの左端から名前タブまでの距離")]
+        public float logNameTabX = 110f;
+        [Tooltip("過去ログの小さい顔アイコンの背景（透明で無し）")]
+        public Color logIconBackground = new Color(1f, 1f, 1f, 0f);
+
+        [Header("ログ（今のセリフのキャラ）")]
+        [Tooltip("一番新しいログの左に、話しているキャラを大きく出す")]
+        public bool logShowPortrait = true;
+        public Vector2 logPortraitSize = new Vector2(340f, 420f);
+        [Tooltip("立ち絵から上半身を切り抜く時の拡大率（Database の Log Portrait を使う時は無関係）")]
+        public float logPortraitZoom = 1.8f;
+        [Tooltip("位置の補正（ウィンドウの左下が基準）")]
+        public Vector2 logPortraitOffset = new Vector2(-10f, -30f);
+
+        [Header("ログ（スクロールバー）")]
+        public bool logShowScrollbar = true;
+        [Tooltip("画面右端からの位置")]
+        public float logScrollbarX = -70f;
+        public float logScrollbarHeight = 640f;
+        public float logScrollbarWidth = 6f;
+        public Color logScrollbarTrack = new Color(1f, 1f, 1f, 0.15f);
+        public Color logScrollbarThumb = new Color(0.75f, 0.88f, 0.85f, 0.85f);
         [Tooltip("スティック/矢印キーでのスクロール速度 (px/秒)")]
         public float logScrollSpeed = 1400f;
         [Tooltip("マウスホイール1目盛りのスクロール量 (px)")]
@@ -177,6 +214,20 @@ namespace Conversation
         public KeyCode logKey = KeyCode.L;
         public KeyCode logCloseKey = KeyCode.Backspace;
 #endif
+
+        [Header("コントローラー（Xbox）")]
+        [Tooltip("文字送り")]
+        public XboxButton padAdvance = XboxButton.A;
+        [Tooltip("ログを開く・閉じる")]
+        public XboxButton padLog = XboxButton.LT;
+        [Tooltip("ログを閉じる")]
+        public XboxButton padLogClose = XboxButton.B;
+        [Tooltip("ストーリースキップ（長押し）")]
+        public XboxButton padStorySkip = XboxButton.Menu;
+
+        [Header("確認用")]
+        [Tooltip("会話中に受け付けた操作を Console に出す")]
+        public bool debugInput = true;
 
         [Header("章タイトル（会話開始前の演出）")]
         public TitleCardStyle titleCard = new TitleCardStyle();
@@ -250,10 +301,14 @@ namespace Conversation
             public bool dedicatedIcon;
             public Vector2 faceCenter;
             public float zoom;
+            public Sprite portrait;
+            public bool dedicatedPortrait;
         }
 
         RectTransform root, bgLayer, charLayer, boxRoot, choicePanel, cursor;
-        RectTransform logRoot, logContent;
+        RectTransform logRoot, logContent, logScrollTrack, logScrollThumb;
+        Image logScrollTrackImage, logScrollThumbImage;
+        Sprite logFillSprite, logBorderSprite, tabFillSprite, tabBorderSprite;
         CanvasGroup rootGroup, boxGroup, logGroup;
         Image currentBg, fadeOverlay, separator, skipRing, skipRingBack;
         TextMeshProUGUI nameText, bodyText;
@@ -319,6 +374,11 @@ namespace Conversation
         void Update()
         {
             if (!IsPlaying || finishing) return;
+            if (!inputReadyLogged)
+            {
+                inputReadyLogged = true;
+                LogInput("会話中の操作の受付を開始しました");
+            }
 
             if (logOpen)
             {
@@ -371,6 +431,19 @@ namespace Conversation
         public void Play(ConversationScript s)
         {
             if (s == null) return;
+            if (!gameObject.activeInHierarchy)
+            {
+                Debug.LogWarning($"[Conversation] {name} のオブジェクトが非表示（非アクティブ）なので、会話を再生できません", this);
+                return;
+            }
+            if (!enabled)
+            {
+                // 無効のままだと、表示はされても操作（キー・コントローラー）を一切受け付けない
+                enabled = true;
+                Debug.LogWarning($"[Conversation] ConversationPlayer が無効（チェックが外れている）だったので有効にしました。" +
+                                 "シーン開始時に会話を始めたくない場合は、チェックを外す代わりに Play On Start をオフにしてください", this);
+            }
+            inputReadyLogged = false;
             if (audioPlayer && !audioPlayer.database) audioPlayer.database = database;
             EnsureUI();
             Stop();
@@ -378,6 +451,7 @@ namespace Conversation
             script = s;
             root.gameObject.SetActive(true);
             rootGroup.alpha = 1f;
+            LogConnectedPads();
             runRoutine = StartCoroutine(Run());
         }
 
@@ -408,6 +482,7 @@ namespace Conversation
             BuildLogEntries();
             logRoot.gameObject.SetActive(true);
             logScroll = 0f;
+            UpdateLogScrollbar();
             PlayUiSe(logOpenSe);
             StartCoroutine(LogOpenRoutine());
         }
@@ -1188,9 +1263,11 @@ namespace Conversation
 
             if (held)
             {
+                if (skipTimer <= 0f) LogInput("ストーリースキップ 長押し開始");
                 skipTimer += Dt;
                 if (skipTimer >= skipHoldSeconds)
                 {
+                    LogInput("ストーリースキップ 実行");
                     StorySkip();
                     return;
                 }
@@ -1226,11 +1303,20 @@ namespace Conversation
                 var ce = prof.FindExpression(expr);
                 if (ce != null)
                 {
-                    entry.dedicatedIcon = ce.logIcon != null;
-                    entry.icon = ce.logIcon != null ? ce.logIcon : ce.sprite;
+                    // 立ち絵と同じ画像が入っている場合は「専用画像」扱いにせず、顔を切り抜く
+                    entry.dedicatedIcon = ce.logIcon != null && ce.logIcon != ce.sprite;
+                    entry.icon = entry.dedicatedIcon ? ce.logIcon : ce.sprite;
+                    entry.dedicatedPortrait = ce.logPortrait != null && ce.logPortrait != ce.sprite;
+                    entry.portrait = entry.dedicatedPortrait ? ce.logPortrait : ce.sprite;
                 }
                 entry.faceCenter = prof.faceCenter;
                 entry.zoom = prof.logIconZoom;
+                if (entry.zoom < 1.5f)
+                {
+                    // 拡大率が小さいと全身が映ってしまう（リストの + で追加した時に 0 や 1 になっていることがある）
+                    Debug.LogWarning($"[Conversation] {prof.id} の Log Icon Zoom が {prof.logIconZoom} なので、顔ではなく全身が映ります。3 前後にしてください（今回は 3.2 で表示します）");
+                    entry.zoom = 3.2f;
+                }
             }
 
             logEntries.Add(entry);
@@ -1247,6 +1333,13 @@ namespace Conversation
             {
                 bool isCurrent = i == logEntries.Count - 1;
                 var rt = CreateLogEntry(logEntries[i], isCurrent, out float h);
+                if (isCurrent)
+                {
+                    // 今のセリフだけ大きくする（重ならないように、高さも拡大後の値で積む）
+                    float scale = Mathf.Max(1f, logCurrentScale);
+                    rt.localScale = new Vector3(scale, scale, 1f);
+                    h *= scale;
+                }
                 if (!isCurrent) y += prevH * 0.5f + logEntrySpacing + h * 0.5f;
                 rt.anchoredPosition = new Vector2(0f, y);
                 prevH = h;
@@ -1260,8 +1353,11 @@ namespace Conversation
             entry.anchorMin = entry.anchorMax = new Vector2(0.5f, 0.5f);
             entry.pivot = new Vector2(0.5f, 0.5f);
 
+            bool angled = !logWindowSprite && logWindowShape == LogWindowShape.Angled;
             float winLeft = logIconSize + 24f;
-            float textW = logEntryWidth - winLeft - 80f;
+            if (isCurrent) winLeft -= Mathf.Max(0f, logCurrentExtendLeft);   // 今のセリフだけ左に広げる
+            float sidePad = angled ? 80f : 40f;   // とがった端に文字がかからないように
+            float textW = logEntryWidth - winLeft - sidePad * 2f;
             bool hasName = !string.IsNullOrEmpty(e.name);
 
             // テキスト（高さを先に測る）
@@ -1270,57 +1366,72 @@ namespace Conversation
             body.text = e.text;
             float textH = body.GetPreferredValues(e.text, textW, 0f).y;
 
-            float winH = Mathf.Max(logIconSize, textH + 92f);
+            float winH = Mathf.Max(logIconSize, textH + 100f);
             height = winH + (hasName ? 24f : 0f);
             entry.sizeDelta = new Vector2(logEntryWidth, height);
 
-            // ウィンドウ
-            var win = CreateImage(entry, "Window", logWindowSprite ? logWindowSprite : roundSprite);
-            win.type = Image.Type.Sliced;
-            win.color = isCurrent ? logCurrentWindowColor : logWindowColor;
-            var wrt = win.rectTransform;
-            wrt.anchorMin = new Vector2(0f, 0f);
-            wrt.anchorMax = new Vector2(1f, 0f);
-            wrt.pivot = new Vector2(0.5f, 0f);
-            wrt.offsetMin = new Vector2(winLeft, 0f);
-            wrt.offsetMax = new Vector2(0f, winH);
-            win.transform.SetAsFirstSibling();
+            // ウィンドウ（塗り）
+            var fill = CreateImage(entry, "Window", logWindowSprite ? logWindowSprite : angled ? logFillSprite : roundSprite);
+            fill.type = Image.Type.Sliced;
+            fill.color = isCurrent ? logWindowFillCurrent : logWindowFill;
+            SetLogWindowRect(fill.rectTransform, winLeft, winH);
+            fill.transform.SetAsFirstSibling();
+
+            // ウィンドウ（内側の枠線）
+            if (angled && logWindowBorder.a > 0f)
+            {
+                var border = CreateImage(entry, "Border", logBorderSprite);
+                border.type = Image.Type.Sliced;
+                border.color = logWindowBorder;
+                SetLogWindowRect(border.rectTransform, winLeft, winH);
+                border.transform.SetSiblingIndex(1);
+            }
 
             var brt = body.rectTransform;
             brt.anchorMin = new Vector2(0f, 0f);
             brt.anchorMax = new Vector2(1f, 0f);
             brt.pivot = new Vector2(0.5f, 0f);
-            brt.offsetMin = new Vector2(winLeft + 40f, 32f);
-            brt.offsetMax = new Vector2(-40f, winH - 52f);
+            brt.offsetMin = new Vector2(winLeft + sidePad, 34f);
+            brt.offsetMax = new Vector2(-sidePad, winH - 50f);
 
-            // 名前タブ
+            // 名前タブ（ウィンドウの上の辺に重ねる）
             if (hasName)
             {
-                var tab = CreateImage(entry, "NameTab", roundSprite);
+                var tab = CreateImage(entry, "NameTab", angled ? tabFillSprite : roundSprite);
                 tab.type = Image.Type.Sliced;
-                tab.color = logNameTabColor;
+                tab.color = logNameTabFill;
 
-                var nameT = CreateText(tab.transform, "Name", logNameSize, nameColor, TextAlignmentOptions.MidlineLeft);
+                if (angled && logNameTabBorder.a > 0f)
+                {
+                    var tb = CreateImage(tab.transform, "Border", tabBorderSprite);
+                    tb.type = Image.Type.Sliced;
+                    tb.color = logNameTabBorder;
+                    Stretch(tb.rectTransform);
+                }
+
+                var nameT = CreateText(tab.transform, "Name", logNameSize, logNameColor, TextAlignmentOptions.Center);
                 nameT.textWrappingMode = TextWrappingModes.NoWrap;
                 nameT.text = FormatName(e.name, e.affiliation, logNameSize * 0.75f);
-                // 折り返さない状態での幅を測る
                 float nameW = nameT.GetPreferredValues(nameT.text, float.PositiveInfinity, float.PositiveInfinity).x;
 
-                const float tabPad = 24f;
                 var trt = tab.rectTransform;
                 trt.anchorMin = trt.anchorMax = new Vector2(0f, 0f);
                 trt.pivot = new Vector2(0f, 0.5f);
-                trt.anchoredPosition = new Vector2(winLeft + 30f, winH);
-                trt.sizeDelta = new Vector2(nameW + tabPad * 2f, 48f);
+                trt.anchoredPosition = new Vector2(winLeft + logNameTabX, winH);
+                trt.sizeDelta = new Vector2(Mathf.Max(logNameTabMinWidth, nameW + 80f), 46f);
 
                 var nrt = nameT.rectTransform;
                 Stretch(nrt);
-                nrt.offsetMin = new Vector2(tabPad, 0f);
-                nrt.offsetMax = new Vector2(-tabPad, 0f);
+                nrt.offsetMin = new Vector2(30f, 0f);
+                nrt.offsetMax = new Vector2(-30f, 0f);
             }
 
-            // キャラの顔
-            if (e.icon != null)
+            // キャラ：今のセリフは大きく、過去のログは小さい顔アイコン
+            if (isCurrent && logShowPortrait && e.portrait != null)
+            {
+                CreateLogPortrait(entry, e, winLeft);
+            }
+            else if (e.icon != null)
             {
                 var box = NewRect("Icon", entry);
                 box.anchorMin = box.anchorMax = new Vector2(0f, 0f);
@@ -1329,10 +1440,13 @@ namespace Conversation
                 box.sizeDelta = new Vector2(logIconSize, logIconSize);
                 box.gameObject.AddComponent<RectMask2D>();
 
-                var back = CreateImage(box, "Back", roundSprite);
-                back.type = Image.Type.Sliced;
-                back.color = logIconBackColor;
-                Stretch(back.rectTransform);
+                if (logIconBackground.a > 0f)
+                {
+                    var back = CreateImage(box, "Back", roundSprite);
+                    back.type = Image.Type.Sliced;
+                    back.color = logIconBackground;
+                    Stretch(back.rectTransform);
+                }
 
                 var face = CreateImage(box, "Face", e.icon);
                 var frt = face.rectTransform;
@@ -1356,6 +1470,66 @@ namespace Conversation
             return entry;
         }
 
+        static void SetLogWindowRect(RectTransform rt, float left, float height)
+        {
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.offsetMin = new Vector2(left, 0f);
+            rt.offsetMax = new Vector2(0f, height);
+        }
+
+        /// <summary>今のセリフの左に、話しているキャラを大きく出す</summary>
+        void CreateLogPortrait(RectTransform entry, LogEntry e, float winLeft)
+        {
+            var box = NewRect("Portrait", entry);
+            box.anchorMin = box.anchorMax = new Vector2(0f, 0f);
+            box.pivot = new Vector2(1f, 0f);
+            box.anchoredPosition = new Vector2(winLeft, 0f) + logPortraitOffset;
+            box.sizeDelta = logPortraitSize;
+            box.gameObject.AddComponent<RectMask2D>();
+            box.SetAsFirstSibling();   // ウィンドウより奥に置く
+
+            var img = CreateImage(box, "Image", e.portrait);
+            var rt = img.rectTransform;
+            if (e.dedicatedPortrait)
+            {
+                Stretch(rt);
+                img.preserveAspect = true;
+            }
+            else
+            {
+                // 立ち絵から上半身を切り抜く（顔が枠の上の方に来るように）
+                float hh = logPortraitSize.y * logPortraitZoom;
+                float ww = hh * e.portrait.rect.width / e.portrait.rect.height;
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.72f);
+                rt.pivot = e.faceCenter;
+                rt.anchoredPosition = Vector2.zero;
+                rt.sizeDelta = new Vector2(ww, hh);
+            }
+        }
+
+        void UpdateLogScrollbar()
+        {
+            if (!logScrollTrack) return;
+            bool show = logShowScrollbar && logMaxScroll > 1f;
+            logScrollTrack.gameObject.SetActive(show);
+            if (!show) return;
+
+            logScrollTrack.anchoredPosition = new Vector2(logScrollbarX, 0f);
+            logScrollTrack.sizeDelta = new Vector2(logScrollbarWidth, logScrollbarHeight);
+            logScrollTrackImage.color = logScrollbarTrack;
+            logScrollThumbImage.color = logScrollbarThumb;
+
+            // つまみの長さ = 画面に見えている割合。一番新しい時は一番下
+            float view = logRoot.rect.height;
+            float thumbH = logScrollbarHeight * Mathf.Clamp(view / (view + logMaxScroll), 0.08f, 1f);
+            float range = (logScrollbarHeight - thumbH) * 0.5f;
+            float t = logMaxScroll > 0f ? logScroll / logMaxScroll : 0f;
+            logScrollThumb.sizeDelta = new Vector2(logScrollbarWidth, thumbH);
+            logScrollThumb.anchoredPosition = new Vector2(0f, Mathf.Lerp(-range, range, t));
+        }
+
         void UpdateLog()
         {
             if (LogPressed() || LogClosePressed())
@@ -1367,7 +1541,8 @@ namespace Conversation
             logScroll += ReadLogScrollAxis() * logScrollSpeed * Dt;
             logScroll += ReadWheelNotches() * logWheelStep;
             logScroll = Mathf.Clamp(logScroll, 0f, logMaxScroll);
-            logContent.anchoredPosition = new Vector2(0f, -logScroll + logOpenOffset);
+            logContent.anchoredPosition = new Vector2(0f, logCurrentOffsetY - logScroll + logOpenOffset);
+            UpdateLogScrollbar();
         }
 
         IEnumerator LogOpenRoutine()
@@ -1380,7 +1555,7 @@ namespace Conversation
                 float k = 1f - Mathf.Pow(1f - Mathf.Clamp01(t / d), 3f);
                 logGroup.alpha = k;
                 logOpenOffset = -160f * (1f - k); // 下から上へ流れて出てくる
-                logContent.anchoredPosition = new Vector2(0f, -logScroll + logOpenOffset);
+                logContent.anchoredPosition = new Vector2(0f, logCurrentOffsetY - logScroll + logOpenOffset);
                 yield return null;
             }
             logGroup.alpha = 1f;
@@ -1735,6 +1910,10 @@ namespace Conversation
             if (root) return;
             EnsureEventSystem();
             roundSprite = MakeRoundedSprite(64, 14);
+            logFillSprite = MakeAngledSprite(160, 96, 36, 0f, 0f, false);
+            logBorderSprite = MakeAngledSprite(160, 96, 36, 7f, 2f, true);
+            tabFillSprite = MakeAngledSprite(120, 48, 14, 0f, 0f, false);
+            tabBorderSprite = MakeAngledSprite(120, 48, 14, 3f, 1.5f, true);
             gradientSprite = MakeGradientSprite(boxGradient);
             triangleSprite = MakeTriangleSprite(32, 24);
             circleSprite = MakeRingSprite(128, 64f);
@@ -1823,7 +2002,11 @@ namespace Conversation
             cb.onClick.AddListener(() =>
             {
                 Deselect();
-                if (!choosing && !logOpen && !finishing) advanceRequested = true;
+                if (!choosing && !logOpen && !finishing)
+                {
+                    LogInput("文字送り（マウスクリック）");
+                    advanceRequested = true;
+                }
             });
 
             // ---- UIバー（ログ・スキップ） ----
@@ -1871,7 +2054,12 @@ namespace Conversation
             var logBtn = logItem.gameObject.AddComponent<Button>();
             logBtn.transition = Selectable.Transition.None;
             logBtn.navigation = new Navigation { mode = Navigation.Mode.None };
-            logBtn.onClick.AddListener(() => { Deselect(); if (logOpen) CloseLog(); else OpenLog(); });
+            logBtn.onClick.AddListener(() =>
+            {
+                Deselect();
+                LogInput(logOpen ? "ログを閉じる（マウスクリック）" : "ログを開く（マウスクリック）");
+                if (logOpen) CloseLog(); else OpenLog();
+            });
 
             // スキップ（長押し）
             var skipItem = CreateBarItem(rt, 1, skipKeyLabel, skipButtonIcon, skipLabel, out var badge);
@@ -1967,6 +2155,16 @@ namespace Conversation
             logContent.pivot = new Vector2(0.5f, 0.5f);
             logContent.sizeDelta = Vector2.zero;
 
+            // スクロールバー（右側）
+            logScrollTrackImage = CreateImage(logRoot, "Scrollbar", null);
+            logScrollTrack = logScrollTrackImage.rectTransform;
+            logScrollTrack.anchorMin = logScrollTrack.anchorMax = new Vector2(1f, 0.5f);
+            logScrollTrack.pivot = new Vector2(0.5f, 0.5f);
+            logScrollThumbImage = CreateImage(logScrollTrack, "Thumb", null);
+            logScrollThumb = logScrollThumbImage.rectTransform;
+            logScrollThumb.anchorMin = logScrollThumb.anchorMax = new Vector2(0.5f, 0.5f);
+            logScrollThumb.pivot = new Vector2(0.5f, 0.5f);
+
             logRoot.gameObject.SetActive(false);
         }
 
@@ -2044,14 +2242,41 @@ namespace Conversation
             if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
         }
 
+        /// <summary>
+        /// UIのクリックに必要な EventSystem を用意する。
+        /// シーンに既にある場合も、入力の設定と合っているか確認して直す。
+        /// </summary>
         static void EnsureEventSystem()
         {
-            if (FindAnyObjectByType<EventSystem>() != null) return;
-            var es = new GameObject("EventSystem", typeof(EventSystem));
+            var es = FindAnyObjectByType<EventSystem>();
+            if (es == null)
+            {
+                var go = new GameObject("EventSystem", typeof(EventSystem));
 #if ENABLE_INPUT_SYSTEM
-            es.AddComponent<InputSystemUIInputModule>();
+                go.AddComponent<InputSystemUIInputModule>().AssignDefaultActions();
 #else
-            es.AddComponent<StandaloneInputModule>();
+                go.AddComponent<StandaloneInputModule>();
+#endif
+                return;
+            }
+
+#if ENABLE_INPUT_SYSTEM
+#if !ENABLE_LEGACY_INPUT_MANAGER
+            // 新しい Input System だけの設定なのに、古い入力モジュールが付いていると
+            // UI のボタンがすべて反応しなくなるので、新しい方に置き換える
+            var legacy = es.GetComponent<StandaloneInputModule>();
+            if (legacy)
+            {
+                DestroyImmediate(legacy);
+                Debug.LogWarning("[Conversation] EventSystem の Standalone Input Module を Input System UI Input Module に置き換えました（ボタンが反応しない原因になるため）。" +
+                                 "シーンの EventSystem でも「Replace with InputSystemUIInputModule」を押しておくと、この警告は出なくなります", es);
+            }
+#endif
+            var module = es.GetComponent<InputSystemUIInputModule>();
+            if (!module && !es.GetComponent<BaseInputModule>()) module = es.gameObject.AddComponent<InputSystemUIInputModule>();
+            if (module && module.actionsAsset == null) module.AssignDefaultActions();
+#else
+            if (!es.GetComponent<BaseInputModule>()) es.gameObject.AddComponent<StandaloneInputModule>();
 #endif
         }
 
@@ -2100,22 +2325,128 @@ namespace Conversation
 #endif
         }
 
+        // キーボード等（InputAction）と、コントローラー（Xbox のボタンを直接）の両方を見る。
+        // どちらで受け付けたかを Console に出す
 #if ENABLE_INPUT_SYSTEM
-        bool AdvancePressed() => advanceAction.WasPressedThisFrame();
-        bool SkipHeld() => storySkipAction.IsPressed();
-        bool LogPressed() => logAction.WasPressedThisFrame();
-        bool LogClosePressed() => logCloseAction.WasPressedThisFrame();
-        float ReadLogScrollAxis() => logScrollAction.ReadValue<float>();
+        bool AdvancePressed() => Pressed(advanceAction, padAdvance, "文字送り");
+        bool LogPressed() => Pressed(logAction, padLog, logOpen ? "ログを閉じる" : "ログを開く");
+        bool LogClosePressed() => Pressed(logCloseAction, padLogClose, "ログを閉じる");
+
+        bool SkipHeld()
+        {
+            if (storySkipAction.IsPressed()) return true;
+            foreach (var gp in Gamepad.all)
+            {
+                var pad = XboxPad.GetButton(gp, padStorySkip);
+                if (pad != null && pad.isPressed) return true;
+            }
+            return false;
+        }
+
+        float ReadLogScrollAxis()
+        {
+            float v = logScrollAction.ReadValue<float>();
+            foreach (var gp in Gamepad.all)
+            {
+                float y = gp.leftStick.ReadValue().y + gp.dpad.ReadValue().y;
+                if (Mathf.Abs(y) > 0.2f) v += y;
+            }
+            return Mathf.Clamp(v, -1f, 1f);
+        }
+
         static float ReadWheelNotches() => Mouse.current != null ? Mouse.current.scroll.ReadValue().y / 120f : 0f;
+
+        bool Pressed(InputAction action, XboxButton padButton, string label)
+        {
+            // コントローラーが複数つながっていても、どれで押しても反応する
+            foreach (var gp in Gamepad.all)
+            {
+                var pad = XboxPad.GetButton(gp, padButton);
+                if (pad != null && pad.wasPressedThisFrame)
+                {
+                    LogInput($"{label}（{gp.displayName} の {padButton}）");
+                    return true;
+                }
+            }
+            if (action != null && action.WasPressedThisFrame())
+            {
+                var control = action.activeControl;
+                LogInput($"{label}（{(control != null ? control.device.displayName + " の " + control.displayName : "キー入力")}）");
+                return true;
+            }
+            return false;
+        }
+
+        void LogConnectedPads()
+        {
+            if (!debugInput) return;
+            var names = new List<string>();
+            foreach (var gp in Gamepad.all) names.Add(gp.displayName);
+            if (names.Count > 0)
+            {
+                Debug.Log($"[Conversation入力] 接続中のコントローラー: {string.Join(", ", names)}", this);
+            }
+            else if (Joystick.all.Count > 0)
+            {
+                var j = new List<string>();
+                foreach (var js in Joystick.all) j.Add(js.displayName);
+                Debug.LogWarning($"[Conversation入力] コントローラー（{string.Join(", ", j)}）がゲームパッドとして認識されていません。" +
+                                 "Xbox モード（XInput）に切り替えられるコントローラーなら切り替えてください", this);
+            }
+            else
+            {
+                Debug.Log("[Conversation入力] コントローラーが接続されていません", this);
+            }
+        }
 #else
-        bool AdvancePressed() => Input.GetKeyDown(advanceKey) || Input.GetKeyDown(advanceKey2);
-        bool SkipHeld() => Input.GetKey(storySkipKey);
-        bool LogPressed() => Input.GetKeyDown(logKey);
-        bool LogClosePressed() => Input.GetKeyDown(logCloseKey) || Input.GetMouseButtonDown(1);
+        bool AdvancePressed() => PressedLegacy(Input.GetKeyDown(advanceKey) || Input.GetKeyDown(advanceKey2), padAdvance, "文字送り");
+        bool LogPressed() => PressedLegacy(Input.GetKeyDown(logKey), padLog, logOpen ? "ログを閉じる" : "ログを開く");
+        bool LogClosePressed() => PressedLegacy(Input.GetKeyDown(logCloseKey) || Input.GetMouseButtonDown(1), padLogClose, "ログを閉じる");
+
+        bool SkipHeld()
+        {
+            var pad = XboxPad.LegacyKeyCode(padStorySkip);
+            return Input.GetKey(storySkipKey) || (pad != KeyCode.None && Input.GetKey(pad));
+        }
+
         static float ReadLogScrollAxis() =>
             (Input.GetKey(KeyCode.UpArrow) ? 1f : 0f) - (Input.GetKey(KeyCode.DownArrow) ? 1f : 0f);
         static float ReadWheelNotches() => Input.mouseScrollDelta.y;
+
+        bool PressedLegacy(bool keyPressed, XboxButton padButton, string label)
+        {
+            var pad = XboxPad.LegacyKeyCode(padButton);
+            if (pad != KeyCode.None && Input.GetKeyDown(pad))
+            {
+                LogInput($"{label}（コントローラーの {padButton}）");
+                return true;
+            }
+            if (keyPressed)
+            {
+                LogInput($"{label}（キーボード）");
+                return true;
+            }
+            return false;
+        }
+
+        void LogConnectedPads()
+        {
+            if (!debugInput) return;
+            var names = Input.GetJoystickNames();
+            var list = new List<string>();
+            foreach (var n in names) if (!string.IsNullOrEmpty(n)) list.Add(n);
+            Debug.Log(list.Count > 0
+                ? $"[Conversation入力] 接続中のコントローラー: {string.Join(", ", list)}"
+                : "[Conversation入力] コントローラーが接続されていません", this);
+        }
 #endif
+
+        bool inputReadyLogged;
+
+        void LogInput(string message)
+        {
+            if (debugInput) Debug.Log($"[Conversation入力] {message}", this);
+        }
 
         // =====================================================================
         // ユーティリティ
@@ -2158,6 +2489,36 @@ namespace Conversation
             }
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, 4, h), new Vector2(0.5f, 0.5f));
+        }
+
+        /// <summary>
+        /// 左右の端がとがった横長の六角形（ログのウィンドウ・名前タブ用）。
+        /// outline = true なら、内側 inset の位置に太さ thickness の線だけを描く
+        /// </summary>
+        static Sprite MakeAngledSprite(int w, int h, int point, float inset, float thickness, bool outline)
+        {
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            float half = h * 0.5f;
+            float slope = point / half;
+            float norm = 1f / Mathf.Sqrt(1f + slope * slope);
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float px = x + 0.5f, py = y + 0.5f;
+                    float dy = Mathf.Abs(py - half);
+                    float dl = (px - slope * dy) * norm;         // 左のとがった辺までの距離
+                    float dr = ((w - px) - slope * dy) * norm;   // 右のとがった辺までの距離
+                    float d = Mathf.Min(Mathf.Min(py, h - py), Mathf.Min(dl, dr));
+                    float a = outline
+                        ? Mathf.Clamp01(thickness * 0.5f - Mathf.Abs(d - inset) + 0.5f)
+                        : Mathf.Clamp01(d + 0.5f);
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
+            tex.Apply();
+            float side = point + inset + thickness + 2f;
+            float tb = inset + thickness + 4f;
+            return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f, 0,
+                SpriteMeshType.FullRect, new Vector4(side, tb, side, tb));
         }
 
         static Sprite MakeRoundedSprite(int size, int radius)
@@ -2277,5 +2638,12 @@ namespace Conversation
         public float fadeOut = 0.8f;
         [Tooltip("クリック/決定ボタンで演出を飛ばせる")]
         public bool skippable = true;
+    }
+
+    /// <summary>ログのウィンドウの形</summary>
+    public enum LogWindowShape
+    {
+        Angled,   // 左右の端がとがった形
+        Rounded   // 角丸
     }
 }

@@ -13,6 +13,8 @@ namespace Conversation
         public Sprite sprite;
         [Tooltip("ログ用の顔アイコン（空なら立ち絵の顔部分を自動で切り抜く）")]
         public Sprite logIcon;
+        [Tooltip("ログで今のセリフの横に大きく出す画像（空なら立ち絵の上半身を自動で切り抜く）")]
+        public Sprite logPortrait;
     }
 
     [Serializable]

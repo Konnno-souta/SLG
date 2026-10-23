@@ -13,32 +13,35 @@ MonoBehaviour:
   m_Name: ConversationDB
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationDatabase
   characters:
-  - id: yonesima
-    displayName: Player1
+  - id: Kanade
+    displayName: Kanade
     affiliation: 
     expressions:
     - name: normal
       sprite: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
       logIcon: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
-    scale: 0.7
-    offset: {x: 0, y: 50}
+      logPortrait: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
+    scale: 3
+    offset: {x: 0, y: -1800}
     emoteAnchor: {x: 0, y: 0}
-    faceCenter: {x: 0, y: 0}
-    logIconZoom: 0
+    faceCenter: {x: 0.5, y: 0.8}
+    logIconZoom: 4.5
   - id: yuzuki
-    displayName: Player2
+    displayName: yuzuki
     affiliation: 
     expressions:
     - name: normal
       sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
       logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 0.5
-    offset: {x: 0, y: 150}
+      logPortrait: {fileID: 0}
+    scale: 2
+    offset: {x: 0, y: -1200}
     emoteAnchor: {x: 0, y: 0}
-    faceCenter: {x: 0, y: 0}
-    logIconZoom: 0
+    faceCenter: {x: 0.5, y: 0.85}
+    logIconZoom: 3
   backgrounds:
   - name: classroom
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: d9219180ee22c214e9b550425456c4c4, type: 3}
   bgms: []
   ses: []
+  titles: []
