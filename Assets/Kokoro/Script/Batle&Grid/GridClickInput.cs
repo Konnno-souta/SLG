@@ -5,7 +5,19 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// マウス・ゲームパッドからグリッドを操作する。
+/// 戦闘マップのカーソル入力を管理する。
+///
+/// 対応入力：
+/// ・マウス移動：カーソル移動
+/// ・左クリック：マス決定
+/// ・WASD / 矢印キー：カーソル移動
+/// ・Enter：マス決定
+/// ・ゲームパッド左スティック / 十字キー：移動
+/// ・ゲームパッドの南ボタン：決定
+///
+/// 今回の追加機能：
+/// ・カーソル移動を外部に通知
+/// ・ユニットにマウスを合わせるだけで情報表示
 /// </summary>
 public sealed class GridClickInput : MonoBehaviour
 {
@@ -19,45 +31,58 @@ public sealed class GridClickInput : MonoBehaviour
     [SerializeField]
     private Camera targetCamera;
 
-    [Header("コントローラー設定")]
-
-    // スティックをどの程度倒したら反応するか
+    [Header("カーソル設定")]
     [SerializeField, Range(0.2f, 0.95f)]
     private float stickDeadZone = 0.55f;
 
-    // 長押し時のマス移動間隔
     [SerializeField, Min(0.05f)]
     private float moveRepeatInterval = 0.18f;
 
-    // 現在のカーソル位置
+    // 現在のカーソル座標
     private Vector2Int cursorPosition;
 
-    // カーソルが初期化済みか
+    // カーソルが初期化されているか
     private bool hasCursor;
 
-    // 前フレームの入力方向
+    // 最後に入力された方向
     private Vector2Int lastDirection;
 
-    // 次にマスを移動できる時刻
+    // 次の方向入力受付時刻
     private float nextMoveTime;
 
-    // ゲーム操作の有効・無効
+    // 現在マップ入力を受け付けるか
     private bool inputEnabled = true;
 
     /// <summary>
-    /// マスの決定をほかのシステムへ通知する。
+    /// マスを決定したことを通知。
+    /// 既存のUnitSelectionControllerが使用する。
     /// </summary>
     public event Action<Vector2Int> CellSelected;
+
+    /// <summary>
+    /// 今回追加。
+    /// カーソルが別のマスに移動したことを通知。
+    /// </summary>
+    public event Action<Vector2Int> CursorChanged;
+
+    // 外部からカーソル情報を参照する
+    public bool HasCursor => hasCursor;
+
+    public Vector2Int CursorPosition => cursorPosition;
+
+    public bool InputEnabled => inputEnabled;
 
     private void Awake()
     {
         if (targetCamera == null)
+        {
             targetCamera = Camera.main;
+        }
 
-        if (grid == null)
+        if (grid == null || targetCamera == null)
         {
             Debug.LogError(
-                "BattleGridが設定されていません。",
+                "GridClickInputの参照が不足しています。",
                 this
             );
 
@@ -70,85 +95,177 @@ public sealed class GridClickInput : MonoBehaviour
         if (!inputEnabled)
             return;
 
-        HandleMouseInput();
-        HandleGamepadInput();
+        // マウスを動かした位置へカーソルを合わせる
+        HandleMouseHover();
+
+        // マウス左クリック
+        HandleMouseClick();
+
+        // クリックの結果UIが開いた場合は
+        // このフレームの残りの入力を処理しない。
+        if (!inputEnabled)
+            return;
+
+        // WASD / 矢印キー / ゲームパッド
+        HandleDirectionalInput();
+
+        if (!inputEnabled)
+            return;
+
+        // Enter / ゲームパッド決定
+        HandleConfirmInput();
     }
 
-    // ====================================
+    // ======================================
     // マウス操作
-    // ====================================
+    // ======================================
 
-    private void HandleMouseInput()
+    /// <summary>
+    /// マウスを動かしたマスへカーソルを合わせる。
+    ///
+    /// 毎フレーム位置を強制更新すると
+    /// WASDで動かしたカーソルが
+    /// マウス位置へ戻ってしまうため、
+    /// マウスが実際に動いたフレームだけ処理する。
+    /// </summary>
+    private void HandleMouseHover()
+    {
+        if (Mouse.current == null)
+            return;
+
+        Vector2 delta =
+            Mouse.current.delta.ReadValue();
+
+        if (delta.sqrMagnitude < 0.01f)
+            return;
+
+        // UI上のマウスはマップに反映しない
+        if (IsPointerOverUI())
+            return;
+
+        if (TryGetMouseCell(out Vector2Int position))
+        {
+            UpdateCursor(position);
+        }
+    }
+
+    /// <summary>
+    /// 左クリックでマスを決定する。
+    /// </summary>
+    private void HandleMouseClick()
     {
         if (Mouse.current == null ||
-            targetCamera == null)
+            !Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            return;
+        }
+
+        if (IsPointerOverUI())
             return;
 
-        if (!Mouse.current.leftButton.wasPressedThisFrame)
+        if (!TryGetMouseCell(out Vector2Int position))
             return;
 
-        // UI上をクリックしたときは無視
-        if (EventSystem.current != null &&
-            EventSystem.current.IsPointerOverGameObject())
-            return;
+        UpdateCursor(position);
+
+        ConfirmCell();
+    }
+
+    /// <summary>
+    /// マウス位置をグリッド座標に変換する。
+    /// 3DモデルのColliderには依存しない。
+    /// </summary>
+    private bool TryGetMouseCell(
+        out Vector2Int position)
+    {
+        position = Vector2Int.zero;
+
+        if (grid == null || targetCamera == null)
+            return false;
+
+        if (Mouse.current == null)
+            return false;
+
+        Vector2 mousePosition =
+            Mouse.current.position.ReadValue();
 
         Ray ray = targetCamera.ScreenPointToRay(
-            Mouse.current.position.ReadValue()
+            mousePosition
         );
 
-        // グリッドのXZ平面との交点を求める
-        Plane plane = new Plane(
+        // BattleGridのXZ平面を使う
+        Plane gridPlane = new Plane(
             grid.transform.up,
             grid.transform.position
         );
 
-        if (!plane.Raycast(ray, out float distance))
-            return;
-
-        Vector3 worldPosition = ray.GetPoint(distance);
-
-        if (!grid.TryWorldToCell(
-            worldPosition,
-            out Vector2Int position))
-            return;
-
-        // カーソルの位置を更新
-        UpdateCursor(position);
-
-        // マウスはクリックで即決定
-        ConfirmCell();
-    }
-
-    // ====================================
-    // コントローラー操作
-    // ====================================
-
-    private void HandleGamepadInput()
-    {
-        Gamepad gamepad = Gamepad.current;
-
-        if (gamepad == null)
-            return;
-
-        // 十字キーを優先
-        Vector2 input = gamepad.dpad.ReadValue();
-
-        // 十字キー入力がなければ左スティック
-        if (input.sqrMagnitude < 0.25f)
+        if (!gridPlane.Raycast(
+            ray,
+            out float distance))
         {
-            input = gamepad.leftStick.ReadValue();
+            return false;
         }
 
-        Vector2Int direction =
-            GetGridDirection(input);
+        Vector3 worldPosition =
+            ray.GetPoint(distance);
 
-        // 方向入力によるカーソル移動
+        return grid.TryWorldToCell(
+            worldPosition,
+            out position
+        );
+    }
+
+    /// <summary>
+    /// マウスがUnity UIの上にあるか。
+    /// </summary>
+    private bool IsPointerOverUI()
+    {
+        return EventSystem.current != null &&
+               EventSystem.current.IsPointerOverGameObject();
+    }
+
+    // ======================================
+    // 方向入力
+    // ======================================
+
+    private void HandleDirectionalInput()
+    {
+        Vector2Int direction = Vector2Int.zero;
+
+        Gamepad gamepad = Gamepad.current;
+
+        if (gamepad != null)
+        {
+            // 十字キーを優先
+            Vector2 padDirection =
+                gamepad.dpad.ReadValue();
+
+            if (padDirection.sqrMagnitude < 0.01f)
+            {
+                padDirection =
+                    gamepad.leftStick.ReadValue();
+            }
+
+            direction =
+                GetGridDirection(padDirection);
+        }
+
+        // パッド入力がなければキーボード
+        if (direction == Vector2Int.zero)
+        {
+            direction = GetKeyboardDirection();
+        }
+
+        // 方向入力を離した
         if (direction == Vector2Int.zero)
         {
             lastDirection = Vector2Int.zero;
+            return;
         }
-        else if (
-            direction != lastDirection ||
+
+        // 方向が変わった瞬間は即座に移動。
+        // 押しっぱなしの場合は一定間隔で移動。
+        if (direction != lastDirection ||
             Time.unscaledTime >= nextMoveTime)
         {
             MoveCursor(direction);
@@ -156,44 +273,81 @@ public sealed class GridClickInput : MonoBehaviour
             lastDirection = direction;
 
             nextMoveTime =
-                Time.unscaledTime + moveRepeatInterval;
-        }
-
-        // PS: × / Xbox: A
-        if (gamepad.buttonSouth.wasPressedThisFrame)
-        {
-            EnsureCursor();
-            ConfirmCell();
+                Time.unscaledTime +
+                moveRepeatInterval;
         }
     }
 
     /// <summary>
-    /// スティックの入力を上下左右の
-    /// いずれか1方向に変換する。
+    /// WASD / 矢印キーから方向取得。
+    /// </summary>
+    private Vector2Int GetKeyboardDirection()
+    {
+        Keyboard keyboard = Keyboard.current;
+
+        if (keyboard == null)
+            return Vector2Int.zero;
+
+        int x = 0;
+        int y = 0;
+
+        if (keyboard.aKey.isPressed ||
+            keyboard.leftArrowKey.isPressed)
+        {
+            x--;
+        }
+
+        if (keyboard.dKey.isPressed ||
+            keyboard.rightArrowKey.isPressed)
+        {
+            x++;
+        }
+
+        if (keyboard.wKey.isPressed ||
+            keyboard.upArrowKey.isPressed)
+        {
+            y++;
+        }
+
+        if (keyboard.sKey.isPressed ||
+            keyboard.downArrowKey.isPressed)
+        {
+            y--;
+        }
+
+        // 斜め入力ではX方向を優先する
+        if (x != 0)
+            return new Vector2Int(x, 0);
+
+        return new Vector2Int(0, y);
+    }
+
+    /// <summary>
+    /// ゲームパッドの方向を上下左右に変換。
     /// </summary>
     private Vector2Int GetGridDirection(Vector2 input)
     {
         if (input.magnitude < stickDeadZone)
             return Vector2Int.zero;
 
-        // 斜め入力時は大きい軸を優先
         if (Mathf.Abs(input.x) >= Mathf.Abs(input.y))
         {
             return new Vector2Int(
-                input.x > 0 ? 1 : -1,
+                input.x > 0f ? 1 : -1,
                 0
             );
         }
 
         return new Vector2Int(
             0,
-            input.y > 0 ? 1 : -1
+            input.y > 0f ? 1 : -1
         );
     }
 
-    /// <summary>
-    /// カーソルを指定方向へ1マス移動する。
-    /// </summary>
+    // ======================================
+    // カーソル移動
+    // ======================================
+
     private void MoveCursor(Vector2Int direction)
     {
         EnsureCursor();
@@ -201,7 +355,6 @@ public sealed class GridClickInput : MonoBehaviour
         Vector2Int nextPosition =
             cursorPosition + direction;
 
-        // マップ外に移動しない
         nextPosition.x = Mathf.Clamp(
             nextPosition.x,
             0,
@@ -214,15 +367,11 @@ public sealed class GridClickInput : MonoBehaviour
             grid.Height - 1
         );
 
-        if (nextPosition == cursorPosition)
-            return;
-
         UpdateCursor(nextPosition);
     }
 
     /// <summary>
-    /// 初めてコントローラーを操作したとき、
-    /// カーソルをマップ中央付近に配置する。
+    /// カーソルが未設定ならマップ中央に生成。
     /// </summary>
     private void EnsureCursor()
     {
@@ -237,18 +386,18 @@ public sealed class GridClickInput : MonoBehaviour
         UpdateCursor(center);
     }
 
-    // ====================================
-    // 共通処理
-    // ====================================
-
     /// <summary>
-    /// カーソル位置とハイライトを更新する。
-    /// ここではマスの決定は行わない。
+    /// カーソル位置を更新し、
+    /// 位置が変わったときだけイベントを通知。
     /// </summary>
     private void UpdateCursor(Vector2Int position)
     {
         if (!grid.IsInside(position))
             return;
+
+        bool changed =
+            !hasCursor ||
+            cursorPosition != position;
 
         cursorPosition = position;
         hasCursor = true;
@@ -257,33 +406,70 @@ public sealed class GridClickInput : MonoBehaviour
         {
             gridDebugView.SetSelectedCell(position);
         }
+
+        if (changed)
+        {
+            CursorChanged?.Invoke(position);
+        }
     }
 
-    /// <summary>
-    /// 現在のマスを決定する。
-    /// </summary>
+    // ======================================
+    // マス決定
+    // ======================================
+
+    private void HandleConfirmInput()
+    {
+        bool confirmPressed = false;
+
+        Gamepad gamepad = Gamepad.current;
+
+        if (gamepad != null &&
+            gamepad.buttonSouth.wasPressedThisFrame)
+        {
+            confirmPressed = true;
+        }
+
+        Keyboard keyboard = Keyboard.current;
+
+        if (keyboard != null &&
+            (keyboard.enterKey.wasPressedThisFrame ||
+             keyboard.numpadEnterKey.wasPressedThisFrame))
+        {
+            confirmPressed = true;
+        }
+
+        if (!confirmPressed)
+            return;
+
+        EnsureCursor();
+        ConfirmCell();
+    }
+
     private void ConfirmCell()
     {
         if (!hasCursor)
             return;
 
-        // 今後キャラ選択や移動処理で使用
+        // 移動やユニット選択は
+        // これまでどおり既存システムへ通知
         CellSelected?.Invoke(cursorPosition);
-
-        Debug.Log(
-            $"決定したマス: {cursorPosition} / " +
-            $"通行可能: {grid.IsWalkable(cursorPosition)}"
-        );
     }
 
+    // ======================================
+    // 操作制限
+    // ======================================
+
     /// <summary>
-    /// UIを開いている間などに
-    /// グリッド操作を停止するための処理。
+    /// 移動演出中やコマンドUI表示中は
+    /// グリッド入力を止める。
     /// </summary>
     public void SetGridInputEnabled(bool value)
     {
         inputEnabled = value;
 
+        // ボタンを押しっぱなしにした
+        // 古い情報を引き継がない。
         lastDirection = Vector2Int.zero;
+        nextMoveTime = 0f;
     }
 }

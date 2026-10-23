@@ -1,35 +1,45 @@
+using System;
 using UnityEngine;
 
 /// <summary>
-/// BattleUnit.csv の1行。Character_IDはCharacter.csvを参照する。
-/// MoveRangeは移動力仕様が未確定のため、一時的に配置CSVから与える。
+/// プランナーのStage_CharaLayout.csv の1行。
+/// X/Yは1始まりなので、読込時に一度だけ-1する。
+/// 現CSVにはSpawnIDがないので、セーブ用の安定個体IDはまだ未対応。
 /// </summary>
 public sealed class BattleUnitRecord
 {
-    public string BattleId { get; private set; }
-    public string SpawnId { get; private set; }
-    public int CharacterId { get; private set; }
+    public string StageId { get; private set; }
+    public string CharacterId { get; private set; }
+    public string Team { get; private set; }
+    public string Memo { get; private set; }
+    public int SourceLine { get; private set; }
+    public int SourceX { get; private set; }
+    public int SourceY { get; private set; }
     public Vector2Int Position { get; private set; }
-    public int MoveRange { get; private set; }
 
     public static BattleUnitRecord FromCsv(CsvRow row)
     {
-        var record = new BattleUnitRecord
+        int csvX = row.GetInt("X");
+        int csvY = row.GetInt("Y");
+        if (csvX < 1 || csvY < 1)
+            throw new FormatException($"X/Yは1始まりです。受信値=({csvX},{csvY})");
+
+        var data = new BattleUnitRecord
         {
-            BattleId = row.Get("BattleID"),
-            SpawnId = row.Get("SpawnID"),
-            CharacterId = row.GetInt("Character_ID"),
-            Position = new Vector2Int(row.GetInt("GridX"), row.GetInt("GridY")),
-            MoveRange = row.GetInt("MoveRange")
+            StageId = row.Get("StageID"),
+            CharacterId = row.Get("CharacterID"),
+            Team = row.Get("Team"),
+            Memo = row.Get("Memo"),
+            SourceLine = row.LineNumber,
+            SourceX = csvX,
+            SourceY = csvY,
+            Position = new Vector2Int(csvX - 1, csvY - 1)
         };
-
-        if (string.IsNullOrWhiteSpace(record.BattleId) ||
-            string.IsNullOrWhiteSpace(record.SpawnId))
-            throw new System.FormatException("BattleID / SpawnID は必須です。");
-
-        if (record.CharacterId <= 0 || record.MoveRange < 0)
-            throw new System.FormatException("Character_ID または MoveRange が不正です。");
-
-        return record;
+        if (string.IsNullOrWhiteSpace(data.StageId) ||
+            string.IsNullOrWhiteSpace(data.CharacterId))
+            throw new FormatException("StageIDとCharacterIDは必須です。");
+        if (data.Team != "Player" && data.Team != "Enemy")
+            throw new FormatException($"Team={data.Team} は Player または Enemy にしてください。");
+        return data;
     }
 }
