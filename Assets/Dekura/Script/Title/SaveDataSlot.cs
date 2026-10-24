@@ -1,3 +1,4 @@
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,14 +17,19 @@ public class SaveDataSlot : MonoBehaviour
 #if UNITY_EDITOR
     [SerializeField] private bool savedata;
 #endif
+
     //-------------------------------------------------//
 
     private bool isSaved = false;
 
     private void Awake()
     {
-        //セーブデータ読み込み(実装後)
+        // 元のEditor確認用処理
+        // ビルド時にはsavedataが存在しないので
+        // UNITY_EDITORで囲む
+#if UNITY_EDITOR
         if (savedata) isSaved = true;
+#endif
 
         UpdateUi();
     }
@@ -40,5 +46,42 @@ public class SaveDataSlot : MonoBehaviour
             dataArea.SetActive(false);
             noDataArea.SetActive(true);
         }
+    }
+
+
+    /// <summary>
+    /// 外部スクリプトからJSONの保存状態を受け取る。
+    ///
+    /// 実際のJSON読み込みは行わず、
+    /// 既存の表示処理だけを呼び出す。
+    /// </summary>
+    public void SetSaveInfo(
+        bool hasData,
+        string stageId)
+    {
+        isSaved = hasData;
+
+        if (isSaved)
+        {
+            // 現在のセーブJSONには
+            // プレイヤー名・累計プレイ時間がない
+            if (playerName != null)
+            {
+                playerName.text = "名前未記録";
+            }
+
+            if (playTime != null)
+            {
+                playTime.text = "TIME: --:--";
+            }
+
+            if (playStage_Floor != null)
+            {
+                playStage_Floor.text =
+                    "STAGE: " + stageId;
+            }
+        }
+
+        UpdateUi();
     }
 }

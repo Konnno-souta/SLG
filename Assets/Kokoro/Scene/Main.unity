@@ -1494,6 +1494,61 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &927337703
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 927337705}
+  - component: {fileID: 927337704}
+  m_Layer: 0
+  m_Name: BattleLoadRestorer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &927337704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 927337703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22f4104c871a00647b62ea5db2d5b4d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleLoadRestorer
+  saveManager: {fileID: 2013331648}
+  stageLoader: {fileID: 1651776096}
+  grid: {fileID: 555877683}
+  turnManager: {fileID: 1169402818}
+  timeOfDayController: {fileID: 1949015495}
+  selectionController: {fileID: 876830314}
+  threatController: {fileID: 1258680498}
+  phaseText: {fileID: 1407001724}
+  enableDebugLoadKey: 1
+  debugSlotNumber: 1
+  showLogs: 1
+--- !u!4 &927337705
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 927337703}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1008976828
 GameObject:
   m_ObjectHideFlags: 0
@@ -3509,3 +3564,4 @@ SceneRoots:
   - {fileID: 1258680499}
   - {fileID: 99772369}
   - {fileID: 2013331649}
+  - {fileID: 927337705}
