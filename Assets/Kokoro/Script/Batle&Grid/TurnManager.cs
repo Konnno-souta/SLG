@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static UnityEngine.EventSystems.EventTrigger;
 
 /// <summary>
 /// 戦闘中のフェーズ。
@@ -42,6 +44,10 @@ public sealed class TurnManager : MonoBehaviour
     [Header("敵フェーズのテスト設定")]
     [SerializeField, Min(0f)]
     private float enemyActionDelay = 0.3f;
+
+    [Header("敵AI")]
+    [SerializeField]
+    private EnemyAiMovementController enemyAiMovementController;
 
     // 現在のフェーズ
     public BattlePhase CurrentPhase { get; private set; }
@@ -336,6 +342,16 @@ public sealed class TurnManager : MonoBehaviour
             if (!IsValidUnit(unit))
                 continue;
 
+            // 敵の移動が終わるまで待つ。
+            if (enemyAiMovementController != null)
+            {
+                yield return StartCoroutine(
+                    enemyAiMovementController.ExecuteAction(unit));
+            }
+
+            // この後に、既存の
+            // enemy.State.CompleteAction();
+            // を実行する。
             unit.State.CompleteAction();
 
             Debug.Log(
