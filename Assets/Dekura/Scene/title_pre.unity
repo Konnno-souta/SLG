@@ -1715,10 +1715,13 @@ MonoBehaviour:
   buttons:
   - button: {fileID: 508170912}
     window: {fileID: 8497243740302241713, guid: fa1f757200cd33c4ea7d2d8a4cb25ff7, type: 3}
+    slotMode: 1
   - button: {fileID: 1924783520}
     window: {fileID: 8497243740302241713, guid: fa1f757200cd33c4ea7d2d8a4cb25ff7, type: 3}
+    slotMode: 2
   - button: {fileID: 1601638448}
     window: {fileID: 8497243740302241713, guid: 0d90d4905d4d23041bb0bad88c6ed930, type: 3}
+    slotMode: 0
 --- !u!1 &1074250947
 GameObject:
   m_ObjectHideFlags: 0
