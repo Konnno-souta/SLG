@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 479e1ba90bbb4fd4e80d0184f61a6e3e, type: 3}
+  m_Name: CutIn_
+  m_EditorClassIdentifier: Assembly-CSharp::CutIn.CutInData
+  character: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
+  characterScale: 10
+  characterOffset: {x: 0, y: -1900}
+  flipX: 0
+  characterRotation: 10
+  characterUpright: 0
+  characterColor: {r: 1, g: 1, b: 1, a: 1}
+  drift: {x: 0, y: 0}
+  motion: 0
+  enterTime: 0.12
+  pullBackDistance: 70
+  holdBeforePullBack: 0
+  pullBackTime: 0.33
+  pullBackRotation: 8
+  creepDistance: 60
+  creepTime: 0.45
+  dashTime: 0.3
+  dashDistance: 1000
+  straightenOnDash: 1
+  closeDuringDash: 1
+  bandShape: 0
+  slashJag: 18
+  slashJagDensity: 1.2
+  wedgeLength: 0.55
+  wedgeHeight: 1000
+  bandHeight: 460
+  bandFlare: 0.35
+  bandAngle: 12
+  bandOffset: {x: 0, y: 0}
+  bandBackground: {fileID: 0}
+  bandColorLeft: {r: 0.06, g: 0.06, b: 0.08, a: 1}
+  bandColorRight: {r: 0.62, g: 0.04, b: 0.1, a: 1}
+  bandEdgeColor: {r: 1, g: 1, b: 1, a: 0.9}
+  bandEdgeThickness: 6
+  backLayers:
+  - color: {r: 0.85, g: 0.05, b: 0.1, a: 1}
+    extraHeight: 50
+    offset: {x: -30, y: 18}
+    delay: 0.03
+  - color: {r: 0, g: 0, b: 0, a: 1}
+    extraHeight: 110
+    offset: {x: 40, y: -28}
+    delay: 0.06
+  halftone: 1
+  halftoneColor: {r: 1, g: 1, b: 1, a: 0.12}
+  halftoneSpacing: 14
+  speedLines: 1
+  speedLineColor: {r: 1, g: 1, b: 1, a: 0.55}
+  lightning: 1
+  lightningStyle: 1
+  lightningY: 0
+  lightningBehindCharacter: 1
+  boltColorStart: {r: 0.98, g: 0.25, b: 0.25, a: 1}
+  boltColorEnd: {r: 0.6, g: 0.1, b: 0.15, a: 1}
+  boltThickness: 120
+  boltTaper: 0.35
+  boltAmplitude: 50
+  boltSegments: 8
+  boltLength: 0.9
+  boltOutlineColor: {r: 0.3, g: 0.05, b: 0.05, a: 0.8}
+  boltOutlineWidth: 3
+  lightningCoreColor: {r: 1, g: 1, b: 1, a: 1}
+  lightningGlowColor: {r: 0.55, g: 0.8, b: 1, a: 0.9}
+  lightningCoreWidth: 16
+  lightningGlowWidth: 90
+  lightningAmplitude: 45
+  lightningSegments: 44
+  lightningFlicker: 0.05
+  lightningJitter: 8
+  label: 
+  labelColor: {r: 1, g: 1, b: 1, a: 1}
+  labelSize: 64
+  labelOffset: {x: 480, y: -120}
+  se: {fileID: 0}
+  voice: {fileID: 0}
+  volume: 1
+  holdTime: 1.2
