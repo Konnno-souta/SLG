@@ -100,6 +100,18 @@ public sealed class UnitSelectionController : MonoBehaviour
     // 二重処理されることを防ぐ
     private int suppressCellSelectionUntilFrame = -1;
 
+
+    /// <summary>
+    /// セーブデータを復元してもよい操作状態か。
+    ///
+    /// ユニットの選択中や移動中は
+    /// ロードを禁止する。
+    /// </summary>
+    public bool CanRestoreBattleState =>
+        currentStep == SelectionStep.None &&
+        !isMoving;
+
+
     // ====================================
     // 初期化
     // ====================================

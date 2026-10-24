@@ -2,87 +2,130 @@
 using System;
 
 /// <summary>
-/// 現在使用している昼夜クラス。
+/// 戦闘中の朝夜クラス。
 /// </summary>
 public enum BattleClassMode
 {
-    Light, // 朝
-    Dark   // 夜
+    Light,
+    Dark
 }
 
 /// <summary>
-/// ユニットの戦闘用ステータス。
+/// キャラクターの戦闘ステータス。
 ///
-/// Character.csvの基礎ステータスと
-/// Class.csvの倍率から能力を計算する。
+/// Character.csv の基礎値と
+/// Class.csv の倍率から能力値を生成する。
 ///
-/// 朝夜を切り替えると再計算する。
+/// 朝夜のクラス変更に対応。
+/// 第16段階ではHP復元機能を追加。
 /// </summary>
 public sealed class UnitBattleStats
 {
-    // ================================
-    // 元のCSVデータ
-    // ================================
+    // ========================================
+    // CSVマスターデータ
+    // ========================================
 
     public CharacterData Character { get; }
 
     public ClassData LightClass { get; }
+
     public ClassData DarkClass { get; }
 
-    public ClassData CurrentClass { get; private set; }
+    public ClassData CurrentClass
+    {
+        get;
+        private set;
+    }
 
-    public BattleClassMode ClassMode { get; private set; }
+    public BattleClassMode ClassMode
+    {
+        get;
+        private set;
+    }
 
-    // ================================
+    // ========================================
     // HP
-    // ================================
+    // ========================================
 
-    public int MaxHP { get; private set; }
-    public int CurrentHP { get; private set; }
+    public int MaxHP
+    {
+        get;
+        private set;
+    }
+
+    public int CurrentHP
+    {
+        get;
+        private set;
+    }
 
     public bool IsDead => CurrentHP <= 0;
 
-    // ================================
-    // 戦闘ステータス
-    // ================================
+    // ========================================
+    // 能力値
+    // ========================================
 
     public float Attack { get; private set; }
+
     public float Magic { get; private set; }
 
     public float AttackDefense { get; private set; }
+
     public float MagicDefense { get; private set; }
 
     public float Speed { get; private set; }
+
     public float Hit { get; private set; }
+
     public float Evasion { get; private set; }
 
-    // ================================
+    // ========================================
     // 攻撃範囲
-    // ================================
+    // ========================================
 
-    public int MinAttackRange { get; private set; }
-    public int MaxAttackRange { get; private set; }
-    public string RangeType { get; private set; }
+    public int MinAttackRange
+    {
+        get;
+        private set;
+    }
 
-    // ================================
-    // 移動範囲（今回追加）
-    // ================================
+    public int MaxAttackRange
+    {
+        get;
+        private set;
+    }
 
-    public int MoveRange { get; private set; }
+    public string RangeType
+    {
+        get;
+        private set;
+    }
 
-    // ================================
-    // 取得用
-    // ================================
+    // ========================================
+    // 移動力
+    // ========================================
+
+    public int MoveRange
+    {
+        get;
+        private set;
+    }
+
+    // ========================================
+    // 表示用
+    // ========================================
 
     public string CharacterId => Character.Id;
+
     public string CharacterName => Character.Name;
 
     public string CurrentClassId => CurrentClass.Id;
+
     public string CurrentClassName => CurrentClass.Name;
 
-    // ================================
-    // コンストラクタ
-    // ================================
+    // ========================================
+    // 生成
+    // ========================================
 
     public UnitBattleStats(
         CharacterData character,
@@ -90,38 +133,43 @@ public sealed class UnitBattleStats
         ClassData darkClass,
         BattleClassMode initialMode)
     {
-        if (character == null)
-            throw new ArgumentNullException(nameof(character));
+        Character =
+            character ??
+            throw new ArgumentNullException(
+                nameof(character)
+            );
 
-        if (lightClass == null)
-            throw new ArgumentNullException(nameof(lightClass));
+        LightClass =
+            lightClass ??
+            throw new ArgumentNullException(
+                nameof(lightClass)
+            );
 
-        if (darkClass == null)
-            throw new ArgumentNullException(nameof(darkClass));
+        DarkClass =
+            darkClass ??
+            throw new ArgumentNullException(
+                nameof(darkClass)
+            );
 
-        Character = character;
-        LightClass = lightClass;
-        DarkClass = darkClass;
-
-        // 現在のCSVにHP倍率は存在しないため、
-        // HPはCharacter.csvの基礎値を使用する。
-        MaxHP = character.BaseHP;
+        // 正式CSVにHP倍率はないため
+        // Character.csvの基礎HPを使用する。
+        MaxHP = Character.BaseHP;
         CurrentHP = MaxHP;
 
         SetClassMode(initialMode);
     }
 
-    // ================================
-    // 昼夜クラスの変更
-    // ================================
+    // ========================================
+    // 昼夜クラス変更
+    // ========================================
 
     /// <summary>
-    /// 朝夜に応じたクラスを選び直し、
-    /// 戦闘ステータスを再計算する。
+    /// 使用クラスと能力値を更新。
     ///
-    /// HPはリセットしない。
+    /// 現在HPは変更しない。
     /// </summary>
-    public void SetClassMode(BattleClassMode mode)
+    public void SetClassMode(
+        BattleClassMode mode)
     {
         ClassMode = mode;
 
@@ -133,18 +181,19 @@ public sealed class UnitBattleStats
         RecalculateStats();
     }
 
-    // ================================
+    // ========================================
     // 能力値の計算
-    // ================================
+    // ========================================
 
     private void RecalculateStats()
     {
-        // 基礎ステータス × クラス倍率
         Attack =
-            Character.BaseAttack * CurrentClass.AttackRatio;
+            Character.BaseAttack *
+            CurrentClass.AttackRatio;
 
         Magic =
-            Character.BaseMagic * CurrentClass.MagicRatio;
+            Character.BaseMagic *
+            CurrentClass.MagicRatio;
 
         AttackDefense =
             Character.BaseAttackDefense *
@@ -155,20 +204,50 @@ public sealed class UnitBattleStats
             CurrentClass.MagicDefenseRatio;
 
         Speed =
-            Character.BaseSpeed * CurrentClass.SpeedRatio;
+            Character.BaseSpeed *
+            CurrentClass.SpeedRatio;
 
         Hit =
-            Character.BaseHit * CurrentClass.HitRatio;
+            Character.BaseHit *
+            CurrentClass.HitRatio;
 
         Evasion =
-            Character.BaseEvasion * CurrentClass.EvasionRatio;
+            Character.BaseEvasion *
+            CurrentClass.EvasionRatio;
 
-        // 攻撃射程
-        MinAttackRange = CurrentClass.MinAttackRange;
-        MaxAttackRange = CurrentClass.MaxAttackRange;
-        RangeType = CurrentClass.RangeType;
+        MinAttackRange =
+            CurrentClass.MinAttackRange;
 
-        // 移動力は倍率ではなく、クラス側の直接指定値
-        MoveRange = CurrentClass.MaxMovementRange;
+        MaxAttackRange =
+            CurrentClass.MaxAttackRange;
+
+        RangeType =
+            CurrentClass.RangeType;
+
+        MoveRange =
+            CurrentClass.MaxMovementRange;
+    }
+
+    // ========================================
+    // 第16段階：現在HPの復元
+    // ========================================
+
+    /// <summary>
+    /// JSONに保存された現在HPを復元。
+    ///
+    /// MaxHPは正式CSVの値を維持する。
+    ///
+    /// 不正なHPなら変更しない。
+    /// </summary>
+    public bool TryRestoreCurrentHP(int hp)
+    {
+        if (hp < 0 || hp > MaxHP)
+        {
+            return false;
+        }
+
+        CurrentHP = hp;
+
+        return true;
     }
 }
