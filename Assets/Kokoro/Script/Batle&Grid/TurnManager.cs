@@ -467,4 +467,63 @@ public sealed class TurnManager : MonoBehaviour
         phaseText.text =
             $"TURN {TurnNumber}  {phaseName}";
     }
+
+
+    /// <summary>
+    /// セーブデータからPLAYER PHASEのターン番号を復元する。
+    /// 
+    /// すでにPLAYER PHASEである場合だけ許可。
+    ///
+    /// 通常のStartPlayerPhaseとは異なり、
+    /// 味方の行動状態をリセットしない。
+    ///
+    /// UnitStateのHasActedなどは
+    /// ロード管理側で復元済みのため。
+    /// </summary>
+    public bool TryRestorePlayerTurnForLoad(
+        int restoredTurnNumber)
+    {
+        if (restoredTurnNumber < 1)
+        {
+            Debug.LogError(
+                "ロード失敗：ターン番号が不正です。",
+                this
+            );
+
+            return false;
+        }
+
+        // 敵AIが動いている途中には
+        // ターンを差し替えない。
+        if (CurrentPhase != BattlePhase.Player)
+        {
+            Debug.LogWarning(
+                "ロードはPLAYER PHASE中のみ可能です。",
+                this
+            );
+
+            return false;
+        }
+
+        // 通常のターン開始処理は呼ばない。
+        // ここでResetActionしてしまうと
+        // 保存した行動終了状態が失われる。
+        TurnNumber = restoredTurnNumber;
+
+        // 第11段階の昼夜管理や、
+        // 第13段階の危険範囲管理へ通知する。
+        PhaseChanged?.Invoke(
+            BattlePhase.Player,
+            TurnNumber
+        );
+
+        Debug.Log(
+            $"【ターン復元】TURN {TurnNumber}" +
+            " / PLAYER PHASE",
+            this
+        );
+
+        return true;
+    }
+
 }
