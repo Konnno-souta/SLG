@@ -1501,7 +1501,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1585821894}
   m_CullTransparentMesh: 1
---- !u!1 &1811167055
+--- !u!1 &1713075476
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1509,22 +1509,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1811167057}
-  - component: {fileID: 1811167056}
+  - component: {fileID: 1713075478}
+  - component: {fileID: 1713075479}
   m_Layer: 0
-  m_Name: CutInDemo
+  m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1811167056
+--- !u!4 &1713075478
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1713075476}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.22487, y: 0.15741, z: 0.22487}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1713075479
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1811167055}
+  m_GameObject: {fileID: 1713075476}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3253c6bdf76301943ba9cfbad2274200, type: 3}
@@ -1532,7 +1547,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CutIn.CutInDemo
   cutInPlayer: {fileID: 0}
   cutIns:
-  - {fileID: 11400000, guid: 185a6d835e382f24e8811ab3374cfc1d, type: 2}
+  - {fileID: 11400000, guid: 31e02845a89be4a4ca46549114286da4, type: 2}
   mode: 0
   interval: 1
   startDelay: 0.5
@@ -1540,21 +1555,6 @@ MonoBehaviour:
   showHelp: 1
   helpSize: 28
   helpColor: {r: 1, g: 1, b: 1, a: 0.85}
---- !u!4 &1811167057
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1811167055}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.00431, y: 0.92016, z: -0.39997}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1852284266
 GameObject:
   m_ObjectHideFlags: 0
@@ -1839,4 +1839,4 @@ SceneRoots:
   - {fileID: 945983811}
   - {fileID: 262613975}
   - {fileID: 600651787}
-  - {fileID: 1811167057}
+  - {fileID: 1713075478}
