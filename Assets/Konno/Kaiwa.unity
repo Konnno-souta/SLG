@@ -1512,7 +1512,7 @@ GameObject:
   - component: {fileID: 1713075478}
   - component: {fileID: 1713075479}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: CutinManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

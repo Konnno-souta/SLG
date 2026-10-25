@@ -87,7 +87,12 @@ namespace CutIn
         TextMeshProUGUI labelText;
         CutInLightning lightning;
         CutInBandShape bandShape, bandOutline;
-        Image halftoneImage;
+        Image halftoneImage, strikeTint, strikeFlashImage, openLineImage;
+        RectTransform openLine;
+        Sprite glowLineSprite;
+        float bandInDuration;   // 帯が出きるまでの時間（出し方によって変わる）
+        bool slideIn;           // 帯が左から流れてくるか
+        int strikeIndex = -1;
         Sprite halftoneSprite;
         readonly List<CutInBandShape> layerShapes = new List<CutInBandShape>();
         readonly List<float> layerDelays = new List<float>();
@@ -151,24 +156,47 @@ namespace CutIn
             onStarted?.Invoke();
             PlaySound(d.se, d.volume);
 
-            // 1. 帯が左から入ってくる
             float t = 0f;
             elapsed = 0f;
-            while (t < bandInTime)
+            if (slideIn)
             {
-                t += Dt;
-                float k = EaseOutCubic(t / bandInTime);
-                bandRoot.anchoredPosition = bandPos + bandDir * Mathf.Lerp(-bandWidth, 0f, k);   // 傾きに沿って左から
-                SetDim(dimAlpha * k);
-                Tick(d);
-                yield return null;
+                // 1. 帯が左から入ってくる
+                while (t < bandInTime)
+                {
+                    t += Dt;
+                    float k = EaseOutCubic(t / bandInTime);
+                    bandRoot.anchoredPosition = bandPos + bandDir * Mathf.Lerp(-bandWidth, 0f, k);   // 傾きに沿って左から
+                    SetDim(dimAlpha * k);
+                    Tick(d);
+                    yield return null;
+                }
+            }
+            else
+            {
+                // 1. 細い光の線が出る → 上下に一気に開く（FE 風）
+                bandRoot.anchoredPosition = bandPos;
+                float lineTime = Mathf.Max(0f, d.lineTime);
+                float openTime = Mathf.Max(0.01f, d.openTime);
+                while (t < lineTime + openTime)
+                {
+                    t += Dt;
+                    float lineIn = lineTime > 0f ? Mathf.Clamp01(t / Mathf.Min(0.04f, lineTime)) : 1f;   // 線がパッと出る
+                    float k = EaseOutCubic((t - lineTime) / openTime);                                       // 開く
+                    SetBandOpen(k, d, lineIn * (1f - k));
+                    SetDim(dimAlpha * Mathf.Clamp01(t / (lineTime + openTime)));
+                    Tick(d);
+                    yield return null;
+                }
+                SetBandOpen(1f, d, 0f);
             }
             bandRoot.anchoredPosition = bandPos;
             SetDim(dimAlpha);
 
             // 2. キャラが左から勢いよく入ってくる（同時に光って、雷が走る）
             PlaySound(d.voice, d.volume);
-            flashTimer = flash ? flashTime : 0f;
+            // Strike の白い光を使う時は、画面全体のフラッシュは出さない（FE の動画と同じ）
+            bool bandFlash = d.lightning && d.lightningStyle == LightningStyle.Strike && d.strikeFlash;
+            flashTimer = flash && !bandFlash ? flashTime : 0f;
             lightningActive = d.lightning;
             lightningTime = 0f;
 
@@ -304,14 +332,17 @@ namespace CutIn
 
             // d. 一気に右へ走り抜ける。帯は、抜けきるのと同時に閉じ終わるように途中から閉じ始める
             float dash = Mathf.Max(0.01f, d.dashTime);
-            float exitStart = d.closeDuringDash ? Mathf.Max(0f, dash - exitTime) : float.MaxValue;
+            float closeTime = Mathf.Max(0.01f, d.dashCloseTime);
+            float exitStart = d.closeDuringDash ? Mathf.Max(0f, dash - closeTime) : float.MaxValue;
+            if (!d.closeDuringDash) closeTime = exitTime;
             float exitT = 0f;
             float startRot = rot;
             t = 0f;
             while (t < dash)
             {
                 t += Dt;
-                float k = EaseInCubic(t / dash);
+                // 最初から少しずつ右へ流れて、どんどん速くなる（帯が細くなる間もキャラが見える）
+                float k = EaseInQuad(t / dash);
                 x = d.creepDistance + d.dashDistance * k;
                 if (d.straightenOnDash)
                     rot = Mathf.Lerp(startRot, 0f, EaseOutCubic(Mathf.Clamp01(t / (dash * 0.5f))));
@@ -320,7 +351,7 @@ namespace CutIn
                 if (t >= exitStart)
                 {
                     exitT += Dt;
-                    ApplyExit(Mathf.Clamp01(exitT / exitTime));
+                    ApplyExit(Mathf.Clamp01(exitT / closeTime));
                 }
                 Tick(d);
                 yield return null;
@@ -328,12 +359,31 @@ namespace CutIn
             characterImage.enabled = false;   // 画面の外に出たので消す
 
             // 帯がまだ閉じきっていなければ、残りを閉じる
-            while (exitT < exitTime)
+            while (exitT < closeTime)
             {
                 exitT += Dt;
-                ApplyExit(Mathf.Clamp01(exitT / exitTime));
+                ApplyExit(Mathf.Clamp01(exitT / closeTime));
                 Tick(d);
                 yield return null;
+            }
+        }
+
+        /// <summary>帯の開き具合（0: 閉じている → 1: 開ききった）と、細い光の線の濃さ</summary>
+        void SetBandOpen(float k, CutInData d, float lineAlpha)
+        {
+            float sy = Mathf.Max(0.001f, k);
+            bandRoot.localScale = new Vector3(1f, sy, 1f);
+
+            bool showLine = lineAlpha > 0.001f;
+            openLine.gameObject.SetActive(showLine);
+            if (showLine)
+            {
+                // 帯と一緒に縦につぶれないように、つぶれた分だけ太くしておく
+                float h = Mathf.Max(1f, d.lineThickness) * 5f;   // 周りの光の分も含めた太さ
+                openLine.sizeDelta = new Vector2(bandWidth, h / sy);
+                var c = d.lineColor;
+                c.a *= lineAlpha;
+                openLineImage.color = c;
             }
         }
 
@@ -350,7 +400,7 @@ namespace CutIn
             switch (exitMode)
             {
                 case CutInExit.Collapse:
-                    bandRoot.localScale = new Vector3(1f, 1f - EaseInCubic(k), 1f);
+                    bandRoot.localScale = new Vector3(1f, Mathf.Max(0.001f, 1f - EaseInQuad(k)), 1f);
                     break;
                 case CutInExit.SlideOut:
                     bandRoot.anchoredPosition = bandPos + bandDir * Mathf.Lerp(0f, bandWidth, EaseInCubic(k));
@@ -390,7 +440,8 @@ namespace CutIn
                 }
             }
 
-            if (lightningActive) TickLightning(d, dt);
+            if (d.lightning && d.lightningStyle == LightningStyle.Strike) TickStrike(d, dt);
+            else if (lightningActive) TickLightning(d, dt);
 
             if (flashTimer > 0f)
             {
@@ -402,6 +453,108 @@ namespace CutIn
             else if (flashImage.color.a > 0f)
             {
                 flashImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+        }
+
+        /// <summary>
+        /// FE 風の雷（動画から見た流れ）
+        ///   帯が入ってくる間 : まっすぐな細い光の線。帯の中は Strike Tint の色
+        ///   Strike Times の各タイミング : 大きな波の雷がドンと走る → まっすぐになりながら消える。帯の色もすぐ元に戻る
+        /// </summary>
+        void TickStrike(CutInData d, float dt)
+        {
+            lightningTime += dt;
+            float tint = 0f;
+            var L = lightning;
+
+            if (lightningTime < 0f)
+            {
+                // 帯が入ってくる間：まっすぐな細い線
+                if (d.strikePreLine)
+                {
+                    L.SetShapeScale(0f);
+                    L.reveal = 1f;
+                    L.intensity = 0.9f;
+                    L.coreWidth = d.lightningCoreWidth * 0.4f;
+                    L.glowWidth = d.lightningGlowWidth * 0.35f;
+                }
+                else
+                {
+                    L.intensity = 0f;
+                    L.Refresh();
+                }
+                tint = 1f;
+            }
+            else
+            {
+                // 今走っている雷を探す
+                int active = -1;
+                float local = 0f;
+                float duration = Mathf.Max(0.01f, d.strikeDuration);
+                if (d.strikeTimes != null)
+                {
+                    for (int i = 0; i < d.strikeTimes.Count; i++)
+                    {
+                        float l = lightningTime - d.strikeTimes[i];
+                        if (l >= 0f && l < duration) { active = i; local = l; }
+                    }
+                }
+
+                if (active >= 0)
+                {
+                    // 新しい雷が走るたびに形を作り直す
+                    if (active != strikeIndex)
+                    {
+                        strikeIndex = active;
+                        L.GenerateSmooth(-lightningLength * 0.5f, lightningLength, d.strikeAmplitude, d.strikeWaves, d.strikeRoughness);
+                    }
+
+                    float p = local / duration;
+                    // 最初の3割は大きな波のまま → そのあと、だんだんまっすぐになる
+                    float shape = p < 0.3f ? 1f : 1f - EaseOutCubic((p - 0.3f) / 0.7f);
+                    L.SetShapeScale(shape);
+                    L.reveal = lightningRevealTime > 0f ? Mathf.Clamp01(local / lightningRevealTime) : 1f;
+                    L.intensity = p < 0.6f ? 1f : 1f - (p - 0.6f) / 0.4f;
+                    L.coreWidth = d.lightningCoreWidth * Mathf.Lerp(1f, 0.5f, p);
+                    L.glowWidth = d.lightningGlowWidth * Mathf.Lerp(1f, 0.6f, p);
+                    tint = p < 0.25f ? 1f : 1f - EaseOutCubic((p - 0.25f) / 0.75f);
+                }
+                else if (L.intensity > 0f)
+                {
+                    L.intensity = 0f;
+                    L.Refresh();
+                }
+            }
+
+            var c = d.strikeTintColor;
+            c.a *= tint;
+            strikeTint.color = c;
+
+            // 雷が走った後、帯の中が白く光る（いちばん新しい雷を基準にする）
+            if (d.strikeFlash)
+            {
+                float flashA = 0f;
+                if (lightningTime >= 0f && d.strikeTimes != null)
+                {
+                    float latest = float.MaxValue;
+                    foreach (var st in d.strikeTimes)
+                    {
+                        float l = lightningTime - st;
+                        if (l >= 0f && l < latest) latest = l;
+                    }
+                    if (latest < float.MaxValue)
+                    {
+                        float s = latest - Mathf.Max(0f, d.strikeFlashDelay);
+                        if (s >= 0f)
+                        {
+                            float hold = Mathf.Max(0f, d.strikeFlashHold);
+                            flashA = s < hold ? 1f : 1f - EaseOutCubic((s - hold) / Mathf.Max(0.01f, d.strikeFlashFade));
+                        }
+                    }
+                }
+                var fc = d.strikeFlashColor;
+                fc.a *= flashA;
+                strikeFlashImage.color = fc;
             }
         }
 
@@ -459,7 +612,18 @@ namespace CutIn
             float rad = d.bandAngle * Mathf.Deg2Rad;
             bandDir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
             bandPos = d.bandOffset;
-            bandRoot.anchoredPosition = bandPos - bandDir * bandWidth;
+            slideIn = d.bandOpen == BandOpen.SlideFromLeft;
+            bandInDuration = slideIn ? bandInTime : Mathf.Max(0f, d.lineTime) + Mathf.Max(0.01f, d.openTime);
+            if (slideIn)
+            {
+                bandRoot.anchoredPosition = bandPos - bandDir * bandWidth;
+            }
+            else
+            {
+                bandRoot.anchoredPosition = bandPos;
+                bandRoot.localScale = new Vector3(1f, 0.001f, 1f);   // 最初は閉じている
+            }
+            openLine.gameObject.SetActive(false);
 
             // 形と大きさ（Wedge は画面の左端から伸びる三角形）
             bool wedge = d.bandShape == BandShape.Wedge;
@@ -540,6 +704,13 @@ namespace CutIn
                 l.image.color = c;
             }
 
+            // 雷が走る瞬間に帯の中を染める色（Strike の時だけ）
+            bool strike = d.lightning && d.lightningStyle == LightningStyle.Strike;
+            strikeTint.gameObject.SetActive(strike && d.strikeTintColor.a > 0f);
+            strikeTint.color = new Color(d.strikeTintColor.r, d.strikeTintColor.g, d.strikeTintColor.b, 0f);
+            strikeFlashImage.gameObject.SetActive(strike && d.strikeFlash);
+            strikeFlashImage.color = new Color(d.strikeFlashColor.r, d.strikeFlashColor.g, d.strikeFlashColor.b, 0f);
+
             // 雷（キャラが入ってくる時に走り出す）
             lightningActive = false;
             lightningFlickerTimer = 0f;
@@ -568,6 +739,16 @@ namespace CutIn
                     float boltSpan = wedge ? bandSize.x : screenW;
                     float boltLen = boltSpan * d.boltLength;
                     lightning.Generate(-boltSpan * 0.5f, boltLen, d.boltAmplitude, d.boltSegments);
+                }
+                else if (d.lightningStyle == LightningStyle.Strike)
+                {
+                    // FE 風：帯が入ってくる間は「まっすぐな細い線」。キャラが入ってきたら波の雷が走る
+                    lightningLength = wedge ? bandSize.x : Mathf.Max(referenceResolution.x, referenceResolution.y) * 1.3f;
+                    lightning.GenerateSmooth(-lightningLength * 0.5f, lightningLength, d.strikeAmplitude, d.strikeWaves, d.strikeRoughness);
+                    lightning.SetShapeScale(0f);
+                    lightning.intensity = 0f;
+                    lightningTime = -bandInDuration;   // キャラが入ってくる瞬間が 0
+                    strikeIndex = -1;
                 }
                 else
                 {
@@ -666,6 +847,7 @@ namespace CutIn
 
                 var layer = d.backLayers[i];
                 g.color = layer.color;
+                g.rectTransform.localScale = Vector3.one;
                 var size = new Vector2(bandSize.x, bandSize.y + layer.extraHeight);
                 ApplyShape(g, d, Random.Range(1, int.MaxValue), size);
                 Vector2 pos = band.anchoredPosition + layer.offset;
@@ -680,6 +862,7 @@ namespace CutIn
         /// <summary>後ろの帯を、メインの帯より少し遅れて入ってこさせる</summary>
         void UpdateLayers()
         {
+            if (!slideIn) return;   // 線から開く時は、メインの帯と一緒に開く
             float main = Mathf.Lerp(-bandWidth, 0f, EaseOutCubic(elapsed / bandInTime));
             for (int i = 0; i < layerShapes.Count && i < layerDelays.Count; i++)
             {
@@ -751,6 +934,13 @@ namespace CutIn
             halftoneImage.type = Image.Type.Tiled;
             Stretch(halftoneImage.rectTransform);
 
+            strikeTint = NewImage(band, "StrikeTint", null);
+            Stretch(strikeTint.rectTransform);
+
+            strikeFlashImage = NewImage(band, "StrikeFlash", null);
+            Stretch(strikeFlashImage.rectTransform);
+            strikeFlashImage.color = new Color(1f, 1f, 1f, 0f);
+
             linesRoot = NewRect("SpeedLines", band);
             linesRoot.anchorMin = linesRoot.anchorMax = new Vector2(0.5f, 0.5f);
             linesRoot.sizeDelta = Vector2.zero;
@@ -781,6 +971,13 @@ namespace CutIn
             bandOutline.outlineOnly = true;
             bandOutline.raycastTarget = false;
             bandOutline.rectTransform.anchorMin = bandOutline.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+
+            // 帯が開く前の、細い光の線
+            glowLineSprite = MakeGlowLineSprite();
+            openLineImage = NewImage(bandRoot, "OpenLine", glowLineSprite);
+            openLine = openLineImage.rectTransform;
+            openLine.anchorMin = openLine.anchorMax = new Vector2(0.5f, 0.5f);
+            openLine.gameObject.SetActive(false);
 
             var labelGo = new GameObject("Label", typeof(RectTransform));
             labelGo.transform.SetParent(bandRoot, false);
@@ -874,6 +1071,23 @@ namespace CutIn
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
         }
 
+        /// <summary>真ん中が白く光り、上下に向かってぼんやり消える線（縦のグラデーション）</summary>
+        static Sprite MakeGlowLineSprite()
+        {
+            const int w = 4, h = 64;
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            for (int y = 0; y < h; y++)
+            {
+                float v = Mathf.Abs((y + 0.5f) / h - 0.5f) * 2f;    // 中心 0 → ふち 1
+                float core = v < 0.2f ? 1f : 0f;                     // 芯（太さの 2 割）
+                float glow = Mathf.Pow(1f - v, 2f) * 0.7f;           // 周りの光
+                float a = Mathf.Clamp01(Mathf.Max(core, glow));
+                for (int x = 0; x < w; x++) tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f));
+        }
+
         /// <summary>右端が濃く、左に向かって薄くなる線</summary>
         static Sprite MakeLineSprite()
         {
@@ -896,6 +1110,7 @@ namespace CutIn
 
         static float EaseOutCubic(float k) { k = Mathf.Clamp01(k); float u = 1f - k; return 1f - u * u * u; }
         static float EaseInCubic(float k) { k = Mathf.Clamp01(k); return k * k * k; }
+        static float EaseInQuad(float k) { k = Mathf.Clamp01(k); return k * k; }
 
         static float EaseOutBack(float k, float s)
         {
