@@ -4,28 +4,22 @@ using UnityEngine.UI;
 
 namespace CutIn
 {
-    // 並び順は変えないこと（保存されている設定は番号で記録されるため）
     public enum LightningStyle
     {
         Bolt,      // 塗りつぶしたギザギザの稲妻（先がとがる）
-        Electric   // 光るギザギザの線
+        Electric,  // 光るギザギザの線（チラつき続ける）
+        Strike     // FE 風：大きな波の雷がドンと走り、まっすぐになりながら消える（何回か走る）
     }
 
     /// <summary>
     /// 横に走る雷を描く UI 部品（CutInPlayer が自動で使う）。
-    ///   Electric : 外側がぼんやり光る線（Glow）と、中心の明るい芯（Core）の2層。
     ///   Bolt     : 太いギザギザの稲妻。先端だけ細くとがる。左右でグラデーション。
+    ///   Electric : 外側がぼんやり光る線（Glow）と、中心の明るい芯（Core）の2層。
     /// </summary>
     [RequireComponent(typeof(CanvasRenderer))]
     public class CutInLightning : MaskableGraphic
     {
-        public LightningStyle style = LightningStyle.Electric;
-
-        [Header("Electric")]
-        public Color coreColor = Color.white;
-        public Color glowColor = new Color(0.55f, 0.8f, 1f, 0.9f);
-        public float coreWidth = 16f;
-        public float glowWidth = 90f;
+        public LightningStyle style = LightningStyle.Bolt;
 
         [Header("Bolt")]
         public Color boltColorStart = new Color(0.98f, 0.25f, 0.25f, 1f);
@@ -35,6 +29,12 @@ namespace CutIn
         [Range(0.05f, 1f)] public float boltTaper = 0.35f;
         public Color boltOutlineColor = new Color(0.3f, 0.05f, 0.05f, 0.8f);
         public float boltOutlineWidth = 3f;
+
+        [Header("Electric")]
+        public Color coreColor = Color.white;
+        public Color glowColor = new Color(0.55f, 0.8f, 1f, 0.9f);
+        public float coreWidth = 16f;
+        public float glowWidth = 90f;
 
         [Header("共通")]
         [Tooltip("左から何割まで伸びているか（0〜1）")]
@@ -46,6 +46,8 @@ namespace CutIn
         readonly List<Vector2> points = new List<Vector2>();
         readonly List<Vector2> visible = new List<Vector2>();
         readonly List<float> visibleT = new List<float>();
+        float startX, length;
+        float shapeScale = 1f;   // 波の大きさ（1 で元の形、0 でまっすぐ）
 
         /// <summary>雷の形を新しく作る</summary>
         /// <param name="startX">左端の位置</param>
@@ -54,6 +56,8 @@ namespace CutIn
         /// <param name="segments">折れ曲がりの数</param>
         public void Generate(float startX, float length, float amplitude, int segments)
         {
+            this.startX = startX;
+            this.length = length;
             basePoints.Clear();
             int n = Mathf.Max(2, segments);
             float step = length / n;
@@ -85,6 +89,54 @@ namespace CutIn
                     basePoints.Add(new Vector2(x, wave + jag));
                 }
             }
+            shapeScale = 1f;
+            Jitter(0f);
+        }
+
+        /// <summary>
+        /// なめらかな大きい波の雷（Strike 用）。山と谷を controlPoints 個作って、なめらかにつなぐ
+        /// </summary>
+        public void GenerateSmooth(float startX, float length, float amplitude, int controlPoints, float roughness)
+        {
+            this.startX = startX;
+            this.length = length;
+            basePoints.Clear();
+            int c = Mathf.Max(2, controlPoints);
+            var ctrl = new Vector2[c + 1];
+            for (int i = 0; i <= c; i++)
+            {
+                float x = startX + length * i / c;
+                if (i > 0 && i < c) x += Random.Range(-0.15f, 0.15f) * length / c;
+                float sign = (i % 2 == 0) ? 1f : -1f;
+                ctrl[i] = new Vector2(x, sign * Random.Range(0.45f, 1f) * amplitude);
+            }
+
+            const int samplesPer = 10;
+            for (int i = 0; i < c; i++)
+            {
+                Vector2 p0 = ctrl[Mathf.Max(0, i - 1)], p1 = ctrl[i], p2 = ctrl[i + 1], p3 = ctrl[Mathf.Min(c, i + 2)];
+                for (int k = 0; k < samplesPer; k++)
+                {
+                    Vector2 p = CatmullRom(p0, p1, p2, p3, k / (float)samplesPer);
+                    p.y += Random.Range(-roughness, roughness);   // ふちを少しだけガタガタに
+                    basePoints.Add(p);
+                }
+            }
+            basePoints.Add(ctrl[c]);
+            shapeScale = 1f;
+            Jitter(0f);
+        }
+
+        static Vector2 CatmullRom(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t)
+        {
+            float t2 = t * t, t3 = t2 * t;
+            return (p1 * 2f + (p2 - p0) * t + (p0 * 2f - p1 * 5f + p2 * 4f - p3) * t2 + (p1 * 3f - p0 - p2 * 3f + p3) * t3) * 0.5f;
+        }
+
+        /// <summary>波の大きさを変える（1 で元の形、0 でまっすぐな線）</summary>
+        public void SetShapeScale(float scale)
+        {
+            shapeScale = scale;
             Jitter(0f);
         }
 
@@ -93,7 +145,7 @@ namespace CutIn
         {
             points.Clear();
             foreach (var p in basePoints)
-                points.Add(p + new Vector2(0f, amount > 0f ? Random.Range(-amount, amount) : 0f));
+                points.Add(new Vector2(p.x, p.y * shapeScale + (amount > 0f ? Random.Range(-amount, amount) : 0f)));
             SetVerticesDirty();
         }
 
@@ -140,7 +192,7 @@ namespace CutIn
 
         /// <summary>
         /// 塗りつぶしの稲妻。上下のふちを「真上・真下」にずらすので、段々の稲妻らしい形になる。
-        /// 太さはほぼ一定で、先端の boltTaper の範囲だけ細くとがる
+        /// 太さは左が一番太く、右端で 0（とがる）
         /// </summary>
         void AddBolt(VertexHelper vh, float thickness, Color startColor, Color endColor, float tipExtra)
         {
@@ -149,6 +201,7 @@ namespace CutIn
             for (int i = 0; i < n; i++)
             {
                 float t = visibleT[i];
+                // 太さはほぼ一定で、先端の boltTaper の範囲だけ細くとがる
                 float taper = Mathf.Clamp01((1f - t) / Mathf.Max(0.01f, boltTaper));
                 float half = thickness * 0.5f * taper + (t >= 1f ? tipExtra : 0f);
                 Color c = Color.Lerp(startColor, endColor, t);

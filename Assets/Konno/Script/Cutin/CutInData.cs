@@ -11,6 +11,13 @@ namespace CutIn
         Stay              // そのまま（帯と一緒に消える）
     }
 
+    /// <summary>帯の出し方</summary>
+    public enum BandOpen
+    {
+        FromLine,       // 細い光の線が出て、そこから上下に一気に開く（FE 風）
+        SlideFromLeft   // 帯が左から流れてくる
+    }
+
     /// <summary>帯の後ろに重ねる帯（少しずらして、少し遅れて入ってくる）</summary>
     [Serializable]
     public class BandLayer
@@ -73,6 +80,20 @@ namespace CutIn
         public bool straightenOnDash = true;
         [Tooltip("走り抜けている途中から帯を閉じ始める（抜けきるのと同時に閉じ終わる）")]
         public bool closeDuringDash = true;
+        [Tooltip("走り抜けながら帯が閉じきるまでの時間（秒）。走り抜ける時間と同じくらいにすると、キャラが右へ流れながら帯が細くなる")]
+        public float dashCloseTime = 0.3f;
+
+        [Header("帯の出し方")]
+        [Tooltip("FromLine: 細い光の線 → 上下に開く（FE 風） / SlideFromLeft: 左から流れてくる")]
+        public BandOpen bandOpen = BandOpen.FromLine;
+        [Tooltip("FromLine：細い線だけが見えている時間（秒）")]
+        public float lineTime = 0.1f;
+        [Tooltip("FromLine：線から帯が開ききるまでの時間（秒）")]
+        public float openTime = 0.08f;
+        [Tooltip("FromLine：線の太さ (px)")]
+        public float lineThickness = 10f;
+        [Tooltip("FromLine：線の色（周りがぼんやり光る）")]
+        public Color lineColor = Color.white;
 
         [Header("帯")]
         [Tooltip("帯の形。Slash: ふちがギザギザの帯（ペルソナ風） / Rectangle: まっすぐな帯 / Wedge: 三角形")]
@@ -120,8 +141,8 @@ namespace CutIn
 
         [Header("雷（帯の中を横に1本走る）")]
         public bool lightning = true;
-        [Tooltip("雷の見た目。Electric: 光る線 / Bolt: 塗りつぶしのギザギザの稲妻")]
-        public LightningStyle lightningStyle = LightningStyle.Electric;
+        [Tooltip("雷の見た目。Strike: FE 風（ドンと走って、まっすぐになりながら消える） / Electric: 光る線がチラつき続ける / Bolt: 塗りつぶしの稲妻")]
+        public LightningStyle lightningStyle = LightningStyle.Strike;
         [Tooltip("帯の中心からの高さ")]
         public float lightningY = 0f;
         [Tooltip("キャラの後ろに出す（オフで手前）")]
@@ -145,7 +166,32 @@ namespace CutIn
         public Color boltOutlineColor = new Color(0.3f, 0.05f, 0.05f, 0.8f);
         public float boltOutlineWidth = 3f;
 
-        [Header("雷：Electric（光る線）")]
+        [Header("雷：Strike（FE 風）")]
+        [Tooltip("雷が走るタイミング（キャラが入ってきてからの秒）。複数書くと、その回数だけ走る")]
+        public List<float> strikeTimes = new List<float> { 0f, 0.55f };
+        [Tooltip("1回の雷が、まっすぐになって消えるまでの時間（秒）")]
+        public float strikeDuration = 0.25f;
+        [Tooltip("波の上下の大きさ")]
+        public float strikeAmplitude = 120f;
+        [Tooltip("波の数（山と谷の数）。少ないほど大きくうねる")]
+        [Range(2, 16)] public int strikeWaves = 6;
+        [Tooltip("波のふちの細かいガタガタ")]
+        public float strikeRoughness = 6f;
+        [Tooltip("雷が走る瞬間に、帯の中をこの色にする（すぐ元に戻る）。透明にすると無し")]
+        public Color strikeTintColor = new Color(0.45f, 0.3f, 0.75f, 1f);
+        [Tooltip("帯が入ってくる間、まっすぐな細い光の線を出す")]
+        public bool strikePreLine = true;
+        [Tooltip("雷が走った後、帯の中を白く光らせる（FE 風。画面全体のフラッシュの代わり）")]
+        public bool strikeFlash = true;
+        public Color strikeFlashColor = Color.white;
+        [Tooltip("雷が走ってから白くなるまでの時間（秒）")]
+        public float strikeFlashDelay = 0.06f;
+        [Tooltip("白いままの時間（秒）")]
+        public float strikeFlashHold = 0.3f;
+        [Tooltip("白から元の色に戻るまでの時間（秒）")]
+        public float strikeFlashFade = 0.45f;
+
+        [Header("雷：光る線の色と太さ（Strike・Electric 共通）")]
         [Tooltip("中心の明るい芯の色")]
         public Color lightningCoreColor = Color.white;
         [Tooltip("周りのぼんやり光る部分の色")]
