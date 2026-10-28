@@ -24,9 +24,6 @@ public class SaveDataSlot : MonoBehaviour
 
     private void Awake()
     {
-        // 元のEditor確認用処理
-        // ビルド時にはsavedataが存在しないので
-        // UNITY_EDITORで囲む
 #if UNITY_EDITOR
         if (savedata) isSaved = true;
 #endif
