@@ -197,27 +197,156 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             magicType
         );
 
+
+        // ====================================
+        // 第21段階：敵AIの攻撃実行
+        // ====================================
+
         if (attackPlan != null)
         {
-            // 攻撃できる位置へ移動する。
+            // =================================
+            // 1. 攻撃可能な位置まで移動
+            // =================================
+
             yield return MoveEnemy(
                 enemy,
                 attackPlan
             );
 
-            // ダメージ処理はまだ行わない。
-            if (IsUsable(attackPlan.Target))
+            UnitView target = attackPlan.Target;
+
+            // =================================
+            // 2. 移動完了後の生存確認
+            // =================================
+
+            if (!BattleUnitLife.IsAlive(enemy) ||
+                !BattleUnitLife.IsAlive(target))
             {
                 Log(
-                    $"【敵の攻撃予定】{enemy.name}" +
-                    $" → {attackPlan.Target.name}" +
-                    "\n射程内へ移動完了。" +
-                    "\n※HP減少は未実装"
+                    "【敵攻撃中止】" +
+                    "攻撃側または対象が戦闘不能です。"
+                );
+
+                yield break;
+            }
+
+            // =================================
+            // 3. 現在位置から射程を再計算
+            // =================================
+
+            UnitBattleStats currentStats =
+                enemy.State.CombatStats;
+
+            HashSet<Vector2Int> currentAttackRange =
+                AttackRangeCalculator.Calculate(
+                    grid,
+                    enemy.State.Position,
+                    currentStats
+                );
+
+            Vector2Int targetPosition =
+                target.State.Position;
+
+            if (!AttackRangeCalculator.Contains(
+                currentAttackRange,
+                targetPosition))
+            {
+                Log(
+                    $"【敵攻撃中止】{enemy.name}" +
+                    $" → {target.name}" +
+                    "\n移動後の位置から" +
+                    "攻撃射程に入っていません。"
+                );
+
+                yield break;
+            }
+
+            // =================================
+            // 4. ダメージ計算・HP減少
+            // =================================
+
+            // 第19～20段階で使用している
+            // 共通の攻撃処理を再利用。
+            if (!BattleAttackExecutor.TryExecute(
+                enemy,
+                target,
+                out BattleAttackPreview result))
+            {
+                Debug.LogWarning(
+                    $"【敵攻撃失敗】{enemy.name}" +
+                    $" → {target.name}" +
+                    "\nダメージ計算または" +
+                    "HP減少処理に失敗しました。",
+                    this
+                );
+
+                yield break;
+            }
+
+            // =================================
+            // 5. 戦闘不能の表示を反映
+            // =================================
+
+            bool isDefeated =
+                result.RemainingHP <= 0;
+
+            BattleUnitDefeatVisual defeatVisual =
+                target.GetComponent<
+                    BattleUnitDefeatVisual>();
+
+            if (defeatVisual != null)
+            {
+                defeatVisual.Refresh();
+            }
+            else if (isDefeated)
+            {
+                Debug.LogWarning(
+                    $"{target.name} に" +
+                    "BattleUnitDefeatVisualがありません。",
+                    target
                 );
             }
 
+            // =================================
+            // 6. 攻撃結果を表示
+            // =================================
+
+            string attackerName =
+                enemy.State.CombatStats.CharacterName;
+
+            string targetName =
+                target.State.CombatStats.CharacterName;
+
+            Log(
+                "【敵AI攻撃成功】" +
+                $"\n攻撃側：{attackerName}" +
+                $"\n対象：{targetName}" +
+                $"\n攻撃種別：{result.DamageType}" +
+                $"\n計算ダメージ：{result.CalculatedDamage}" +
+                $"\n実際に減ったHP：{result.AppliedDamage}" +
+                $"\n対象の残HP：{result.RemainingHP}" +
+                $"\n戦闘不能：{isDefeated}"
+            );
+
+            if (isDefeated)
+            {
+                Debug.Log(
+                    $"【味方戦闘不能】{targetName}",
+                    target
+                );
+            }
+
+            // =================================
+            // 7. 敵の行動処理終了
+            // =================================
+
+            // CompleteAction()は
+            // 既存TurnManagerで実行するため、
+            // ここでは呼び出さない。
+
             yield break;
         }
+
 
         // ====================================
         // 4. 攻撃できる味方がいない場合
