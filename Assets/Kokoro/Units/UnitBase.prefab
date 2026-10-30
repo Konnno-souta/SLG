@@ -125,6 +125,7 @@ GameObject:
   - component: {fileID: 3890474188613965430}
   - component: {fileID: -447473251358801611}
   - component: {fileID: 6840421057744293397}
+  - component: {fileID: -4412364112899555987}
   m_Layer: 0
   m_Name: UnitBase
   m_TagString: Untagged
@@ -177,3 +178,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitActionVisual
   finishedBrightness: 0.45
+--- !u!114 &-4412364112899555987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6136205668839972636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ff6d942e2999f34a9444234031b0c02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleUnitDefeatVisual

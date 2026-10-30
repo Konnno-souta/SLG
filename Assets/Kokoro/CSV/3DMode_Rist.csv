@@ -1,0 +1,14 @@
+﻿3DModel_ID,Name,Design_Name,Use
+3D01,主人公モデル,Hero_Model,主人公駒
+3D02,ネームドモデル(仲間),Named_Model,ネームド駒(仲間)
+3D03,ネームドモデル(敵),Enemy_Named_Model,ネームド駒(敵)
+3D04,敵兵モデル,Enemy_Model,敵兵駒
+3D05,剣,Sword_Model,ブレイバー、キャヴァリエ
+3D06,槍,Spear_Model,トライデント、ファランクス
+3D07,篭手,Gauntlet_Model,スパルタン
+3D08,弓,Bow_Model,アルテミス
+3D09,魔導書,Spellbook_Model,ライトソーサラー、ダークウィザード
+3D10,城,FIE_Castle,
+3D11,市街地,FIE_Town,
+3D12,平原,FIE_Plain,
+3D13,森,FIE_Forest,

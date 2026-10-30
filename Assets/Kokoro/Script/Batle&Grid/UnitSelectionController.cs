@@ -7,8 +7,6 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// 味方ユニットの選択・移動・コマンド管理。
 ///
-/// 第12段階では正式CSVの攻撃範囲に対応。
-///
 /// 機能：
 /// ・味方選択
 /// ・青い移動可能範囲表示
@@ -18,8 +16,13 @@ using UnityEngine.InputSystem;
 /// ・赤い攻撃可能範囲表示
 /// ・射程内の敵だけを候補として判定
 /// ・待機による行動終了
+/// 
+/// ・攻撃対象を1回選択して情報表示
+/// ・同じ敵を2回目に選択すると攻撃実行
+/// ・正式ダメージ計算でHP減少
+/// ・攻撃側の行動終了
 ///
-/// ダメージ・命中・攻撃演出は未実装。
+/// 命中・撃破・攻撃演出は未実装。
 /// </summary>
 public sealed class UnitSelectionController : MonoBehaviour
 {
@@ -40,7 +43,7 @@ public sealed class UnitSelectionController : MonoBehaviour
     [SerializeField]
     private AttackTargetPreviewPanel attackPreviewPanel;
 
-    [Header("攻撃範囲表示（今回追加）")]
+    [Header("攻撃範囲表示")]
     [SerializeField]
     private AttackRangeOverlay attackRangeOverlay;
 
@@ -96,10 +99,13 @@ public sealed class UnitSelectionController : MonoBehaviour
     // 移動アニメーション中か
     private bool isMoving;
 
-    // UIの決定ボタンがグリッド側で
+    // UI決定ボタンがグリッド側で
     // 二重処理されることを防ぐ
     private int suppressCellSelectionUntilFrame = -1;
 
+    // ====================================
+    // セーブ・ロード用
+    // ====================================
 
     /// <summary>
     /// セーブデータを復元してもよい操作状態か。
@@ -110,7 +116,6 @@ public sealed class UnitSelectionController : MonoBehaviour
     public bool CanRestoreBattleState =>
         currentStep == SelectionStep.None &&
         !isMoving;
-
 
     // ====================================
     // 初期化
@@ -306,6 +311,11 @@ public sealed class UnitSelectionController : MonoBehaviour
     /// <summary>
     /// 指定マスにいるユニットを返す。
     /// </summary>
+
+    /// <summary>
+    /// 指定マスにいる戦闘可能なユニットを返す。
+    /// HP0のユニットは占有判定から除外する。
+    /// </summary>
     private UnitView FindUnitAt(Vector2Int position)
     {
         foreach (UnitView unit in activeUnits)
@@ -313,6 +323,18 @@ public sealed class UnitSelectionController : MonoBehaviour
             if (unit == null ||
                 !unit.gameObject.activeInHierarchy ||
                 unit.State == null)
+            {
+                continue;
+            }
+
+            // 第20段階：
+            // HP0のユニットは、このマスに
+            // 存在しないものとして扱う。
+            UnitBattleStats stats =
+                unit.State.CombatStats;
+
+            if (stats != null &&
+                stats.CurrentHP <= 0)
             {
                 continue;
             }
@@ -325,6 +347,7 @@ public sealed class UnitSelectionController : MonoBehaviour
 
         return null;
     }
+
 
     private bool IsOccupied(Vector2Int position)
     {
@@ -583,7 +606,7 @@ public sealed class UnitSelectionController : MonoBehaviour
     }
 
     // ====================================
-    // 攻撃対象選択（今回の追加部分）
+    // 攻撃対象選択
     // ====================================
 
     /// <summary>
@@ -671,18 +694,25 @@ public sealed class UnitSelectionController : MonoBehaviour
         );
     }
 
+    // ====================================
+    // 第19段階：攻撃対象選択
+    // ====================================
+
     /// <summary>
-    /// 攻撃対象候補の選択。
+    /// 攻撃対象の選択。
     ///
-    /// 赤い範囲内にいる敵だけ有効。
+    /// 1回目：
+    /// 対象と予測ダメージを表示。
     ///
-    /// 今回は情報表示まで。
-    /// ダメージも行動終了も行わない。
+    /// 2回目：
+    /// 同じ敵を決定すると攻撃実行。
     /// </summary>
     private void SelectAttackTargetCandidate(
         Vector2Int position)
     {
-        if (selectedUnit == null)
+        if (selectedUnit == null ||
+            selectedUnit.State == null ||
+            selectedUnit.State.HasActed)
         {
             return;
         }
@@ -690,7 +720,10 @@ public sealed class UnitSelectionController : MonoBehaviour
         UnitView target =
             FindUnitAt(position);
 
-        // 空白マスや味方を選んだ場合
+        // =================================
+        // 空白マス・味方の場合
+        // =================================
+
         if (target == null ||
             target.State == null ||
             target.State.Team != UnitTeam.Enemy)
@@ -703,7 +736,7 @@ public sealed class UnitSelectionController : MonoBehaviour
         }
 
         // =================================
-        // 攻撃可能範囲の判定
+        // 攻撃範囲の判定
         // =================================
 
         bool isInRange =
@@ -716,7 +749,9 @@ public sealed class UnitSelectionController : MonoBehaviour
         {
             selectedAttackTarget = null;
 
-            attackPreviewPanel.ShowOutOfRange(target);
+            attackPreviewPanel.ShowOutOfRange(
+                target
+            );
 
             Debug.Log(
                 $"{target.name}は攻撃範囲外です。"
@@ -726,7 +761,17 @@ public sealed class UnitSelectionController : MonoBehaviour
         }
 
         // =================================
-        // 範囲内の敵として選択する
+        // 2回目：同じ敵を決定した場合
+        // =================================
+
+        if (selectedAttackTarget == target)
+        {
+            ExecuteSelectedAttack(target);
+            return;
+        }
+
+        // =================================
+        // 1回目：攻撃対象を選択
         // =================================
 
         selectedAttackTarget = target;
@@ -737,12 +782,130 @@ public sealed class UnitSelectionController : MonoBehaviour
         );
 
         Debug.Log(
-            "【攻撃対象】" +
+            "【攻撃対象を選択】" +
             $"{selectedUnit.name} → " +
             $"{selectedAttackTarget.name}" +
-            "（射程内・攻撃実行は未実装）"
+            " / 同じ敵をもう一度決定すると攻撃実行"
         );
     }
+
+    /// <summary>
+    /// 正式な物理・魔法計算式でHPを減らし、
+    /// 攻撃側の行動を終了する。
+    ///
+    /// ダメージ判定・適用が失敗した場合は
+    /// 行動を終了しない。
+    /// </summary>
+
+    /// <summary>
+    /// 攻撃実行・HP減少・戦闘不能判定。
+    /// </summary>
+    private void ExecuteSelectedAttack(
+        UnitView target)
+    {
+        if (selectedUnit == null ||
+            target == null ||
+            target.State == null ||
+            selectedAttackTarget != target ||
+            selectedUnit.State == null ||
+            selectedUnit.State.HasActed)
+        {
+            return;
+        }
+
+        if (!AttackRangeCalculator.Contains(
+            attackableCells,
+            target.State.Position))
+        {
+            return;
+        }
+
+        // =================================
+        // ダメージ計算・HP減少
+        // =================================
+
+        if (!BattleAttackExecutor.TryExecute(
+            selectedUnit,
+            target,
+            out BattleAttackPreview result))
+        {
+            Debug.LogWarning(
+                "攻撃を実行できませんでした。",
+                this
+            );
+
+            selectedAttackTarget = null;
+            attackPreviewPanel.ShowSearching();
+
+            return;
+        }
+
+        string attackerName =
+            selectedUnit.State.CombatStats.CharacterName;
+
+        string targetName =
+            target.State.CombatStats.CharacterName;
+
+        // =================================
+        // 第20段階：戦闘不能の表示反映
+        // =================================
+
+        bool isDefeated =
+            result.RemainingHP <= 0;
+
+        BattleUnitDefeatVisual defeatVisual =
+            target.GetComponent<BattleUnitDefeatVisual>();
+
+        if (defeatVisual != null)
+        {
+            defeatVisual.Refresh();
+        }
+        else if (isDefeated)
+        {
+            Debug.LogWarning(
+                $"{target.name} に" +
+                "BattleUnitDefeatVisualがありません。",
+                target
+            );
+        }
+
+        if (isDefeated)
+        {
+            Debug.Log(
+                $"【敵を撃破】{targetName}",
+                target
+            );
+        }
+
+        // =================================
+        // 攻撃側の行動終了
+        // =================================
+
+        selectedUnit.State.CompleteAction();
+
+        // =================================
+        // 攻撃結果
+        // =================================
+
+        Debug.Log(
+            "【味方の攻撃成功】" +
+            $"\n攻撃側：{attackerName}" +
+            $"\n対象：{targetName}" +
+            $"\n攻撃種別：{result.DamageType}" +
+            $"\n計算ダメージ：{result.CalculatedDamage}" +
+            $"\n実際に減ったHP：{result.AppliedDamage}" +
+            $"\n残HP：{result.RemainingHP}" +
+            $"\n戦闘不能：{isDefeated}",
+            this
+        );
+
+        DeselectUnit();
+    }
+
+
+    // ====================================
+    // 攻撃対象選択キャンセル
+    // ====================================
 
     /// <summary>
     /// 攻撃対象の選択をキャンセルする。
@@ -759,7 +922,8 @@ public sealed class UnitSelectionController : MonoBehaviour
         // 対象選択UIを消す
         attackPreviewPanel.Hide();
 
-        currentStep = SelectionStep.CommandMenu;
+        currentStep =
+            SelectionStep.CommandMenu;
 
         // 元のコマンドUIへ戻る
         commandPanel.Show();
@@ -847,6 +1011,10 @@ public sealed class UnitSelectionController : MonoBehaviour
         }
     }
 
+    // ====================================
+    // 移動キャンセル
+    // ====================================
+
     /// <summary>
     /// 移動経路を逆にたどって元のマスへ戻る。
     /// </summary>
@@ -917,7 +1085,8 @@ public sealed class UnitSelectionController : MonoBehaviour
         attackableCells.Clear();
         movePath.Clear();
 
-        currentStep = SelectionStep.None;
+        currentStep =
+            SelectionStep.None;
 
         gridDebugView.ClearMovementRange();
     }

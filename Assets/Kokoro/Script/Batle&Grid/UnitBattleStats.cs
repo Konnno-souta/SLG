@@ -228,10 +228,6 @@ public sealed class UnitBattleStats
             CurrentClass.MaxMovementRange;
     }
 
-    // ========================================
-    // 第16段階：現在HPの復元
-    // ========================================
-
     /// <summary>
     /// JSONに保存された現在HPを復元。
     ///
@@ -250,4 +246,45 @@ public sealed class UnitBattleStats
 
         return true;
     }
+
+
+    /// <summary>
+    /// 指定されたダメージで現在HPを減らす。
+    ///
+    /// ・ダメージ量の計算は行わない
+    /// ・HPは0未満にならない
+    /// ・実際に減ったHPを返す
+    ///
+    /// 今後、攻撃・敵AI・スキルなどから
+    /// 共通して呼び出す。
+    /// </summary>
+    public bool TryTakeDamage(
+        int requestedDamage,
+        out int appliedDamage)
+    {
+        appliedDamage = 0;
+
+        if (requestedDamage < 0)
+        {
+            return false;
+        }
+
+        if (CurrentHP <= 0)
+        {
+            return false;
+        }
+
+        int previousHP = CurrentHP;
+
+        CurrentHP = Math.Max(
+            0,
+            CurrentHP - requestedDamage
+        );
+
+        appliedDamage =
+            previousHP - CurrentHP;
+
+        return true;
+    }
+
 }

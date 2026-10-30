@@ -12,8 +12,8 @@ public sealed class CsvLoadTest : MonoBehaviour
             Debug.LogError("CsvLoadTest: GameDataRepositoryの読み込みに失敗しています。", this);
             return;
         }
-        ShowCharacter("Chara01");
-        ShowCharacter("Chara14");
+        ShowCharacter("1");
+        ShowCharacter("114");
     }
 
     private void ShowCharacter(string id)
