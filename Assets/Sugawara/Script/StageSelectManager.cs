@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 public class StageSelectManager : MonoBehaviour
 {
     [SerializeField] MapCharacter player;
-    [SerializeField] GameObject menuPanel;
+    [SerializeField] MenuSlider menuPanel;
     [SerializeField] StageInfoWindow stageInfo;
     [SerializeField] GameObject dialogPanel;
 
@@ -20,7 +20,7 @@ public class StageSelectManager : MonoBehaviour
     void Start()
     {
         // 最初は全部隠しておく
-        menuPanel.SetActive(false);
+        //menuPanel.SetActive(false);
         stageInfo.Hide();
         dialogPanel.SetActive(false);
 
@@ -54,14 +54,14 @@ public class StageSelectManager : MonoBehaviour
     void SelectStage(StagePoint stage)
     {
         selectedStage = stage;
-        menuPanel.SetActive(false);
+        menuPanel.Hide();
         stageInfo.Hide();
         player.MoveTo(stage.StandPosition);
     }
 
     void OnPlayerArrived()
     {
-        menuPanel.SetActive(true);
+        menuPanel.Show();
         stageInfo.Show(selectedStage.data);
     }
 
