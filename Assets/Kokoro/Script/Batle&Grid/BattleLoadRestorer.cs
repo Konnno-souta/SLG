@@ -268,6 +268,19 @@ public sealed class BattleLoadRestorer : MonoBehaviour
             // UnitView.SyncPositionで同期する。
             unit.SyncPosition(grid);
 
+
+
+            BattleUnitDefeatVisual defeatVisual =
+                unit.GetComponent<BattleUnitDefeatVisual>();
+
+            if (defeatVisual != null)
+            {
+                // HP0なら非表示、
+                // HP1以上なら再表示する。
+                defeatVisual.Refresh();
+            }
+
+
             if (showLogs)
             {
                 Debug.Log(
@@ -629,13 +642,20 @@ public sealed class BattleLoadRestorer : MonoBehaviour
                 );
             }
 
-            if (!usedPositions.Add(position))
+
+            // HP0のユニットは座標を保持するが、
+            // 盤面の占有判定には含めない。
+            if (saved.currentHP > 0)
             {
-                return LoadError(
-                    "保存座標が重複しています：" +
-                    position
-                );
+                if (!usedPositions.Add(position))
+                {
+                    return LoadError(
+                        "生存ユニットの保存座標が重複：" +
+                        position
+                    );
+                }
             }
+
 
             // ここまで正常なら復元対象に追加。
             pairs.Add(

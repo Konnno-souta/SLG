@@ -704,12 +704,24 @@ public sealed class EnemyAiMovementController : MonoBehaviour
 #endif
     }
 
+
+    /// <summary>
+    /// AIが利用可能な生存ユニットか。
+    ///
+    /// HP0の敵：
+    /// ・行動しない
+    ///
+    /// HP0の味方：
+    /// ・追跡対象にしない
+    ///
+    /// HP0の全ユニット：
+    /// ・移動障害物にしない
+    /// </summary>
     private static bool IsUsable(UnitView unit)
     {
-        return unit != null &&
-               unit.gameObject.activeInHierarchy &&
-               unit.State != null;
+        return BattleUnitLife.IsAlive(unit);
     }
+
 
     private static string GetUnitId(UnitView unit)
     {

@@ -29,7 +29,7 @@ public sealed class BattleUnitRecord
             StageId = row.Get("StageID"),
             CharacterId = row.Get("CharacterID"),
             Team = row.Get("Team"),
-            Memo = row.Get("Memo"),
+            Memo = row.Get("Name"),
             SourceLine = row.LineNumber,
             SourceX = csvX,
             SourceY = csvY,

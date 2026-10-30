@@ -200,14 +200,14 @@ public sealed class TurnManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 現在の戦闘参加ユニットか確認する。
+    /// 生存している戦闘参加ユニットか確認。
+    /// HP0のユニットはターン処理から除外する。
     /// </summary>
     private bool IsValidUnit(UnitView unit)
     {
-        return unit != null &&
-               unit.State != null &&
-               unit.gameObject.activeInHierarchy;
+        return BattleUnitLife.IsAlive(unit);
     }
+
 
     /// <summary>
     /// 味方が全員行動終了しているか。

@@ -688,16 +688,27 @@ public sealed class BattleSaveManager : MonoBehaviour
                     unit.y
                 );
 
-            if (!positions.Add(position))
-            {
-                Debug.LogError(
-                    $"ユニット配置が重複：" +
-                    position,
-                    this
-                );
 
-                return false;
+
+            // HP0のユニットは盤面を占有しない。
+            // ただし、保存データからは除外しない。
+            //
+            // 生存ユニット同士が
+            // 同じ座標にいる場合だけエラー。
+            if (unit.currentHP > 0)
+            {
+                if (!positions.Add(position))
+                {
+                    Debug.LogError(
+                        "生存ユニットの配置が重複：" +
+                        position,
+                        this
+                    );
+
+                    return false;
+                }
             }
+
 
             if (unit.maxHP <= 0 ||
                 unit.currentHP < 0 ||

@@ -2810,6 +2810,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1626952943
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1626952945}
+  - component: {fileID: 1626952944}
+  m_Layer: 0
+  m_Name: BattleHPDebugTester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1626952944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1626952943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66eab6defec1d2c4db7594146fb222d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleHPDebugTester
+  turnManager: {fileID: 1169402818}
+  testDamage: 10
+  enableTest: 0
+--- !u!4 &1626952945
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1626952943}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2756.4163, y: -0.00002, z: 32175.256}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1651776095
 GameObject:
   m_ObjectHideFlags: 0
@@ -2841,7 +2888,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleStageLoader
   stageConfigCsv: {fileID: 4900000, guid: a69f430f55d696e4297428ad85603f01, type: 3}
   stageCharaLayoutCsv: {fileID: 4900000, guid: 01e73bc49a473ca48ad88c23ee490a9a, type: 3}
-  stageId: ST01
+  stageId: 1
   grid: {fileID: 555877683}
   spawner: {fileID: 1610487110}
 --- !u!4 &1651776097
@@ -3565,3 +3612,4 @@ SceneRoots:
   - {fileID: 99772369}
   - {fileID: 2013331649}
   - {fileID: 927337705}
+  - {fileID: 1626952945}

@@ -1,20 +1,14 @@
-
 using System.Text;
 using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// UŒ‚‘ÎÛ‘I‘ğ‚ÌˆÄ“àUIB
-///
-/// EUŒ‚‰Â”\”ÍˆÍ‚Ìà–¾
-/// EË’ö“à‚Ì“G‚Ìî•ñ•\¦
-/// EË’öŠO‚Ì“G‚Ö‚ÌŒx•\¦
-///
-/// ÀÛ‚ÌUŒ‚ˆ—‚Ís‚í‚È‚¢B
+/// æ”»æ’ƒå¯¾è±¡é¸æŠæ™‚ã®æ¡ˆå†…UIã€‚
+/// ç¬¬19æ®µéšï¼šé¸æŠã—ãŸæ•µã®äºˆæ¸¬ãƒ€ãƒ¡ãƒ¼ã‚¸ã‚’è¡¨ç¤ºã€‚
 /// </summary>
 public sealed class AttackTargetPreviewPanel : MonoBehaviour
 {
-    [Header("UIQÆ")]
+    [Header("UIå‚ç…§")]
     [SerializeField]
     private GameObject panelRoot;
 
@@ -22,30 +16,21 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
     private TMP_Text informationText;
 
     public bool IsOpen =>
-        panelRoot != null &&
-        panelRoot.activeSelf;
+        panelRoot != null && panelRoot.activeSelf;
 
     private void Awake()
     {
-        if (panelRoot == null ||
-            informationText == null)
+        if (panelRoot == null || informationText == null)
         {
             Debug.LogError(
-                "AttackTargetPreviewPanel‚ÌQÆ‚ª" +
-                "•s‘«‚µ‚Ä‚¢‚Ü‚·B",
-                this
-            );
-
+                "AttackTargetPreviewPanelã®å‚ç…§ãŒä¸è¶³ã—ã¦ã„ã¾ã™ã€‚",
+                this);
             enabled = false;
             return;
         }
 
         panelRoot.SetActive(false);
     }
-
-    // =====================================
-    // •\¦ŠJn
-    // =====================================
 
     public void Show()
     {
@@ -55,13 +40,8 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
         }
 
         panelRoot.SetActive(true);
-
         ShowSearching();
     }
-
-    // =====================================
-    // ‘ÎÛ‚ğ’T‚µ‚Ä‚¢‚éó‘Ô
-    // =====================================
 
     public void ShowSearching()
     {
@@ -71,18 +51,15 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
         }
 
         informationText.text =
-            "yUŒ‚‘ÎÛ‚Ì‘I‘ğz\n\n" +
-            "Ô‚¢˜g‚ªUŒ‚‰Â”\‚Èƒ}ƒX‚Å‚·B\n\n" +
-            "”ÍˆÍ“à‚É‚¢‚é“G‚ğ‘I‚ñ‚Å‚­‚¾‚³‚¢B\n\n" +
-            "¶ƒNƒŠƒbƒN / EnterF‘ÎÛ‘I‘ğ\n" +
-            "Esc / ‰EƒNƒŠƒbƒNF–ß‚é\n\n" +
-            "¦ ƒ_ƒ[ƒWˆ—‚Í–¢À‘•‚Å‚·B";
+            "ã€æ”»æ’ƒå¯¾è±¡ã®é¸æŠã€‘\n\n" +
+            "èµ¤ã„æ ãŒæ”»æ’ƒå¯èƒ½ãªãƒã‚¹ã§ã™ã€‚\n\n" +
+            "å°„ç¨‹å†…ã®æ•µã‚’1å›é¸æŠï¼šæƒ…å ±è¡¨ç¤º\n" +
+            "åŒã˜æ•µã‚’ã‚‚ã†1å›é¸æŠï¼šæ”»æ’ƒå®Ÿè¡Œ\n\n" +
+            "å·¦ã‚¯ãƒªãƒƒã‚¯ / Enterï¼šå¯¾è±¡é¸æŠãƒ»æ±ºå®š\n" +
+            "Esc / å³ã‚¯ãƒªãƒƒã‚¯ï¼šæˆ»ã‚‹\n\n" +
+            "â€»HP0ã§æˆ¦é—˜ä¸èƒ½ã«ãªã‚Šã¾ã™ã€‚";
     }
 
-    /// <summary>
-    /// RangeType‚ª•s–¾‚È‚Ç‚Å
-    /// UŒ‚‰Â”\‚Èƒ}ƒX‚ğŒvZ‚Å‚«‚È‚¢ê‡B
-    /// </summary>
     public void ShowNoRange(
         string className,
         string rangeType)
@@ -93,175 +70,105 @@ public sealed class AttackTargetPreviewPanel : MonoBehaviour
         }
 
         informationText.text =
-            "yUŒ‚‘ÎÛ‚Ì‘I‘ğz\n\n" +
-            "UŒ‚”ÍˆÍ‚ğæ“¾‚Å‚«‚Ü‚¹‚ñB\n\n" +
-            $"ƒNƒ‰ƒXF{className}\n" +
-            $"RangeTypeF{rangeType}\n\n" +
-            "CSV‚ÆUŒ‚”ÍˆÍƒ‹[ƒ‹‚ğ" +
-            "Šm”F‚µ‚Ä‚­‚¾‚³‚¢B\n\n" +
-            "Esc / ‰EƒNƒŠƒbƒNF–ß‚é";
+            "ã€æ”»æ’ƒå¯¾è±¡ã®é¸æŠã€‘\n\n" +
+            "æ”»æ’ƒç¯„å›²ã‚’å–å¾—ã§ãã¾ã›ã‚“ã€‚\n\n" +
+            $"ã‚¯ãƒ©ã‚¹ï¼š{className}\n" +
+            $"RangeTypeï¼š{rangeType}\n\n" +
+            "CSVã¨æ”»æ’ƒç¯„å›²ãƒ«ãƒ¼ãƒ«ã‚’ç¢ºèªã—ã¦ãã ã•ã„ã€‚\n\n" +
+            "Esc / å³ã‚¯ãƒªãƒƒã‚¯ï¼šæˆ»ã‚‹";
     }
 
-    // =====================================
-    // ”ÍˆÍ“à‚Ì“G‚ğ‘I‘ğ
-    // =====================================
-
-    /// <summary>
-    /// UŒ‚‰Â”\”ÍˆÍ“à‚É‚¢‚é“G‚Ìî•ñ‚ğ•\¦B
-    ///
-    /// ¦ ‚±‚Ì’iŠK‚Å‚ÍHP‚ğŒ¸‚ç‚³‚È‚¢B
-    /// </summary>
-    public void ShowCandidate(
-        UnitView attacker,
-        UnitView target)
+    public void ShowCandidate(UnitView attacker, UnitView target)
     {
         if (informationText == null ||
-            attacker == null ||
-            target == null ||
-            attacker.State == null ||
-            target.State == null)
+            attacker == null || target == null ||
+            attacker.State == null || target.State == null)
         {
             return;
         }
 
-        UnitBattleStats attackerStats =
-            attacker.State.CombatStats;
+        UnitBattleStats attackerStats = attacker.State.CombatStats;
+        UnitBattleStats targetStats = target.State.CombatStats;
 
-        UnitBattleStats targetStats =
-            target.State.CombatStats;
-
-        Vector2Int attackerPosition =
-            attacker.State.Position;
-
-        Vector2Int targetPosition =
-            target.State.Position;
+        Vector2Int attackerPosition = attacker.State.Position;
+        Vector2Int targetPosition = target.State.Position;
 
         int distance =
-            Mathf.Abs(
-                attackerPosition.x - targetPosition.x
-            ) +
-            Mathf.Abs(
-                attackerPosition.y - targetPosition.y
-            );
+            Mathf.Abs(attackerPosition.x - targetPosition.x) +
+            Mathf.Abs(attackerPosition.y - targetPosition.y);
 
-        string attackerName =
-            attackerStats != null
-                ? attackerStats.CharacterName
-                : attacker.name;
+        string attackerName = attackerStats != null
+            ? attackerStats.CharacterName : attacker.name;
+        string targetName = targetStats != null
+            ? targetStats.CharacterName : target.name;
 
-        string targetName =
-            targetStats != null
-                ? targetStats.CharacterName
-                : target.name;
-
-        StringBuilder builder =
-            new StringBuilder();
-
-        builder.AppendLine(
-            "yUŒ‚‘ÎÛF”ÍˆÍ“àz"
-        );
-
+        StringBuilder builder = new StringBuilder();
+        builder.AppendLine("ã€æ”»æ’ƒå¯¾è±¡ï¼šç¯„å›²å†…ã€‘");
         builder.AppendLine();
-
-        builder.AppendLine(
-            $"UŒ‚‘¤F{attackerName}"
-        );
-
-        builder.AppendLine(
-            $"‘ÎÛF{targetName}"
-        );
-
-        builder.AppendLine(
-            $"‘ÎÛÀ•WF({targetPosition.x + 1}, " +
-            $"{targetPosition.y + 1})"
-        );
-
-        builder.AppendLine(
-            $"c‰¡‹——£F{distance}"
-        );
+        builder.AppendLine($"æ”»æ’ƒå´ï¼š{attackerName}");
+        builder.AppendLine($"å¯¾è±¡ï¼š{targetName}");
+        builder.AppendLine($"å¯¾è±¡åº§æ¨™ï¼š({targetPosition.x + 1}, {targetPosition.y + 1})");
+        builder.AppendLine($"ç¸¦æ¨ªè·é›¢ï¼š{distance}");
 
         if (attackerStats != null)
         {
             builder.AppendLine();
-
-            builder.AppendLine(
-                $"ƒNƒ‰ƒXF{attackerStats.CurrentClassName}"
-            );
-
-            builder.AppendLine(
-                $"UŒ‚ƒ^ƒCƒvF{attackerStats.RangeType}"
-            );
-
-            builder.AppendLine(
-                $"CSVË’öF{attackerStats.MinAttackRange}" +
-                $"`{attackerStats.MaxAttackRange}"
-            );
+            builder.AppendLine($"ã‚¯ãƒ©ã‚¹ï¼š{attackerStats.CurrentClassName}");
+            builder.AppendLine($"æ”»æ’ƒã‚¿ã‚¤ãƒ—ï¼š{attackerStats.RangeType}");
+            builder.AppendLine($"CSVå°„ç¨‹ï¼š{attackerStats.MinAttackRange}ï½{attackerStats.MaxAttackRange}");
         }
 
         if (targetStats != null)
         {
             builder.AppendLine();
-
-            builder.AppendLine(
-                $"‘ÎÛHPF{targetStats.CurrentHP}" +
-                $"/{targetStats.MaxHP}"
-            );
+            builder.AppendLine($"å¯¾è±¡HPï¼š{targetStats.CurrentHP}/{targetStats.MaxHP}");
         }
 
-        builder.AppendLine();
+        if (BattleAttackExecutor.TryPreview(attacker, target,
+            out BattleAttackPreview preview))
+        {
+            builder.AppendLine();
+            builder.AppendLine($"æ”»æ’ƒç¨®åˆ¥ï¼š{preview.DamageType}");
+            builder.AppendLine($"è¨ˆç®—ãƒ€ãƒ¡ãƒ¼ã‚¸ï¼ˆåˆ‡ã‚Šæ¨ã¦ï¼‰ï¼š{preview.CalculatedDamage}");
+            builder.AppendLine($"ä»Šå›æ¸›ã‚‰ã™HPï¼š{preview.AppliedDamage}");
+            builder.AppendLine($"æ”»æ’ƒå¾Œã®æ®‹HPï¼š{preview.RemainingHP}");
+            builder.AppendLine(
+    preview.RemainingHP <= 0 ? "ã“ã®æ”»æ’ƒã§å¯¾è±¡ã¯æˆ¦é—˜ä¸èƒ½ã«ãªã‚Šã¾ã™ã€‚"
+        :   "å¯¾è±¡ã¯æ”»æ’ƒå¾Œã‚‚æˆ¦é—˜å¯èƒ½ã§ã™ã€‚");
+            builder.AppendLine();
+            builder.AppendLine("åŒã˜æ•µã‚’ã‚‚ã†ä¸€åº¦æ±ºå®šï¼šæ”»æ’ƒå®Ÿè¡Œ");
+        }
+        else
+        {
+            builder.AppendLine();
+            builder.AppendLine("æ”»æ’ƒã‚¿ã‚¤ãƒ—ã‚’åˆ¤å®šã§ãã¾ã›ã‚“ã€‚");
+            builder.AppendLine("CSVã®RangeTypeã‚’ç¢ºèªã—ã¦ãã ã•ã„ã€‚");
+        }
 
-        builder.AppendLine(
-            "UŒ‚‰Â”\”ÍˆÍ“à‚Ì“G‚Å‚·B"
-        );
-
-        builder.AppendLine(
-            "¦ UŒ‚ÀsEƒ_ƒ[ƒW‚Í–¢À‘•"
-        );
-
-        builder.AppendLine(
-            "Esc / ‰EƒNƒŠƒbƒN‚Å–ß‚é"
-        );
-
-        informationText.text =
-            builder.ToString();
+        builder.AppendLine("Esc / å³ã‚¯ãƒªãƒƒã‚¯ã§æˆ»ã‚‹");
+        informationText.text = builder.ToString();
     }
 
-    // =====================================
-    // ”ÍˆÍŠO‚Ì“G‚ğ‘I‘ğ
-    // =====================================
-
-    /// <summary>
-    /// “G‚Å‚Í‚ ‚é‚ªAUŒ‚”ÍˆÍŠO‚¾‚Á‚½ê‡B
-    /// </summary>
     public void ShowOutOfRange(UnitView target)
     {
-        if (informationText == null ||
-            target == null)
+        if (informationText == null || target == null)
         {
             return;
         }
 
         string targetName = target.name;
-
-        if (target.State != null &&
-            target.State.CombatStats != null)
+        if (target.State != null && target.State.CombatStats != null)
         {
-            targetName =
-                target.State.CombatStats.CharacterName;
+            targetName = target.State.CombatStats.CharacterName;
         }
 
         informationText.text =
-            "yUŒ‚‘ÎÛF”ÍˆÍŠOz\n\n" +
-            $"‘ÎÛF{targetName}\n\n" +
-            "‚±‚Ì“G‚ÍUŒ‚‰Â”\”ÍˆÍ‚ÌŠO‚É‚¢‚Ü‚·B\n\n" +
-            "Ô‚¢˜g‚Ì’†‚É‚¢‚é“G‚ğ" +
-            "‘I‘ğ‚µ‚Ä‚­‚¾‚³‚¢B\n\n" +
-            "Esc / ‰EƒNƒŠƒbƒNF–ß‚é";
+            "ã€æ”»æ’ƒå¯¾è±¡ï¼šç¯„å›²å¤–ã€‘\n\n" +
+            $"å¯¾è±¡ï¼š{targetName}\n\n" +
+            "ã“ã®æ•µã¯æ”»æ’ƒå¯èƒ½ç¯„å›²ã®å¤–ã«ã„ã¾ã™ã€‚\n\n" +
+            "èµ¤ã„æ ã®ä¸­ã«ã„ã‚‹æ•µã‚’é¸æŠã—ã¦ãã ã•ã„ã€‚\n\n" +
+            "Esc / å³ã‚¯ãƒªãƒƒã‚¯ï¼šæˆ»ã‚‹";
     }
-
-    // =====================================
-    // ”ñ•\¦
-    // =====================================
 
     public void Hide()
     {
