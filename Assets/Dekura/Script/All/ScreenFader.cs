@@ -65,8 +65,6 @@ public static class ScreenFader
     // 黒い全画面Canvasをコードで生成(シーンをまたいで残る)
     private static void Create()
     {
-        Debug.Log("Creating...");
-
         if (group != null) return;
 
         GameObject go = new GameObject("ScreenFader");
