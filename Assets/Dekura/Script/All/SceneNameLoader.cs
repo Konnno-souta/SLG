@@ -3,6 +3,11 @@ using UnityEngine.SceneManagement;
 
 public static class SceneNameLoader
 {
+    /// <summary>
+    /// シーンの名前の有無を取得する
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
     public static bool HasSceneName(string name)
     {
         int count = SceneManager.sceneCountInBuildSettings;

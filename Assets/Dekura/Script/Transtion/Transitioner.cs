@@ -1,26 +1,40 @@
 using UnityEngine;
 using System.Collections;
 
-public class Transitioner : MonoBehaviour
+namespace Transition
 {
-    [SerializeField] private float transitionInterval = 2f;
-    [SerializeField] private GameObject transitionObj;
-
-    public void Transition(string nextscene)
+    public class Transitioner : MonoBehaviour
     {
-        if (!SceneNameLoader.HasSceneName(nextscene))
+        [SerializeField] private float transitionInterval = 2f;
+        [SerializeField] private GameObject transitionObj;
+
+        string standbyScene;
+
+        public void Transition(string nextscene)
         {
-            Debug.Log("Scene‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ!!!!!!!!!!!!!!!!!!!!");
-            return;
+            if (standbyScene != null) return;
+            if (!SceneNameLoader.HasSceneName(nextscene))
+            {
+                Debug.Log("Scene‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ!!!!!!!!!!!!!!!!!!!!");
+                return;
+            }
+
+            ScreenFader.FadeOutIn(0.5f, 0.5f, () =>
+            {
+                GameObject go = Instantiate(transitionObj);
+                go.GetComponent<TransitionAnimation>()?.InitData(transitionInterval,this);
+            });
+
+            standbyScene = nextscene;
         }
 
-        ScreenFader.FadeOutIn(0.5f, 0.5f, () => Transitioning(nextscene));
-    }
+        public IEnumerator Transitioning()
+        {
+            yield return new WaitForSeconds(transitionInterval);
 
-    private IEnumerator Transitioning(string nextscene)
-    {
-        Instantiate(transitionObj);
-        yield return new WaitForSeconds(transitionInterval);
-        ScreenFader.LoadScene(nextscene);
+            ScreenFader.LoadScene(standbyScene);
+            standbyScene = null;
+        }
     }
 }
+
