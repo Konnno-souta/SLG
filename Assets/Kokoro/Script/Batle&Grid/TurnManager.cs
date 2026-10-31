@@ -4,8 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.EventSystems.EventTrigger;
 
 /// <summary>
 /// 戦闘中のフェーズ。
@@ -19,17 +17,18 @@ public enum BattlePhase
 
 /// <summary>
 /// 戦闘のターン・フェーズを管理する。
+/// ・主人公のHP0でGAME OVER
+/// ・敵全滅でSTAGE CLEAR
+/// ・勝敗確定後の操作・ターン進行停止
 ///
-/// PLAYER PHASE
-///     ↓
-/// ENEMY PHASE
-///     ↓
-/// 次のPLAYER PHASE
-///
-/// 敵AIは未実装のため、現在は仮の待機処理。
+/// 既存の移動・敵AI・昼夜・ロード機能を維持。
 /// </summary>
 public sealed class TurnManager : MonoBehaviour
 {
+    // =====================================
+    // Inspector参照
+    // =====================================
+
     [Header("システム参照")]
     [SerializeField]
     private GridClickInput gridInput;
@@ -41,37 +40,84 @@ public sealed class TurnManager : MonoBehaviour
     [SerializeField]
     private TMP_Text phaseText;
 
-    [Header("敵フェーズのテスト設定")]
+    [Header("敵フェーズ")]
     [SerializeField, Min(0f)]
     private float enemyActionDelay = 0.3f;
 
     [Header("敵AI")]
     [SerializeField]
-    private EnemyAiMovementController enemyAiMovementController;
+    private EnemyAiMovementController
+        enemyAiMovementController;
 
-    // 現在のフェーズ
-    public BattlePhase CurrentPhase { get; private set; }
-        = BattlePhase.None;
+    // 第22段階で追加するInspector項目
+    [Header("第22段階：戦闘結果UI")]
+    [SerializeField]
+    private GameObject stageClearPanel;
 
-    // 現在のターン数
-    public int TurnNumber { get; private set; } = 1;
+    [SerializeField]
+    private GameObject gameOverPanel;
 
-    // フェーズ切り替え中か
+    // =====================================
+    // 主人公の識別
+    // =====================================
+
+    // 新Character.csvのクランのID。
+    private const string ProtagonistCharacterId = "1";
+
+    // =====================================
+    // 戦闘状態
+    // =====================================
+
+    public BattlePhase CurrentPhase
+    {
+        get;
+        private set;
+    } = BattlePhase.None;
+
+    public int TurnNumber
+    {
+        get;
+        private set;
+    } = 1;
+
     private bool isChangingPhase;
 
-    // 戦闘参加ユニット一覧
-    private readonly List<UnitView> battleUnits = new();
+    // 第22段階：勝敗確定済みか。
+    private bool isBattleFinished;
 
-    /// <summary>
-    /// 将来、昼夜システムやUIが
-    /// フェーズ変更を受け取るためのイベント。
-    /// </summary>
-    public event Action<BattlePhase, int> PhaseChanged;
+    public bool IsBattleFinished =>
+        isBattleFinished;
 
-    /// <summary>
-    /// 全システムのStartが終了した後、
-    /// 登録済みユニットを取得する。
-    /// </summary>
+    // すべてのユニットを保持する。
+    // HP0のユニットもロード用に残す。
+    private readonly List<UnitView> battleUnits =
+        new List<UnitView>();
+
+    // 既存のイベントを維持。
+    public event Action<BattlePhase, int>
+        PhaseChanged;
+
+    // =====================================
+    // UI初期化
+    // =====================================
+
+    private void Awake()
+    {
+        if (stageClearPanel != null)
+        {
+            stageClearPanel.SetActive(false);
+        }
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
+    }
+
+    // =====================================
+    // 初期化
+    // =====================================
+
     private IEnumerator Start()
     {
         if (gridInput == null ||
@@ -86,23 +132,41 @@ public sealed class TurnManager : MonoBehaviour
             yield break;
         }
 
-        // StageLoaderによるCSV配置や、
+        // StageLoaderによる配置と、
         // UnitSelectionControllerの初期化を待つ。
         yield return null;
 
         RefreshUnits();
 
-        int allyCount = CountUnits(UnitTeam.Ally);
-        int enemyCount = CountUnits(UnitTeam.Enemy);
+        int allyCount =
+            CountUnits(UnitTeam.Ally);
+
+        int enemyCount =
+            CountUnits(UnitTeam.Enemy);
 
         if (allyCount == 0)
         {
             Debug.LogError(
-                "TurnManager: 味方ユニットがいません。" +
-                "キャラクターの配置を確認してください。",
+                "TurnManager: 味方ユニットがいません。",
                 this
             );
 
+            enabled = false;
+            yield break;
+        }
+
+        // 主人公はCharacter_IDで識別する。
+        // 名前による判定にはしない。
+        if (!HasProtagonist())
+        {
+            Debug.LogError(
+                "TurnManager: 主人公のクラン" +
+                "（Character_ID=1）が見つかりません。" +
+                "Stage_CharaLayout.csvを確認してください。",
+                this
+            );
+
+            enabled = false;
             yield break;
         }
 
@@ -112,30 +176,51 @@ public sealed class TurnManager : MonoBehaviour
             this
         );
 
+        isBattleFinished = false;
         TurnNumber = 1;
 
         BeginPlayerPhase();
     }
 
+    // =====================================
+    // 毎フレーム処理
+    // =====================================
+
     private void Update()
     {
-        if (CurrentPhase == BattlePhase.None)
+        if (CurrentPhase == BattlePhase.None ||
+            isBattleFinished)
+        {
             return;
+        }
 
-        // 行動終了に応じてユニットの見た目を更新
+        // 従来の行動終了表示。
         UpdateUnitVisuals();
 
-        // 味方フェーズ以外では何もしない
-        if (CurrentPhase != BattlePhase.Player)
+        // 第22段階：
+        // フェーズ進行より先に勝敗を判定する。
+        if (TryFinishBattle())
+        {
             return;
+        }
+
+        if (CurrentPhase != BattlePhase.Player)
+        {
+            return;
+        }
 
         if (isChangingPhase)
+        {
             return;
+        }
 
-        // 味方全員が行動を終えたら敵フェーズへ
+        // 生存している味方全員が行動終了したら
+        // ENEMY PHASEへ進む。
         if (AreAllAlliesFinished())
         {
-            StartCoroutine(EnemyPhaseRoutine());
+            StartCoroutine(
+                EnemyPhaseRoutine()
+            );
         }
     }
 
@@ -144,10 +229,8 @@ public sealed class TurnManager : MonoBehaviour
     // =====================================
 
     /// <summary>
-    /// シーン内の初期化済みユニットを取得。
-    ///
-    /// CSV自動生成・手動配置の両方に対応する。
-    /// 将来、増援が発生した場合にも再取得できる。
+    /// シーン内のユニットを再取得する。
+    /// HP0のユニットもリストに保持する。
     /// </summary>
     public void RefreshUnits()
     {
@@ -156,11 +239,13 @@ public sealed class TurnManager : MonoBehaviour
         UnitView[] foundUnits;
 
 #if UNITY_2022_2_OR_NEWER
-        foundUnits = FindObjectsByType<UnitView>(
-            FindObjectsSortMode.None
-        );
+        foundUnits =
+            FindObjectsByType<UnitView>(
+                FindObjectsSortMode.None
+            );
 #else
-        foundUnits = FindObjectsOfType<UnitView>();
+        foundUnits =
+            FindObjectsOfType<UnitView>();
 #endif
 
         foreach (UnitView unit in foundUnits)
@@ -179,7 +264,7 @@ public sealed class TurnManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 指定チームのユニット数を取得する。
+    /// 生存している指定チームのユニット数。
     /// </summary>
     private int CountUnits(UnitTeam team)
     {
@@ -188,7 +273,9 @@ public sealed class TurnManager : MonoBehaviour
         foreach (UnitView unit in battleUnits)
         {
             if (!IsValidUnit(unit))
+            {
                 continue;
+            }
 
             if (unit.State.Team == team)
             {
@@ -200,17 +287,16 @@ public sealed class TurnManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 生存している戦闘参加ユニットか確認。
-    /// HP0のユニットはターン処理から除外する。
+    /// 第20段階のHP0除外処理を維持。
+    /// ターン処理に参加できるのは生存者のみ。
     /// </summary>
     private bool IsValidUnit(UnitView unit)
     {
         return BattleUnitLife.IsAlive(unit);
     }
 
-
     /// <summary>
-    /// 味方が全員行動終了しているか。
+    /// 生存している味方が全員行動を終えたか。
     /// </summary>
     private bool AreAllAlliesFinished()
     {
@@ -219,40 +305,198 @@ public sealed class TurnManager : MonoBehaviour
         foreach (UnitView unit in battleUnits)
         {
             if (!IsValidUnit(unit))
+            {
                 continue;
+            }
 
             if (unit.State.Team != UnitTeam.Ally)
+            {
                 continue;
+            }
 
             allyCount++;
 
-            // まだ行動できる味方がいる
             if (!unit.State.HasActed)
             {
                 return false;
             }
         }
 
-        // 味方がいない場合は切り替えない
         return allyCount > 0;
+    }
+
+    // =====================================
+    // 第22段階：勝敗判定
+    // =====================================
+
+    /// <summary>
+    /// 主人公が配置されているかを確認する。
+    /// </summary>
+    private bool HasProtagonist()
+    {
+        foreach (UnitView unit in battleUnits)
+        {
+            if (unit == null ||
+                unit.State == null ||
+                unit.MasterData == null)
+            {
+                continue;
+            }
+
+            if (unit.State.Team == UnitTeam.Ally &&
+                unit.MasterData.Id ==
+                    ProtagonistCharacterId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 主人公が生存しているか。
+    /// 他の味方の生存状態は判定しない。
+    /// </summary>
+    private bool IsProtagonistAlive()
+    {
+        foreach (UnitView unit in battleUnits)
+        {
+            if (unit == null ||
+                unit.State == null ||
+                unit.MasterData == null)
+            {
+                continue;
+            }
+
+            if (unit.State.Team != UnitTeam.Ally ||
+                unit.MasterData.Id !=
+                    ProtagonistCharacterId)
+            {
+                continue;
+            }
+
+            return BattleUnitLife.IsAlive(unit);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 勝利・敗北の判定。
+    ///
+    /// 1. 主人公HP0なら敗北
+    /// 2. 敵全滅なら勝利
+    ///
+    /// 両方成立した場合は敗北優先。
+    /// </summary>
+    private bool TryFinishBattle()
+    {
+        if (isBattleFinished)
+        {
+            return true;
+        }
+
+        // 最優先：主人公の戦闘不能
+        if (!IsProtagonistAlive())
+        {
+            FinishBattle(false);
+            return true;
+        }
+
+        // 次に敵全滅を確認
+        if (CountUnits(UnitTeam.Enemy) == 0)
+        {
+            FinishBattle(true);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 勝敗を確定して操作とターン進行を停止。
+    /// </summary>
+    private void FinishBattle(bool isVictory)
+    {
+        if (isBattleFinished)
+        {
+            return;
+        }
+
+        isBattleFinished = true;
+        isChangingPhase = false;
+
+        // NONEにすることで、
+        // セーブ・ロードも新たには行えなくなる。
+        CurrentPhase = BattlePhase.None;
+
+        // プレイヤーの操作を停止。
+        SetPlayerControlEnabled(false);
+
+        // 結果パネルを表示。
+        if (stageClearPanel != null)
+        {
+            stageClearPanel.SetActive(isVictory);
+        }
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(!isVictory);
+        }
+
+        // 既存のターン表示にも結果を反映。
+        if (phaseText != null)
+        {
+            phaseText.text =
+                $"TURN {TurnNumber}  " +
+                (isVictory
+                    ? "STAGE CLEAR"
+                    : "GAME OVER");
+        }
+
+        if (isVictory)
+        {
+            Debug.Log(
+                "【STAGE CLEAR】\n" +
+                "すべての敵ユニットを撃破しました。",
+                this
+            );
+        }
+        else
+        {
+            Debug.Log(
+                "【GAME OVER】\n" +
+                "主人公クランが戦闘不能になりました。",
+                this
+            );
+        }
+
+        // 既存のPhaseChangedはここでは呼ばない。
+        // 昼夜変更や敵AIに誤って
+        // フェーズ開始を通知しないため。
     }
 
     // =====================================
     // PLAYER PHASE
     // =====================================
 
-    /// <summary>
-    /// 味方フェーズを開始する。
-    /// </summary>
     private void BeginPlayerPhase()
     {
+        if (isBattleFinished)
+        {
+            return;
+        }
+
         CurrentPhase = BattlePhase.Player;
 
-        // 味方の行動状態をリセット
+        // 生存している味方だけリセット。
         foreach (UnitView unit in battleUnits)
         {
             if (!IsValidUnit(unit))
+            {
                 continue;
+            }
 
             if (unit.State.Team == UnitTeam.Ally)
             {
@@ -260,10 +504,8 @@ public sealed class TurnManager : MonoBehaviour
             }
         }
 
-        // ユニットの暗転状態を更新
         UpdateUnitVisuals();
 
-        // プレイヤー操作を有効にする
         SetPlayerControlEnabled(true);
 
         isChangingPhase = false;
@@ -274,6 +516,7 @@ public sealed class TurnManager : MonoBehaviour
             $"TURN {TurnNumber} : PLAYER PHASE"
         );
 
+        // 既存の昼夜・危険範囲への通知。
         PhaseChanged?.Invoke(
             CurrentPhase,
             TurnNumber
@@ -284,21 +527,18 @@ public sealed class TurnManager : MonoBehaviour
     // ENEMY PHASE
     // =====================================
 
-    /// <summary>
-    /// 敵フェーズの処理。
-    ///
-    /// 現在は敵AI未実装のため、
-    /// 敵が順番に待機する仮処理。
-    /// </summary>
     private IEnumerator EnemyPhaseRoutine()
     {
-        isChangingPhase = true;
+        if (isBattleFinished ||
+            TryFinishBattle())
+        {
+            yield break;
+        }
 
+        isChangingPhase = true;
         CurrentPhase = BattlePhase.Enemy;
 
-        // プレイヤー操作を停止する
         SetPlayerControlEnabled(false);
-
         UpdatePhaseText();
 
         Debug.Log(
@@ -310,11 +550,13 @@ public sealed class TurnManager : MonoBehaviour
             TurnNumber
         );
 
-        // 敵の行動状態をリセット
+        // 生存している敵の行動をリセット。
         foreach (UnitView unit in battleUnits)
         {
             if (!IsValidUnit(unit))
+            {
                 continue;
+            }
 
             if (unit.State.Team == UnitTeam.Enemy)
             {
@@ -324,44 +566,75 @@ public sealed class TurnManager : MonoBehaviour
 
         UpdateUnitVisuals();
 
-        // 敵を1体ずつ仮で行動させる
+        // 敵を1体ずつ行動させる。
         foreach (UnitView unit in battleUnits)
         {
-            if (!IsValidUnit(unit))
-                continue;
+            // 前の敵が主人公を倒していたら停止。
+            if (TryFinishBattle())
+            {
+                yield break;
+            }
 
-            if (unit.State.Team != UnitTeam.Enemy)
+            if (!IsValidUnit(unit) ||
+                unit.State.Team != UnitTeam.Enemy)
+            {
                 continue;
+            }
 
-            // 将来ここで敵AIを実行する
-            // 現在は少し待って行動終了とする
             yield return new WaitForSeconds(
                 enemyActionDelay
             );
 
-            if (!IsValidUnit(unit))
-                continue;
+            // 待機中に戦闘終了した場合にも対応。
+            if (TryFinishBattle())
+            {
+                yield break;
+            }
 
-            // 敵の移動が終わるまで待つ。
+            if (!IsValidUnit(unit))
+            {
+                continue;
+            }
+
+            // 既存の敵AIによる移動・攻撃。
             if (enemyAiMovementController != null)
             {
                 yield return StartCoroutine(
-                    enemyAiMovementController.ExecuteAction(unit));
+                    enemyAiMovementController
+                        .ExecuteAction(unit)
+                );
             }
 
-            // この後に、既存の
-            // enemy.State.CompleteAction();
-            // を実行する。
+            // 第22段階：
+            // 敵の攻撃によって主人公が倒れた場合、
+            // 次の敵を行動させずに終了する。
+            if (TryFinishBattle())
+            {
+                yield break;
+            }
+
+            if (!IsValidUnit(unit))
+            {
+                continue;
+            }
+
+            // 行動終了の管理は従来どおり
+            // TurnManagerで実施。
             unit.State.CompleteAction();
 
             Debug.Log(
-                $"{unit.name}: 敵の仮行動終了"
+                $"{unit.name}: 敵の行動終了"
             );
 
             UpdateUnitVisuals();
         }
 
-        // 敵全員の仮行動が終了
+        // 全敵行動後にも勝敗を確認。
+        if (TryFinishBattle())
+        {
+            yield break;
+        }
+
         EndTurn();
     }
 
@@ -369,39 +642,36 @@ public sealed class TurnManager : MonoBehaviour
     // ターン終了
     // =====================================
 
-    /// <summary>
-    /// 1ターンを終了し、次のターンへ進む。
-    /// </summary>
     private void EndTurn()
     {
+        if (isBattleFinished ||
+            TryFinishBattle())
+        {
+            return;
+        }
+
         Debug.Log(
             $"TURN {TurnNumber} 終了"
         );
 
         TurnNumber++;
 
-        // 将来ここに昼夜判定を接続する。
-        // 例：TimeOfDayManagerなど
-
+        // 昼夜切り替えは従来の
+        // PhaseChangedイベントを使用。
         BeginPlayerPhase();
     }
 
     // =====================================
-    // 入力の切り替え
+    // プレイヤー操作の切り替え
     // =====================================
 
-    /// <summary>
-    /// 味方フェーズ以外の操作を禁止する。
-    /// </summary>
     private void SetPlayerControlEnabled(bool value)
     {
-        // グリッドのマウス・ゲームパッド入力
         if (gridInput != null)
         {
             gridInput.SetGridInputEnabled(value);
         }
 
-        // ユニット選択やRキー操作も停止
         if (selectionController != null)
         {
             selectionController.enabled = value;
@@ -412,22 +682,22 @@ public sealed class TurnManager : MonoBehaviour
     // 行動終了表示
     // =====================================
 
-    /// <summary>
-    /// 各ユニットの行動終了状態を
-    /// 3Dモデルの見た目に反映する。
-    /// </summary>
     private void UpdateUnitVisuals()
     {
         foreach (UnitView unit in battleUnits)
         {
             if (!IsValidUnit(unit))
+            {
                 continue;
+            }
 
             UnitActionVisual actionVisual =
                 unit.GetComponent<UnitActionVisual>();
 
             if (actionVisual == null)
+            {
                 continue;
+            }
 
             actionVisual.SetDimmed(
                 unit.State.HasActed
@@ -436,16 +706,15 @@ public sealed class TurnManager : MonoBehaviour
     }
 
     // =====================================
-    // UI表示
+    // フェーズ表示
     // =====================================
 
-    /// <summary>
-    /// 現在のフェーズ名を画面に表示する。
-    /// </summary>
     private void UpdatePhaseText()
     {
         if (phaseText == null)
+        {
             return;
+        }
 
         string phaseName = "";
 
@@ -458,27 +727,19 @@ public sealed class TurnManager : MonoBehaviour
             case BattlePhase.Enemy:
                 phaseName = "ENEMY PHASE";
                 break;
-
-            default:
-                phaseName = "";
-                break;
         }
 
         phaseText.text =
             $"TURN {TurnNumber}  {phaseName}";
     }
 
+    // =====================================
+    // 第16段階：ターン復元
+    // =====================================
 
     /// <summary>
-    /// セーブデータからPLAYER PHASEのターン番号を復元する。
-    /// 
-    /// すでにPLAYER PHASEである場合だけ許可。
-    ///
-    /// 通常のStartPlayerPhaseとは異なり、
-    /// 味方の行動状態をリセットしない。
-    ///
-    /// UnitStateのHasActedなどは
-    /// ロード管理側で復元済みのため。
+    /// PLAYER PHASE中にターン数を復元。
+    /// 味方の行動状態はリセットしない。
     /// </summary>
     public bool TryRestorePlayerTurnForLoad(
         int restoredTurnNumber)
@@ -493,25 +754,22 @@ public sealed class TurnManager : MonoBehaviour
             return false;
         }
 
-        // 敵AIが動いている途中には
-        // ターンを差し替えない。
-        if (CurrentPhase != BattlePhase.Player)
+        if (isBattleFinished ||
+            CurrentPhase != BattlePhase.Player)
         {
             Debug.LogWarning(
-                "ロードはPLAYER PHASE中のみ可能です。",
+                "戦闘終了後またはPLAYER PHASE以外では" +
+                "ロードできません。",
                 this
             );
 
             return false;
         }
 
-        // 通常のターン開始処理は呼ばない。
-        // ここでResetActionしてしまうと
-        // 保存した行動終了状態が失われる。
+        // 既存のHasActedを維持。
         TurnNumber = restoredTurnNumber;
 
-        // 第11段階の昼夜管理や、
-        // 第13段階の危険範囲管理へ通知する。
+        // 昼夜・危険範囲の更新。
         PhaseChanged?.Invoke(
             BattlePhase.Player,
             TurnNumber
@@ -525,5 +783,4 @@ public sealed class TurnManager : MonoBehaviour
 
         return true;
     }
-
 }
