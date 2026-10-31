@@ -211,6 +211,132 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &327278457
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 327278459}
+  - component: {fileID: 327278458}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &327278458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 327278457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262d2809c13854d4fbdd1751a3042f50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageClearPanel
+  playOnStart: 0
+  closeMode: 0
+  autoCloseTime: 3
+  skipIntroWithInput: 1
+  pauseGame: 0
+  buildInto: {fileID: 1688692110}
+  hidePanelOnClose: 1
+  sortingOrder: 220
+  titleFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  textFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  dimColor: {r: 0.12, g: 0.08, b: 0.03, a: 0.55}
+  smoke: 1
+  smokeColor: {r: 0.25, g: 0.2, b: 0.08, a: 0.7}
+  title: STAGE CLEAR
+  titlePosition: {x: 0, y: 250}
+  titleSize: 120
+  titleColor: {r: 1, g: 0.94, b: 0.8, a: 1}
+  titleItalic: 1
+  titleBold: 1
+  titleGlow: 1
+  titleGlowColor: {r: 1, g: 0.75, b: 0.25, a: 0.8}
+  titleFlash: 1
+  bandHeight: 190
+  bandColor: {r: 0.08, g: 0.06, b: 0.03, a: 0.55}
+  lineColor: {r: 1, g: 0.85, b: 0.55, a: 0.95}
+  lineThickness: 4
+  lineLength: 1500
+  lineOrnaments: 1
+  emblem: 1
+  emblemSprite: {fileID: 0}
+  emblemSize: 440
+  emblemColor: {r: 1, g: 0.85, b: 0.5, a: 0.75}
+  emblemRotateSpeed: 6
+  sparkles: 1
+  sparkleSprite: {fileID: 0}
+  sparkleCount: 10
+  sparkleColor: {r: 1, g: 0.85, b: 0.35, a: 1}
+  sparkleArea: {x: 1300, y: 520}
+  sparkleSizeRange: {x: 24, y: 64}
+  character: {fileID: 21300000, guid: df1f1abae82c7994b8bc001587afb846, type: 3}
+  characterPosition: {x: -470, y: -210}
+  characterHeight: 480
+  characterFlipX: 0
+  rows:
+  - label: MVP
+    value: "\u5FC3"
+  - label: TURN
+    value: 6
+  rowsPosition: {x: -150, y: -158}
+  rowWidth: 720
+  rowSpacing: 122
+  rowTextSize: 40
+  valueX: 510
+  labelColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  valueColor: {r: 1, g: 1, b: 1, a: 1}
+  bulletColor: {r: 1, g: 0.92, b: 0.75, a: 1}
+  rowLineColor: {r: 1, g: 0.92, b: 0.75, a: 0.6}
+  dimTime: 0.3
+  bandStart: 0.1
+  bandTime: 0.35
+  emblemStart: 0.2
+  emblemTime: 0.6
+  titleStart: 0.35
+  titleTime: 0.4
+  titleSlide: 80
+  sparkleStart: 0.6
+  characterStart: 0.7
+  characterTime: 0.45
+  characterSlide: 160
+  rowsStart: 0.9
+  rowStagger: 0.15
+  rowTime: 0.35
+  rowSlide: 50
+  closeTime: 0.3
+  showTestButton: 1
+  testButtonScale: 1.5
+  onShown:
+    m_PersistentCalls:
+      m_Calls: []
+  onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &327278459
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 327278457}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &866316149
 GameObject:
   m_ObjectHideFlags: 0
@@ -227,7 +353,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &866316150
 RectTransform:
   m_ObjectHideFlags: 0
@@ -706,3 +832,4 @@ SceneRoots:
   - {fileID: 2045494355}
   - {fileID: 1688692110}
   - {fileID: 1595362004}
+  - {fileID: 327278459}
