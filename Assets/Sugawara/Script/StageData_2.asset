@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: StageData_2
   m_EditorClassIdentifier: Assembly-CSharp::StageData
   chapterNumber: 2
-  stageTitle: Second
-  stageImage: {fileID: 21300000, guid: d70507cf0169e834699800cb6aa76aea, type: 3}
-  synopsis: 
-  talkSceneName: 
+  stageTitle: stage2
+  stageImage: {fileID: 21300000, guid: 0df34dc17cb2ea141850af1e52d3de62, type: 3}
+  synopsis: arasuzi2
