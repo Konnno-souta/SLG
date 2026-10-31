@@ -7,5 +7,5 @@ public class StageData : ScriptableObject
     public string stageTitle;          // ○○○○
     public Sprite stageImage;          // ステージ画像
     [TextArea(2, 4)] public string synopsis; // あらすじ
-    public string talkSceneName;       // 遷移先のシーン名
+   // public string talkSceneName;       // 遷移先のシーン名
 }
