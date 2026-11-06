@@ -96,7 +96,7 @@ public sealed class BattleSaveManager : MonoBehaviour
         // F5でスロット1に保存
         if (keyboard.f5Key.wasPressedThisFrame)
         {
-            SaveSlot(1);
+            SaveSlot(BattleLaunchSession.CurrentSlot);
         }
 
         // F9でスロット1を読み込み、
@@ -149,6 +149,11 @@ public sealed class BattleSaveManager : MonoBehaviour
                 path,
                 json,
                 new UTF8Encoding(false)
+            );
+
+            // 実際に保存できた場合だけ通知する。
+            BattleLaunchSession.NotifySaveCompleted(
+                slotNumber
             );
 
             Debug.Log(

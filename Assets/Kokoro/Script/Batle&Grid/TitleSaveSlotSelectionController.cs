@@ -409,6 +409,13 @@ public sealed class TitleSaveSlotSelectionController
             $"\nステージ：{stageId}",
             this
         );
+        //戦闘Sceneへ引き継ぐ情報
+        if (!BattleLaunchSession.BeginContinue(
+            slotNumber,
+            stageId))
+        {
+            return;
+        }
 
         // 将来のロード遷移処理に渡せる。
         onContinueSlotChosen?.Invoke(
@@ -427,6 +434,7 @@ public sealed class TitleSaveSlotSelectionController
 
         PendingNewGameSlotRequest.Clear();
         PendingBattleContinueRequest.Clear();
+        BattleLaunchSession.Clear();
 
         if (showLogs)
         {
