@@ -50,12 +50,18 @@ public sealed class TurnManager : MonoBehaviour
         enemyAiMovementController;
 
     // 第22段階で追加するInspector項目
-    [Header("第22段階：戦闘結果UI")]
+    [Header("戦闘結果UI")]
     [SerializeField]
     private GameObject stageClearPanel;
 
     [SerializeField]
     private GameObject gameOverPanel;
+
+
+    [Header("クリア演出")]
+    [SerializeField]
+    private StageClearPanel stageClearPresentation;
+
 
     // =====================================
     // 主人公の識別
@@ -435,6 +441,11 @@ public sealed class TurnManager : MonoBehaviour
         SetPlayerControlEnabled(false);
 
         // 結果パネルを表示。
+
+        // ====================================
+        // 第23段階：結果パネルの表示
+        // ====================================
+
         if (stageClearPanel != null)
         {
             stageClearPanel.SetActive(isVictory);
@@ -444,6 +455,31 @@ public sealed class TurnManager : MonoBehaviour
         {
             gameOverPanel.SetActive(!isVictory);
         }
+
+
+        if (isVictory)
+        {
+            if (stageClearPresentation != null)
+            {
+                // 実際のクリアターン数を反映。
+                stageClearPresentation.SetValue(
+                    "TURN",
+                    TurnNumber.ToString()
+                );
+
+                // クリア演出を最初から再生。
+                stageClearPresentation.Play();
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "StageClearPanelの演出参照が" +
+                    "設定されていません。",
+                    this
+                );
+            }
+        }
+
 
         // 既存のターン表示にも結果を反映。
         if (phaseText != null)

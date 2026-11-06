@@ -270,21 +270,50 @@ public class GameOverMenu : MonoBehaviour
         decideTimer = decideDelay;
     }
 
+
     void Execute(int index)
     {
         if (index == 0)
         {
-            Debug.Log("[GameOverMenu] コンテニューする");
+            Debug.Log(
+                "[GameOverMenu] コンテニューする"
+            );
+
             onContinue?.Invoke();
-            LoadScene(continueSceneName);
+
+            // シーン名が指定されている場合のみ移動。
+            if (!string.IsNullOrWhiteSpace(
+                continueSceneName))
+            {
+                LoadScene(continueSceneName);
+                return;
+            }
         }
         else
         {
-            Debug.Log("[GameOverMenu] マップに戻る");
+            Debug.Log(
+                "[GameOverMenu] マップに戻る"
+            );
+
             onReturnToMap?.Invoke();
-            LoadScene(mapSceneName);
+
+            if (!string.IsNullOrWhiteSpace(
+                mapSceneName))
+            {
+                LoadScene(mapSceneName);
+                return;
+            }
         }
+
+        // シーン移動なしの場合、
+        // メニュー操作を再び受け付ける。
+        locked = false;
+        decideTimer = -1f;
+        flashTimer = 0f;
+
+        Select(selected);
     }
+
 
     static void LoadScene(string sceneName)
     {
@@ -331,6 +360,7 @@ public class GameOverMenu : MonoBehaviour
         cgo.transform.SetParent(transform, false);
         canvas = cgo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
         canvas.sortingOrder = sortingOrder;
         var scaler = cgo.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;

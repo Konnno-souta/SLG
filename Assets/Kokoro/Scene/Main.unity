@@ -444,7 +444,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleStatsInitializer
   repository: {fileID: 1849647844}
-  timeOfDayController: {fileID: 0}
+  timeOfDayController: {fileID: 1949015495}
   initialClassMode: 0
   showUnitLogs: 1
 --- !u!4 &367216541
@@ -1142,6 +1142,7 @@ GameObject:
   - component: {fileID: 612165872}
   - component: {fileID: 612165874}
   - component: {fileID: 612165873}
+  - component: {fileID: 612165875}
   m_Layer: 5
   m_Name: GameOverText
   m_TagString: Untagged
@@ -1166,7 +1167,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 1500, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &612165873
 MonoBehaviour:
@@ -1199,8 +1200,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4288545023
+  m_fontColor: {r: 1, g: 0, b: 0.6207466, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1217,14 +1218,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 200
+  m_fontSizeBase: 200
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -1270,6 +1271,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 612165871}
   m_CullTransparentMesh: 1
+--- !u!114 &612165875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612165871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 592d342132ea7374296a961787bf9781, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameOverText
+  text: {fileID: 612165873}
+  playOnEnable: 1
+  useUnscaledTime: 1
+  introDelay: 0
+  charDuration: 0.5
+  charStagger: 0.05
+  introStretchY: 4
+  introScaleX: 0.9
+  introFadePortion: 0.6
+  moveUp: 1
+  moveDelay: 1
+  moveDistance: 400
+  moveTime: 0.5
+  autoHide: 0
+  holdTime: 5
+  flashTime: 0.08
+  flashAlpha: 0.8
+  outroTime: 0.2
+  outroStretchY: 1.3
+  ghost: 1
+  ghostColor: {r: 1, g: 0.45, b: 0.75, a: 1}
+  ghostAlpha: 0.45
+  ghostLag: 0.06
+  ghostIntroStretch: 1.3
+  ghostOutroStretchY: 3
+  pivotY: 0.5
+  hideOnFinish: {fileID: 0}
+  onShown:
+    m_PersistentCalls:
+      m_Calls: []
+  onMoved:
+    m_PersistentCalls:
+      m_Calls: []
+  onFinished:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &773974319
 GameObject:
   m_ObjectHideFlags: 0
@@ -1597,6 +1646,7 @@ GameObject:
   - component: {fileID: 880656995}
   - component: {fileID: 880656994}
   - component: {fileID: 880656993}
+  - component: {fileID: 880656996}
   m_Layer: 5
   m_Name: GameOverPanel
   m_TagString: Untagged
@@ -1662,6 +1712,47 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &880656996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880656992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 847e1d341ff1e7f47b2278b36c2ea796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameOverMenu
+  gameOverText: {fileID: 612165875}
+  font: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  description: "\u4E3B\u4EBA\u516C\u304C\u6226\u95D8\u4E0D\u80FD\u306B\u306A\u308A\u307E\u3057\u305F"
+  continueLabel: "\u30B3\u30F3\u30C6\u30CB\u30E5\u30FC\u3059\u308B"
+  mapLabel: "\u30DE\u30C3\u30D7\u306B\u623B\u308B"
+  continueSceneName: 
+  mapSceneName: 
+  decideDelay: 0.25
+  onContinue:
+    m_PersistentCalls:
+      m_Calls: []
+  onReturnToMap:
+    m_PersistentCalls:
+      m_Calls: []
+  panelSize: {x: 1000, y: 520}
+  panelPosition: {x: 0, y: -80}
+  panelColorTop: {r: 0.1, g: 0.3, b: 0.62, a: 0.95}
+  panelColorBottom: {r: 0.04, g: 0.14, b: 0.38, a: 0.95}
+  panelBorderColor: {r: 0.55, g: 0.85, b: 1, a: 1}
+  descriptionSize: 34
+  buttonSize: {x: 600, y: 76}
+  buttonSpacing: 22
+  buttonTextSize: 34
+  buttonColor: {r: 0.08, g: 0.26, b: 0.6, a: 1}
+  buttonSelectedColor: {r: 0.36, g: 0.62, b: 0.95, a: 1}
+  buttonTextColor: {r: 1, g: 1, b: 1, a: 1}
+  cursorColor: {r: 0.85, g: 0.95, b: 1, a: 1}
+  showTime: 0.3
+  sortingOrder: 210
 --- !u!1 &893203514
 GameObject:
   m_ObjectHideFlags: 0
@@ -2452,6 +2543,7 @@ MonoBehaviour:
   enemyAiMovementController: {fileID: 99772368}
   stageClearPanel: {fileID: 1558792746}
   gameOverPanel: {fileID: 880656992}
+  stageClearPresentation: {fileID: 1222821563}
 --- !u!4 &1169402819
 Transform:
   m_ObjectHideFlags: 0
@@ -2604,6 +2696,132 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1215485640}
   m_CullTransparentMesh: 1
+--- !u!1 &1222821562
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1222821564}
+  - component: {fileID: 1222821563}
+  m_Layer: 0
+  m_Name: StageClearDirector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1222821563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222821562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262d2809c13854d4fbdd1751a3042f50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageClearPanel
+  playOnStart: 0
+  closeMode: 2
+  autoCloseTime: 3
+  skipIntroWithInput: 1
+  pauseGame: 0
+  buildInto: {fileID: 1558792747}
+  hidePanelOnClose: 1
+  sortingOrder: 220
+  titleFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  textFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  dimColor: {r: 0.12, g: 0.08, b: 0.03, a: 0.55}
+  smoke: 1
+  smokeColor: {r: 0.25, g: 0.2, b: 0.08, a: 0.7}
+  title: STAGE CLEAR
+  titlePosition: {x: 0, y: 250}
+  titleSize: 120
+  titleColor: {r: 1, g: 0.94, b: 0.8, a: 1}
+  titleItalic: 1
+  titleBold: 1
+  titleGlow: 1
+  titleGlowColor: {r: 1, g: 0.75, b: 0.25, a: 0.8}
+  titleFlash: 1
+  bandHeight: 190
+  bandColor: {r: 0.08, g: 0.06, b: 0.03, a: 0.55}
+  lineColor: {r: 1, g: 0.85, b: 0.55, a: 0.95}
+  lineThickness: 4
+  lineLength: 1500
+  lineOrnaments: 1
+  emblem: 1
+  emblemSprite: {fileID: 21300000, guid: c91f4bcdfd4cc6744919f89dfc5f72c2, type: 3}
+  emblemSize: 440
+  emblemColor: {r: 1, g: 0.85, b: 0.5, a: 0.75}
+  emblemRotateSpeed: 6
+  sparkles: 1
+  sparkleSprite: {fileID: 21300000, guid: 0fd030d083d1ebb49a5a022901c5989c, type: 3}
+  sparkleCount: 10
+  sparkleColor: {r: 1, g: 0.85, b: 0.35, a: 1}
+  sparkleArea: {x: 1300, y: 520}
+  sparkleSizeRange: {x: 24, y: 64}
+  character: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
+  characterPosition: {x: -470, y: -210}
+  characterHeight: 480
+  characterFlipX: 0
+  rows:
+  - label: MVP
+    value: "\u30A4\u30B7\u30E5\u30DE\u30FC\u30EB"
+  - label: TURN
+    value: 6
+  rowsPosition: {x: -150, y: -158}
+  rowWidth: 720
+  rowSpacing: 122
+  rowTextSize: 40
+  valueX: 510
+  labelColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  valueColor: {r: 1, g: 1, b: 1, a: 1}
+  bulletColor: {r: 1, g: 0.92, b: 0.75, a: 1}
+  rowLineColor: {r: 1, g: 0.92, b: 0.75, a: 0.6}
+  dimTime: 0.3
+  bandStart: 0.1
+  bandTime: 0.35
+  emblemStart: 0.2
+  emblemTime: 0.6
+  titleStart: 0.35
+  titleTime: 0.4
+  titleSlide: 80
+  sparkleStart: 0.6
+  characterStart: 0.7
+  characterTime: 0.45
+  characterSlide: 160
+  rowsStart: 0.9
+  rowStagger: 0.15
+  rowTime: 0.35
+  rowSlide: 50
+  closeTime: 0.3
+  showTestButton: 1
+  testButtonScale: 1.5
+  onShown:
+    m_PersistentCalls:
+      m_Calls: []
+  onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1222821564
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222821562}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 960, y: 540, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1228553774
 GameObject:
   m_ObjectHideFlags: 0
@@ -3252,6 +3470,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1626952945}
   - component: {fileID: 1626952944}
+  - component: {fileID: 1626952946}
   m_Layer: 0
   m_Name: BattleHPDebugTester
   m_TagString: Untagged
@@ -3289,6 +3508,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1626952946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1626952943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7d525c28bebfbb4baf74bc0e24889b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleVictoryDebugTester
+  turnManager: {fileID: 1169402818}
+  enableDebugKey: 1
 --- !u!1 &1651776095
 GameObject:
   m_ObjectHideFlags: 0
@@ -4045,3 +4278,4 @@ SceneRoots:
   - {fileID: 2013331649}
   - {fileID: 927337705}
   - {fileID: 1626952945}
+  - {fileID: 1222821564}
