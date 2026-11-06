@@ -3,69 +3,138 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// 第24段階：シーン統合用。
+/// 第24段階：シーン統合。
 ///
-/// タイトル・マップ選択・ステージ1の
-/// シーン移動を管理する。
+/// NEW GAME:
+/// タイトル → マップセレクト → 戦闘
 ///
-/// 勝敗判定による自動シーン移動は行わない。
+/// CONTINUE:
+/// タイトル → 保存済みステージの戦闘
+///
+/// クリア・ゲームオーバーによる
+/// 自動シーン遷移は行わない。
 /// </summary>
 public sealed class SceneFlowNavigator : MonoBehaviour
 {
     [Header("シーン名")]
-    [Tooltip("タイトル画面のScene名")]
     [SerializeField]
     private string titleSceneName = "";
 
-    [Tooltip("マップ選択画面のScene名")]
     [SerializeField]
     private string mapSelectSceneName = "";
 
-    [Tooltip("今動かしているメインSceneの名前")]
     [SerializeField]
     private string stage01SceneName = "";
 
-    // =====================================
-    // タイトルへ
-    // =====================================
+    [Header("戦闘前会話（任意）")]
+    [SerializeField]
+    private bool useConversationBeforeBattle = false;
+
+    [SerializeField]
+    private string conversationSceneName = "";
 
     public void OpenTitle()
     {
         LoadScene(titleSceneName);
     }
 
-    // =====================================
-    // マップ選択へ
-    // =====================================
-
     public void OpenMapSelect()
     {
         LoadScene(mapSelectSceneName);
     }
 
-    // =====================================
-    // ステージ1へ
-    // =====================================
+    /// <summary>
+    /// タイトルでNEW GAMEのDATAを選択後に呼ぶ。
+    /// </summary>
+    public void OpenMapSelectFromSlot(int slotNumber)
+    {
+        if (!BattleLaunchSession.BeginNewGame(
+            slotNumber))
+        {
+            return;
+        }
 
+        Debug.Log(
+            $"【NEW GAME】DATA{slotNumber}" +
+            " → マップセレクト",
+            this
+        );
+
+        OpenMapSelect();
+    }
+
+    /// <summary>
+    /// CONTINUEのDATAを選択後に呼ぶ。
+    ///
+    /// StageIdはTitleSaveSlotSelectionControllerが
+    /// BattleLaunchSessionへ登録済み。
+    /// </summary>
+    public void OpenContinueFromSlot(int slotNumber)
+    {
+        if (!BattleLaunchSession.HasContinuePending ||
+            BattleLaunchSession.CurrentSlot != slotNumber)
+        {
+            Debug.LogError(
+                "CONTINUEの引き継ぎ情報がありません。",
+                this
+            );
+            return;
+        }
+
+        // 現在の戦闘Sceneはステージ1だけ。
+        if (BattleLaunchSession.StageId != "1")
+        {
+            Debug.LogWarning(
+                "現在はステージ1のCONTINUEのみ対応。" +
+                $" 保存StageID={BattleLaunchSession.StageId}",
+                this
+            );
+            return;
+        }
+
+        Debug.Log(
+            $"【CONTINUE】DATA{slotNumber}" +
+            " → ステージ1",
+            this
+        );
+
+        OpenStage01();
+    }
+
+    /// <summary>
+    /// マップセレクトでステージ1を選択。
+    /// </summary>
+    public void OpenSelectedStage01()
+    {
+        if (useConversationBeforeBattle)
+        {
+            LoadScene(conversationSceneName);
+            return;
+        }
+
+        OpenStage01();
+    }
+
+    /// <summary>
+    /// ステージ1へ。
+    /// 会話終了後にも使用する。
+    /// </summary>
     public void OpenStage01()
     {
         Debug.Log(
-            "【シーン統合】ステージ1へ移動"
+            "【シーン統合】ステージ1へ移動",
+            this
         );
 
         LoadScene(stage01SceneName);
     }
-
-    // =====================================
-    // 共通シーン読み込み
-    // =====================================
 
     private void LoadScene(string sceneName)
     {
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             Debug.LogWarning(
-                "移動先のScene名が未設定です。",
+                "移動先Scene名が未設定です。",
                 this
             );
             return;
@@ -76,15 +145,13 @@ public sealed class SceneFlowNavigator : MonoBehaviour
         {
             Debug.LogError(
                 $"Scene「{sceneName}」を読み込めません。" +
-                "Build SettingsまたはBuild Profilesの" +
-                "シーン登録を確認してください。",
+                " Build Profiles / Build Settingsを" +
+                "確認してください。",
                 this
             );
             return;
         }
 
-        // 演出でゲームを一時停止していた場合、
-        // 次のシーンを正常に開始できるよう戻す。
         Time.timeScale = 1f;
 
         Debug.Log(

@@ -98,10 +98,36 @@ public sealed class BattleLoadRestorer : MonoBehaviour
             return;
         }
 
+
         if (keyboard.f10Key.wasPressedThisFrame)
         {
-            RestoreSlot(debugSlotNumber);
+            // NEW GAME直後に、
+            // 同じDATAの古いセーブを
+            // 誤って復元しないための保護。
+            if (!BattleLaunchSession.CanDebugLoad)
+            {
+                Debug.LogWarning(
+                    "新規開始後、まだ保存していません。" +
+                    " F5で一度保存してから" +
+                    "F10を使用してください。",
+                    this
+                );
+
+                return;
+            }
+
+            // タイトルから来た場合は選択DATA。
+            // 戦闘Sceneを直接Playした場合は
+            // 既存のデバッグスロットを使用。
+            int slot =
+                BattleLaunchSession.Mode ==
+                    BattleLaunchMode.Direct
+                    ? debugSlotNumber
+                    : BattleLaunchSession.CurrentSlot;
+
+            RestoreSlot(slot);
         }
+
     }
 
     // ========================================
