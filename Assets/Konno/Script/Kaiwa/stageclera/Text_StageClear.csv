@@ -1,0 +1,16 @@
+﻿story_id,text_id,character_id,visual,name,motion,bgm,se,text
+story_clear_001,,,,,,clear fade=1,,@bg field 0
+,,,,,,,,@fade in 0.8
+,C001_001,,,,,,,戦いが終わり、あたりに静けさが戻ってきた。
+,C001_002,yuzuki,smile,,left / jump 2,,cheer,やったー！　勝ちましたよ、カナデさん！
+,C001_003,kanade,normal,,right,,,……ふう。なんとか、ってところだけどね。
+,C001_004,yuzuki,smile,,emote ♪,,,なんとかでも勝ちは勝ちです！　今日はお祝いですね！
+,C001_005,kanade,trouble,,shake,,,はしゃぎすぎ。まだ一つ目のステージを抜けただけでしょ。
+,C001_006,yuzuki,trouble,,emote …,volume 0.6 time=1,,うっ……それはそうですけど……。
+,C001_007,kanade,normal,,,,,でも、さっきの動きは悪くなかった。
+,C001_008,yuzuki,normal,,emote !?,,surprise,えっ、今ほめました？　ほめましたよね！？
+,C001_009,kanade,normal,,,volume 1 time=1,,……気のせい。
+,C001_010,,,,yuzuki:jump / kanade:emote …,,,（ユズキはうれしそうに、カナデのまわりをぴょんぴょん跳ねている）
+,C001_011,kanade,normal,,,,,ほら、次に行くよ。この先はもっと手ごわいはず。
+,C001_012,yuzuki,smile,,jump,,,はい！　次もがんばりましょう！
+,,,,,,stop fade=1.5,,@fade out 1.0
