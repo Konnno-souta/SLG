@@ -363,6 +363,21 @@ public sealed class TitleSaveSlotSelectionController
             this
         );
 
+
+        if (!BattleLaunchSession.BeginNewGame(
+            slotNumber))
+        {
+            Debug.LogError(
+                "新規ゲームのスロット登録に失敗",
+                this
+            );
+            return;
+        }
+
+        // DATA番号を確定してから画面移動
+        onNewGameSlotChosen?.Invoke(slotNumber);
+
+
         // 将来のMAP選択遷移処理に渡せる。
         onNewGameSlotChosen?.Invoke(
             slotNumber
