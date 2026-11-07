@@ -373,6 +373,7 @@ public sealed class TitleSaveSlotSelectionController
     // コンテニュー
     // ========================================
 
+
     private void HandleContinue(
         int slotNumber,
         bool validSaveExists,
@@ -386,12 +387,13 @@ public sealed class TitleSaveSlotSelectionController
                 "読み込み可能なデータがありません。",
                 this
             );
-
             return;
         }
 
+        // NEW GAMEの要求を解除
         PendingNewGameSlotRequest.Clear();
 
+        // 以前から使用している引き継ぎ情報
         bool success =
             PendingBattleContinueRequest.SetRequest(
                 slotNumber,
@@ -400,28 +402,43 @@ public sealed class TitleSaveSlotSelectionController
 
         if (!success)
         {
+            Debug.LogError(
+                "既存のCONTINUE情報の登録に失敗。",
+                this
+            );
+            return;
+        }
+
+        // 第24段階で追加したシーン間連携
+        bool launchSuccess =
+            BattleLaunchSession.BeginContinue(
+                slotNumber,
+                stageId
+            );
+
+        if (!launchSuccess)
+        {
+            Debug.LogError(
+                "BattleLaunchSessionへの登録に失敗。",
+                this
+            );
             return;
         }
 
         Debug.Log(
-            "【コンテニュー：スロット選択完了】" +
-            $"\nDATA：{slotNumber}" +
-            $"\nステージ：{stageId}",
+            "【CONTINUE引き継ぎ成功】" +
+            $"\nDATA：{BattleLaunchSession.CurrentSlot}" +
+            $"\nStageID：{BattleLaunchSession.StageId}" +
+            $"\nPending：{BattleLaunchSession.HasContinuePending}",
             this
         );
-        //戦闘Sceneへ引き継ぐ情報
-        if (!BattleLaunchSession.BeginContinue(
-            slotNumber,
-            stageId))
-        {
-            return;
-        }
 
-        // 将来のロード遷移処理に渡せる。
+        // 情報登録が終わってからScene移動
         onContinueSlotChosen?.Invoke(
             slotNumber
         );
     }
+
 
     // ========================================
     // 画面を閉じてキャンセル
