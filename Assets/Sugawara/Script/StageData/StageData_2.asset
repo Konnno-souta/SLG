@@ -15,4 +15,4 @@ MonoBehaviour:
   chapterNumber: 2
   stageTitle: stage2
   stageImage: {fileID: 21300000, guid: 0df34dc17cb2ea141850af1e52d3de62, type: 3}
-  synopsis: arasuzi2
+  synopsisId: 2
