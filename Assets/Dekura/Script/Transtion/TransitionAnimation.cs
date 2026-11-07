@@ -14,6 +14,7 @@ namespace Transition
         public GameObject chipArea;
         public Color loadChipColor_enable;
         public Color loadChipColor_disable;
+        public float loadMinTime = 2f;
 
         [Header("CSV")]
         public TextAsset csv;
@@ -27,19 +28,18 @@ namespace Transition
         List<Image> loadChips = new();
 
         Transitioner transitioner;
-        float loadMinTime = 2f;
         float timer;
 
         bool isLoaded = false;
 
         void Awake()
         {
-            foreach (CsvRow row in CsvReader.Read(csv, "Story_ID"))
+            foreach (CsvRow row in CsvReader.Read(csv, "TIPS_ID"))
             {
-                int id = row.GetInt("Story_ID");
+                int id = row.GetInt("TIPS_ID");
                 string text = row.Get("Text");
 
-                if (id > nowStage) continue;
+                if (row.GetInt("Story_ID") > nowStage) continue;
 
                 tipTexts.Add(id, text);
             }
@@ -65,9 +65,9 @@ namespace Transition
 
         void TipsUpdate()
         {
-            if (tipTexts == null) return;
-
-
+            //仮組み！！！！！！！tipsがあがるまで
+            //int random = Random.Range(1, tipTexts.Count + 1);
+            //Debug.Log($"TipsUpdate: {random} / {tipTexts.Count}");
             tipsText.text = tipTexts[1];
         }
 
@@ -84,6 +84,7 @@ namespace Transition
 
             if (loadChips[loadChips.Count - 1].color == loadChipColor_enable)
             {
+                Debug.Log("ロード完了");
                 transitioner?.Transitioning();
                 isLoaded = true;
             }

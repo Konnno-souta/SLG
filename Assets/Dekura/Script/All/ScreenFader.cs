@@ -48,12 +48,12 @@ public static class ScreenFader
     {
         Create();
         group.DOKill();
-        group.blocksRaycasts = true;   // フェード中はUI操作を受け付けない
+        group.blocksRaycasts = true;
 
         bool isClear = targetAlpha <= 0f;
         tween = group.DOFade(targetAlpha, duration)
             .SetEase(Ease.Linear)
-            .SetUpdate(true)           // Time.timeScale が 0 でも動く
+            .SetUpdate(true)
             .OnComplete(() =>
             {
                 if (isClear) group.blocksRaycasts = false;
