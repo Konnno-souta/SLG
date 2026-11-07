@@ -1,40 +1,53 @@
-using UnityEngine;
 using System.Collections;
+using Transition;
+using UnityEngine;
 
-namespace Transition
+public class Transitioner : MonoBehaviour
 {
-    public class Transitioner : MonoBehaviour
+    public static Transitioner Instance { get; private set; }
+
+    [SerializeField] private float transitionInterval = 2f;
+    [SerializeField] private GameObject transitionObj;
+
+    string standbyScene;
+
+    private void Awake()
     {
-        [SerializeField] private float transitionInterval = 2f;
-        [SerializeField] private GameObject transitionObj;
+        Transition("MapScene");
 
-        string standbyScene;
-
-        public void Transition(string nextscene)
+        //------インスタンス化------//
+        if (Instance != null)
         {
-            if (standbyScene != null) return;
-            if (!SceneNameLoader.HasSceneName(nextscene))
-            {
-                Debug.Log("Sceneが見つかりません!!!!!!!!!!!!!!!!!!!!");
-                return;
-            }
-
-            ScreenFader.FadeOutIn(0.5f, 0.5f, () =>
-            {
-                GameObject go = Instantiate(transitionObj);
-                go.GetComponent<TransitionAnimation>()?.InitData(transitionInterval,this);
-            });
-
-            standbyScene = nextscene;
+            Destroy(this.gameObject);
+            return;
         }
 
-        public IEnumerator Transitioning()
-        {
-            yield return new WaitForSeconds(transitionInterval);
+        Instance = this;
+        //---------------------------//
+    }
 
-            ScreenFader.LoadScene(standbyScene);
-            standbyScene = null;
+    public void Transition(string nextscene)
+    {
+        if (standbyScene != null) return;
+        if (!SceneNameLoader.HasSceneName(nextscene))
+        {
+            Debug.Log("Sceneが見つかりません!!!!!!!!!!!!!!!!!!!!");
+            return;
         }
+
+        ScreenFader.FadeOutIn(1f, 0.5f, () =>
+        {
+            GameObject go = Instantiate(transitionObj);
+            go.GetComponent<TransitionAnimation>()?.InitData(transitionInterval, this);
+        });
+
+        standbyScene = nextscene;
+    }
+
+    public void Transitioning()
+    {
+        ScreenFader.LoadScene(standbyScene, 1f);
+        standbyScene = null;
     }
 }
 

@@ -71,7 +71,7 @@ namespace Title
                 return;
             }
 
-            // 放置時間の計測は、入力待機中だけ
+            // 放置時間の計測は入力待機中だけ
             if (state == State.WaitInput && !decided)
             {
                 idleTimeCount += Time.deltaTime;
