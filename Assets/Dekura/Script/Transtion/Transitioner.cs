@@ -9,12 +9,12 @@ public class Transitioner : MonoBehaviour
     [SerializeField] private float transitionInterval = 2f;
     [SerializeField] private GameObject transitionObj;
 
+    [Header("DEBUG")]
+    [SerializeField] private bool testmode = false;
     string standbyScene;
 
     private void Awake()
     {
-        Transition("MapScene");
-
         //------インスタンス化------//
         if (Instance != null)
         {
@@ -24,6 +24,7 @@ public class Transitioner : MonoBehaviour
 
         Instance = this;
         //---------------------------//
+        if (testmode) Transition("MapScene");
     }
 
     public void Transition(string nextscene)
