@@ -79,6 +79,7 @@ public sealed class BattleSaveManager : MonoBehaviour
     // 開発用入力
     // ========================================
 
+
     private void Update()
     {
         if (!enableDebugKeys)
@@ -93,19 +94,37 @@ public sealed class BattleSaveManager : MonoBehaviour
             return;
         }
 
-        // F5でスロット1に保存
+        // タイトルで選択したスロット番号
+        int currentSlot =
+            BattleLaunchSession.CurrentSlot;
+
+        // F5：選択中のDATAに保存
         if (keyboard.f5Key.wasPressedThisFrame)
         {
-            SaveSlot(BattleLaunchSession.CurrentSlot);
+            Debug.Log(
+                "【F5保存要求】" +
+                $"\nモード：{BattleLaunchSession.Mode}" +
+                $"\nDATA：{currentSlot}" +
+                $"\n保存先：{GetSavePath(currentSlot)}",
+                this
+            );
+
+            SaveSlot(currentSlot);
         }
 
-        // F9でスロット1を読み込み、
-        // ファイル内容を検証する。
+        // F9：選択中のDATAの保存内容を確認
         if (keyboard.f9Key.wasPressedThisFrame)
         {
-            ReadSlot(1);
+            Debug.Log(
+                "【F9保存内容確認】" +
+                $"\nDATA：{currentSlot}",
+                this
+            );
+
+            ReadSlot(currentSlot);
         }
     }
+
 
     // ========================================
     // セーブ処理
