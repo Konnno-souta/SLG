@@ -1065,6 +1065,9 @@ MonoBehaviour:
     csv: {fileID: 4900000, guid: f4640d5e8aa5cf44ab25fb787462286a, type: 3}
   defaultStoryId: 
   delayAfterConversation: 0.2
+  screenFader: {fileID: 1349417439}
+  zoomRatio: 0.4
+  transitionDuration: 1.2
 --- !u!4 &421720431
 Transform:
   m_ObjectHideFlags: 0
@@ -1329,6 +1332,8 @@ Transform:
   - {fileID: 1563274866}
   - {fileID: 1084696147}
   - {fileID: 165082085}
+  - {fileID: 1731265477}
+  - {fileID: 1569753834}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &661576387
@@ -2059,6 +2064,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StagePoint
   data: {fileID: 11400000, guid: 379ab4fa1f50ae945989e5b8461afdf8, type: 2}
+  stageId: 3
+  requiredStage: {fileID: 1563274862}
   standPoint: {fileID: 0}
   scene: {fileID: 102900000, guid: 8ad8cf29283887b48b9b46b7b4e10e5d, type: 3}
   sceneName: Main
@@ -2610,6 +2617,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StagePoint
   data: {fileID: 11400000, guid: 592952167d6229148827aa8f38d17b06, type: 2}
+  stageId: 1
+  requiredStage: {fileID: 0}
   standPoint: {fileID: 0}
   scene: {fileID: 102900000, guid: 8ad8cf29283887b48b9b46b7b4e10e5d, type: 3}
   sceneName: Main
@@ -2705,6 +2714,54 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 624262856}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1349417438
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1349417440}
+  - component: {fileID: 1349417439}
+  m_Layer: 0
+  m_Name: MapScreenFader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1349417439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349417438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0afb6a381ed3a4e469b3b41777af6f7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapScreenFader
+  color: {r: 0, g: 0, b: 0, a: 1}
+  sortingOrder: 10
+  fadeInOnStart: 0
+  fadeInDuration: 0.5
+--- !u!4 &1349417440
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349417438}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.69714, y: -0, z: -0.9897}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1354129399
 GameObject:
@@ -3327,6 +3384,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StagePoint
   data: {fileID: 11400000, guid: 649e37268ebc8cc4c89a84301e2d0bbb, type: 2}
+  stageId: 2
+  requiredStage: {fileID: 1270041874}
   standPoint: {fileID: 0}
   scene: {fileID: 102900000, guid: 8ad8cf29283887b48b9b46b7b4e10e5d, type: 3}
   sceneName: Main
@@ -3423,6 +3482,64 @@ Transform:
   m_Children: []
   m_Father: {fileID: 624262856}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1569753833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1569753834}
+  - component: {fileID: 1569753835}
+  m_Layer: 0
+  m_Name: Road1-3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1569753834
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569753833}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.63511, y: 0, z: -1.44407}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 624262856}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1569753835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569753833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc6aa52ceb9bb05438f5ee48dfae000d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageRoad
+  from: {fileID: 1563274862}
+  to: {fileID: 1084696143}
+  segmentPrefab: {fileID: 694905909099108770, guid: 35a89b33ad8fee947a2a1d23cae65315, type: 3}
+  lockedSegmentPrefab: {fileID: 0}
+  spacing: 0.7
+  startOffset: 0.45
+  endOffset: 0.45
+  roadY: 0.02
+  alignToDirection: 1
+  connect: 1
+  overlap: 0.02
+  openDelay: 0.3
+  appearInterval: 0.08
+  popDuration: 0.25
 --- !u!1 &1686352354
 GameObject:
   m_ObjectHideFlags: 0
@@ -3685,6 +3802,64 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!1 &1731265475
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1731265477}
+  - component: {fileID: 1731265476}
+  m_Layer: 0
+  m_Name: Road1-2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1731265476
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1731265475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc6aa52ceb9bb05438f5ee48dfae000d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageRoad
+  from: {fileID: 1270041874}
+  to: {fileID: 1563274862}
+  segmentPrefab: {fileID: 694905909099108770, guid: 35a89b33ad8fee947a2a1d23cae65315, type: 3}
+  lockedSegmentPrefab: {fileID: 0}
+  spacing: 0.7
+  startOffset: 0.45
+  endOffset: 0.45
+  roadY: 0.02
+  alignToDirection: 1
+  connect: 1
+  overlap: 0
+  openDelay: 0.3
+  appearInterval: 0.08
+  popDuration: 0.25
+--- !u!4 &1731265477
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1731265475}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.63511, y: 0, z: -1.44407}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 624262856}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1732763138
 GameObject:
   m_ObjectHideFlags: 0
@@ -4017,3 +4192,4 @@ SceneRoots:
   - {fileID: 388231982}
   - {fileID: 421720431}
   - {fileID: 82155192}
+  - {fileID: 1349417440}
