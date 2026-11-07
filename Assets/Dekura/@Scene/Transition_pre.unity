@@ -514,6 +514,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Transitioner
       objectReference: {fileID: 0}
+    - target: {fileID: 4041169896569918686, guid: 423871ed34ef63749bed08ffa00d2c96, type: 3}
+      propertyPath: testmode
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
