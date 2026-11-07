@@ -35,6 +35,7 @@ public class CameraIntro : MonoBehaviour
     Quaternion finalRot;
     Vector3 pivot;
     Vector3 followVelocity;
+    float zoom = 1f;          // 1 = 置いた距離、0.5 = 半分の距離まで寄る
 
     void Awake()
     {
@@ -85,12 +86,27 @@ public class CameraIntro : MonoBehaviour
     {
         if (IsPlaying || followTarget == null) return;
 
-        Vector3 desired = FocusOf(followTarget) + offsetFromFocus;
+        Vector3 desired = FocusOf(followTarget) + offsetFromFocus * zoom;
         if (followSmooth <= 0f)
             transform.position = desired; // 常にぴったり中心
         else
             transform.position = Vector3.SmoothDamp(transform.position, desired, ref followVelocity, followSmooth);
         transform.rotation = finalRot;
+    }
+
+    // カメラをプレイヤーへ寄せる（target = 1 で元の距離、0.5 で半分の距離）
+    // 使い方：yield return StartCoroutine(cameraIntro.ZoomTo(0.5f, 1f));
+    public IEnumerator ZoomTo(float target, float time)
+    {
+        float start = zoom;
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / Mathf.Max(0.01f, time);
+            zoom = Mathf.Lerp(start, target, EaseInOut(Mathf.Clamp01(t)));
+            yield return null;
+        }
+        zoom = target;
     }
 
     // 注視点と最終位置を、今のプレイヤーの位置に合わせ直す
