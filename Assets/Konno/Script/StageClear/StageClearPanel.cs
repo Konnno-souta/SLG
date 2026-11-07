@@ -1,8 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using Conversation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -14,7 +17,8 @@ using UnityEngine.InputSystem;
 ///   ・上に横長の帯 ＋ 金色の線 ＋ 後ろで回る魔法陣 ＋「STAGE CLEAR」の文字 ＋ キラキラ
 ///   ・左下にキャラクター（MVP など）
 ///   ・右下に項目（MVP / TURN など。好きなだけ増やせる）
-///   ・決定ボタン（または自動）でフェードして閉じる
+///   ・出きったら右下に「閉じる」ボタン（会話パートの ログ／スキップ と同じ見た目）。押すとパネルを閉じる
+///   ・ボタン（または決定ボタン）でフェードして閉じて、次のシーンへ
 /// 画像や部品は自動で作るので、空の GameObject に付けるだけで動く。
 /// 魔法陣・キラキラなどは、自分の画像に差し替えることもできる。
 /// </summary>
@@ -25,6 +29,12 @@ public class StageClearPanel : MonoBehaviour
         WaitForInput,   // 決定ボタン（Enter / Space / Z / パッドの A / クリック）で閉じる
         AutoClose,      // 決まった秒数で自動で閉じる
         Manual          // Close() を呼んだ時だけ閉じる
+    }
+
+    public enum ConversationTiming
+    {
+        AfterClose,   // パネルが消えきってから会話
+        Immediately   // 押した瞬間に会話（パネルは後ろでフェードして消える）
     }
 
     [Serializable]
@@ -179,11 +189,54 @@ public class StageClearPanel : MonoBehaviour
     public bool showTestButton = true;
     public float testButtonScale = 1.5f;
 
+    [Header("閉じるボタン（右下・会話パートの UI と同じ見た目）")]
+    [Tooltip("出きったら右下に「閉じる」ボタンを出す（押すとパネルを閉じる）")]
+    public bool showNextButton = true;
+    [Tooltip("閉じた後に移るシーン名（Build Profiles のシーン一覧に入れておく）。空ならパネルを閉じるだけ")]
+    public string nextSceneName = "";
+    [Tooltip("ボタンの文字")]
+    public string nextLabel = "閉じる";
+    [Tooltip("丸の中に出す文字（ボタンアイコンの代わり）")]
+    public string nextKeyLabel = "A";
+    [Tooltip("ボタンアイコン画像（設定すると丸と文字の代わりに表示）")]
+    public Sprite nextButtonIcon;
+    [Tooltip("全部出きってから、ボタンが出るまでの時間（秒）")]
+    public float nextButtonDelay = 0.2f;
+    [Tooltip("マウスはボタンの上をクリックした時だけ反応する（オフなら画面のどこでも）")]
+    public bool clickOnlyOnButton = true;
+    public Color uiBarColor = new Color(0f, 0f, 0f, 0.55f);
+    [Tooltip("マウスが乗っている時の色")]
+    public Color uiBarHoverColor = new Color(0.2f, 0.35f, 0.5f, 0.75f);
+    public float uiBarHeight = 56f;
+    public float uiItemWidth = 190f;
+    [Tooltip("画面右下からの余白")]
+    public Vector2 uiBarMargin = new Vector2(24f, 20f);
+    public float uiTextSize = 24f;
+    public Color uiTextColor = Color.white;
+    public Color uiBadgeColor = new Color(1f, 1f, 1f, 0.9f);
+    public Color uiBadgeTextColor = new Color(0.1f, 0.15f, 0.25f);
+
+    [Header("閉じた後の会話（閉じるボタンから会話パートへ直行）")]
+    [Tooltip("閉じるボタンで閉じたら、そのまま会話パートを始める")]
+    public bool playConversationOnClose = true;
+    [Tooltip("会話を流す ConversationPlayer（空なら自動で探す）")]
+    public ConversationPlayer conversationPlayer;
+    [Tooltip("流す会話のストーリーID（CSV の story_id）。空なら会話なし")]
+    public string conversationStoryId = "story_clear_001";
+    [Tooltip("会話の CSV（空なら ConversationPlayer の Csv Asset を使う）")]
+    public TextAsset conversationCsv;
+    [Tooltip("AfterClose: パネルが消えきってから会話 / Immediately: 押した瞬間に会話を始める（パネルは後ろで消える）")]
+    public ConversationTiming conversationTiming = ConversationTiming.AfterClose;
+
     [Header("イベント")]
     [Tooltip("全部出きった時")]
     public UnityEvent onShown;
     [Tooltip("閉じ終わった時（このあと会話を始めるなど）")]
     public UnityEvent onClosed;
+    [Tooltip("閉じるボタンが押された時（閉じ始める時に呼ばれる）")]
+    public UnityEvent onNext;
+    [Tooltip("閉じた後の会話が終わった時")]
+    public UnityEvent onConversationFinished;
 
     public bool IsPlaying { get; private set; }
 
@@ -218,6 +271,14 @@ public class StageClearPanel : MonoBehaviour
 
     float t, introEnd, closeTimer = -1f, shownTimer;
     bool shownInvoked;
+    bool goNext;   // 閉じ終わったら次のシーンへ
+    Coroutine conversationRoutine;
+    RectTransform nextBar;
+    CanvasGroup nextGroup;
+    Image nextBarImage;
+    TextMeshProUGUI nextKeyText, nextLabelText;
+    Image nextBadge;
+    Sprite circleSprite, roundSprite;
     float emblemAngle;
 
     static float Dt => Time.unscaledDeltaTime;
@@ -243,6 +304,7 @@ public class StageClearPanel : MonoBehaviour
         shownInvoked = false;
         emblemAngle = 0f;
         foreach (var s in sparkleUis) { s.age = 0f; s.life = 0f; s.image.enabled = false; }
+        goNext = false;
         IsPlaying = true;
         if (pauseGame) Time.timeScale = 0f;
         Pose();
@@ -255,6 +317,74 @@ public class StageClearPanel : MonoBehaviour
         if (!IsPlaying || closeTimer >= 0f) return;
         t = Mathf.Max(t, introEnd);
         closeTimer = 0f;
+    }
+
+    /// <summary>閉じるボタンと同じ（閉じる。Next Scene Name があれば、そのシーンへ）</summary>
+    public void GoNext()
+    {
+        if (!IsPlaying || closeTimer >= 0f) return;
+        goNext = true;
+        onNext?.Invoke();
+        Close();
+        if (WillPlayConversation() && conversationTiming == ConversationTiming.Immediately)
+            StartConversation();
+    }
+
+    /// <summary>閉じた後に会話を流す設定になっているか</summary>
+    bool WillPlayConversation()
+    {
+        if (!playConversationOnClose || string.IsNullOrEmpty(conversationStoryId)) return false;
+        if (!conversationPlayer) conversationPlayer = FindAnyObjectByType<ConversationPlayer>(FindObjectsInactive.Include);
+        if (!conversationPlayer)
+        {
+            Debug.LogWarning("[StageClearPanel] ConversationPlayer が見つからないので、会話なしで閉じます", this);
+            return false;
+        }
+        return true;
+    }
+
+    void StartConversation()
+    {
+        if (conversationRoutine != null) return;
+        conversationRoutine = StartCoroutine(ConversationRoutine());
+    }
+
+    // 会話を流して、終わったら（設定があれば）次のシーンへ
+    IEnumerator ConversationRoutine()
+    {
+        if (pauseGame) Time.timeScale = 1f;   // 会話中はゲームの時間を戻す
+        if (!conversationPlayer.gameObject.activeInHierarchy) conversationPlayer.gameObject.SetActive(true);
+
+        if (conversationCsv) conversationPlayer.PlayStory(conversationCsv, conversationStoryId);
+        else conversationPlayer.PlayStory(conversationStoryId);
+
+        // 会話が始まるのを少し待つ（ストーリーIDが見つからない時は始まらない）
+        float wait = 0f;
+        while (!conversationPlayer.IsPlaying && wait < 0.5f)
+        {
+            wait += Time.unscaledDeltaTime;
+            yield return null;
+        }
+        if (!conversationPlayer.IsPlaying)
+            Debug.LogWarning($"[StageClearPanel] 会話「{conversationStoryId}」が始まりませんでした（CSV にそのストーリーIDがあるか確認してください）", this);
+
+        // 会話が終わるまで待つ（ストーリースキップでも終わる）
+        while (conversationPlayer.IsPlaying) yield return null;
+
+        // パネルがまだ消えている途中なら待つ
+        while (IsPlaying) yield return null;
+
+        conversationRoutine = null;
+        onConversationFinished?.Invoke();
+        if (buildInto && hidePanelOnClose) buildInto.gameObject.SetActive(false);
+        LoadNextScene();
+    }
+
+    void LoadNextScene()
+    {
+        if (string.IsNullOrEmpty(nextSceneName)) return;
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(nextSceneName);
     }
 
     /// <summary>すぐに消す</summary>
@@ -315,14 +445,25 @@ public class StageClearPanel : MonoBehaviour
         t += dt;
         emblemAngle += emblemRotateSpeed * dt;
 
-        bool pressed = DecidePressed();
+        bool keyPressed = DecideKeyPressed();
+        bool clicked = MouseClicked(out Vector2 mousePos);
+        bool overButton = NextButtonVisible() && IsOverNextButton(mousePos);
 
-        // 出てくる途中
+        // 出てくる途中（キーでもクリックでも最後まで飛ばす）
+        bool pressed;
         if (t < introEnd)
         {
-            if (pressed && skipIntroWithInput) t = introEnd;
+            if ((keyPressed || clicked) && skipIntroWithInput) t = introEnd;
             pressed = false;
         }
+        else if (showNextButton)
+        {
+            // ボタンが出てから受け付ける。マウスはボタンの上だけ（設定による）
+            pressed = NextButtonVisible() && (keyPressed || (clicked && (overButton || !clickOnlyOnButton)));
+        }
+        else pressed = keyPressed || clicked;
+
+        if (nextBarImage) nextBarImage.color = overButton && closeTimer < 0f ? uiBarHoverColor : uiBarColor;
 
         if (t >= introEnd && !shownInvoked)
         {
@@ -334,7 +475,8 @@ public class StageClearPanel : MonoBehaviour
         if (closeTimer < 0f && t >= introEnd)
         {
             shownTimer += dt;
-            if (closeMode == CloseMode.WaitForInput && pressed) Close();
+            if (pressed && showNextButton) GoNext();
+            else if (closeMode == CloseMode.WaitForInput && pressed) Close();
             else if (closeMode == CloseMode.AutoClose && shownTimer >= autoCloseTime) Close();
         }
 
@@ -359,8 +501,20 @@ public class StageClearPanel : MonoBehaviour
         root.gameObject.SetActive(false);
         root.localScale = Vector3.one;
         if (pauseGame) Time.timeScale = 1f;
-        if (buildInto && hidePanelOnClose) buildInto.gameObject.SetActive(false);
         onClosed?.Invoke();
+
+        bool next = goNext;
+        goNext = false;
+
+        // 閉じるボタンで閉じた時は、会話パートへ（会話が終わってから次のシーンへ）
+        if (next && (conversationRoutine != null || WillPlayConversation()))
+        {
+            StartConversation();   // Immediately の時はもう始まっている
+            return;
+        }
+
+        if (buildInto && hidePanelOnClose) buildInto.gameObject.SetActive(false);
+        if (next) LoadNextScene();
     }
 
     void OnGUI()
@@ -376,7 +530,8 @@ public class StageClearPanel : MonoBehaviour
     // 入力
     // =========================================================================
 
-    bool DecidePressed()
+    /// <summary>キーボード・パッドの決定ボタン</summary>
+    bool DecideKeyPressed()
     {
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
@@ -384,14 +539,40 @@ public class StageClearPanel : MonoBehaviour
                            kb.spaceKey.wasPressedThisFrame || kb.zKey.wasPressedThisFrame)) return true;
         foreach (var pad in Gamepad.all)
             if (pad.buttonSouth.wasPressedThisFrame) return true;
-        var mouse = Mouse.current;
-        if (mouse != null && mouse.leftButton.wasPressedThisFrame && !OverTestButton(mouse.position.ReadValue())) return true;
         return false;
 #else
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) ||
-            Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.JoystickButton0)) return true;
-        return Input.GetMouseButtonDown(0) && !OverTestButton(Input.mousePosition);
+        return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) ||
+               Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.JoystickButton0);
 #endif
+    }
+
+    /// <summary>マウスの左クリック（確認用ボタンの上は除く）。pos には今のマウスの位置が入る</summary>
+    bool MouseClicked(out Vector2 pos)
+    {
+#if ENABLE_INPUT_SYSTEM
+        var mouse = Mouse.current;
+        if (mouse == null) { pos = new Vector2(-9999f, -9999f); return false; }
+        pos = mouse.position.ReadValue();
+        return mouse.leftButton.wasPressedThisFrame && !OverTestButton(pos);
+#else
+        pos = Input.mousePosition;
+        return Input.GetMouseButtonDown(0) && !OverTestButton(pos);
+#endif
+    }
+
+    bool NextButtonVisible() => showNextButton && nextGroup && nextGroup.alpha > 0.5f;
+
+    bool IsOverNextButton(Vector2 screenPos)
+    {
+        if (!nextBar) return false;
+        var c = nextBar.GetComponentInParent<Canvas>();
+        Camera cam = null;
+        if (c)
+        {
+            c = c.rootCanvas;
+            if (c.renderMode != RenderMode.ScreenSpaceOverlay) cam = c.worldCamera;
+        }
+        return RectTransformUtility.RectangleContainsScreenPoint(nextBar, screenPos, cam);
     }
 
     /// <summary>確認用ボタンを押したクリックで閉じないようにする</summary>
@@ -487,6 +668,16 @@ public class StageClearPanel : MonoBehaviour
             r.rt.anchoredPosition = RowPosition(i) + new Vector2(Mathf.Lerp(rowSlide, 0f, er), 0f);
             r.line.fillAmount = EaseOutCubic(P(t, rowsStart + i * rowStagger, rowTime * 1.5f));
         }
+
+        PoseNextButton();
+    }
+
+    void PoseNextButton()
+    {
+        if (!nextBar) return;
+        float k = showNextButton ? EaseOutCubic(P(t, introEnd + nextButtonDelay, 0.25f)) : 0f;
+        nextGroup.alpha = k;
+        nextBar.anchoredPosition = new Vector2(-uiBarMargin.x, uiBarMargin.y + Mathf.Lerp(-12f, 0f, k));
     }
 
     Vector2 RowPosition(int i) => rowsPosition + new Vector2(0f, -rowSpacing * i);
@@ -586,6 +777,34 @@ public class StageClearPanel : MonoBehaviour
 
         ApplyCharacter();
         ApplyRows();
+        ApplyNextButton();
+    }
+
+    void ApplyNextButton()
+    {
+        nextBar.gameObject.SetActive(showNextButton);
+        nextBar.sizeDelta = new Vector2(uiItemWidth + 16f, uiBarHeight);
+        nextBarImage.color = uiBarColor;
+
+        float bs = uiBarHeight - 22f;
+        var b = nextBadge.rectTransform;
+        b.anchoredPosition = new Vector2(8f + uiBarHeight * 0.5f - 4f, 0f);
+        b.sizeDelta = new Vector2(bs, bs);
+        nextBadge.sprite = nextButtonIcon ? nextButtonIcon : circleSprite;
+        nextBadge.color = nextButtonIcon ? Color.white : uiBadgeColor;
+
+        nextKeyText.gameObject.SetActive(!nextButtonIcon);
+        nextKeyText.text = "<b>" + nextKeyLabel + "</b>";
+        nextKeyText.fontSize = bs * 0.42f;
+        nextKeyText.color = uiBadgeTextColor;
+
+        nextLabelText.text = nextLabel;
+        nextLabelText.fontSize = uiTextSize;
+        nextLabelText.color = uiTextColor;
+        nextLabelText.rectTransform.offsetMin = new Vector2(8f + uiBarHeight + 2f, 0f);
+        nextLabelText.rectTransform.offsetMax = new Vector2(-6f, 0f);
+        foreach (var tx in new[] { nextKeyText, nextLabelText })
+            if (textFont) tx.font = textFont;
     }
 
     void ApplyTitleGlow()
@@ -714,6 +933,34 @@ public class StageClearPanel : MonoBehaviour
 
         characterImage = NewImage("Character", root, Vector2.zero, Vector2.zero, null, Color.white);
         characterImage.preserveAspect = true;
+
+        // 右下の「閉じる」ボタン（会話パートの ログ／スキップ と同じ形：角の丸い半透明の黒）
+        circleSprite = MakeCircleSprite();
+        roundSprite = MakeRoundRectSprite();
+        nextBarImage = NewImage("CloseButton", root, Vector2.zero, Vector2.zero, roundSprite, Color.clear);
+        nextBarImage.type = Image.Type.Sliced;
+        nextBar = nextBarImage.rectTransform;
+        nextBar.anchorMin = nextBar.anchorMax = new Vector2(1f, 0f);
+        nextBar.pivot = new Vector2(1f, 0f);
+        nextGroup = nextBar.gameObject.AddComponent<CanvasGroup>();
+        nextGroup.alpha = 0f;
+
+        nextBadge = NewImage("Badge", nextBar, Vector2.zero, Vector2.zero, null, Color.white);
+        nextBadge.preserveAspect = true;
+        var br = nextBadge.rectTransform;
+        br.anchorMin = br.anchorMax = new Vector2(0f, 0.5f);
+        br.pivot = new Vector2(0.5f, 0.5f);
+
+        nextKeyText = NewText("Key", br, Vector2.zero, TextAlignmentOptions.Center);
+        var kr = nextKeyText.rectTransform;
+        kr.anchorMin = Vector2.zero;
+        kr.anchorMax = Vector2.one;
+        kr.offsetMin = kr.offsetMax = Vector2.zero;
+
+        nextLabelText = NewText("Label", nextBar, Vector2.zero, TextAlignmentOptions.MidlineLeft);
+        var lr = nextLabelText.rectTransform;
+        lr.anchorMin = Vector2.zero;
+        lr.anchorMax = Vector2.one;
     }
 
     Row NewRow()
@@ -792,13 +1039,13 @@ public class StageClearPanel : MonoBehaviour
         var tex = NewTex(w, h);
         var px = new Color32[w * h];
         for (int y = 0; y < h; y++)
-        for (int x = 0; x < w; x++)
-        {
-            float u = x / (float)(w - 1);
-            float ends = Mathf.Clamp01(Mathf.Min(u, 1f - u) / 0.25f);
-            float v = Mathf.Abs((y + 0.5f) / h - 0.5f) * 2f;
-            px[y * w + x] = White(ends * Mathf.Clamp01(1.4f - v * 1.4f));
-        }
+            for (int x = 0; x < w; x++)
+            {
+                float u = x / (float)(w - 1);
+                float ends = Mathf.Clamp01(Mathf.Min(u, 1f - u) / 0.25f);
+                float v = Mathf.Abs((y + 0.5f) / h - 0.5f) * 2f;
+                px[y * w + x] = White(ends * Mathf.Clamp01(1.4f - v * 1.4f));
+            }
         return ToSprite(tex, px);
     }
 
@@ -809,13 +1056,13 @@ public class StageClearPanel : MonoBehaviour
         var tex = NewTex(w, h);
         var px = new Color32[w * h];
         for (int y = 0; y < h; y++)
-        for (int x = 0; x < w; x++)
-        {
-            float u = x / (float)(w - 1), v = y / (float)(h - 1);
-            float sides = Mathf.Clamp01(Mathf.Min(u, 1f - u) / 0.2f);
-            float edge = Mathf.Clamp01(Mathf.Min(v, 1f - v) / 0.12f);
-            px[y * w + x] = White(sides * edge);
-        }
+            for (int x = 0; x < w; x++)
+            {
+                float u = x / (float)(w - 1), v = y / (float)(h - 1);
+                float sides = Mathf.Clamp01(Mathf.Min(u, 1f - u) / 0.2f);
+                float edge = Mathf.Clamp01(Mathf.Min(v, 1f - v) / 0.12f);
+                px[y * w + x] = White(sides * edge);
+            }
         return ToSprite(tex, px);
     }
 
@@ -830,17 +1077,50 @@ public class StageClearPanel : MonoBehaviour
         for (int i = 0; i < blobs.Length; i++)
             blobs[i] = new Vector3((float)rnd.NextDouble() * 0.6f + 0.2f, (float)rnd.NextDouble() * 0.5f + 0.25f, (float)rnd.NextDouble() * 0.15f + 0.15f);
         for (int y = 0; y < s; y++)
-        for (int x = 0; x < s; x++)
-        {
-            float u = x / (float)(s - 1), v = y / (float)(s - 1);
-            float a = 0f;
-            foreach (var b in blobs)
+            for (int x = 0; x < s; x++)
             {
-                float dx = u - b.x, dy = v - b.y;
-                a += Mathf.Exp(-(dx * dx + dy * dy) / (b.z * b.z));
+                float u = x / (float)(s - 1), v = y / (float)(s - 1);
+                float a = 0f;
+                foreach (var b in blobs)
+                {
+                    float dx = u - b.x, dy = v - b.y;
+                    a += Mathf.Exp(-(dx * dx + dy * dy) / (b.z * b.z));
+                }
+                px[y * s + x] = White(Mathf.Clamp01(a * 0.5f));
             }
-            px[y * s + x] = White(Mathf.Clamp01(a * 0.5f));
-        }
+        return ToSprite(tex, px);
+    }
+
+    /// <summary>角の丸い四角（ボタンの背景・9スライス）</summary>
+    static Sprite MakeRoundRectSprite()
+    {
+        const int s = 64, r = 16;
+        var tex = NewTex(s, s);
+        var px = new Color32[s * s];
+        for (int y = 0; y < s; y++)
+            for (int x = 0; x < s; x++)
+            {
+                float cx = Mathf.Clamp(x + 0.5f, r, s - r), cy = Mathf.Clamp(y + 0.5f, r, s - r);
+                float dx = x + 0.5f - cx, dy = y + 0.5f - cy;
+                px[y * s + x] = White(r - Mathf.Sqrt(dx * dx + dy * dy) + 0.5f);
+            }
+        tex.SetPixels32(px);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(r, r, r, r));
+    }
+
+    /// <summary>白い丸（ボタンの印）</summary>
+    static Sprite MakeCircleSprite()
+    {
+        const int s = 64;
+        var tex = NewTex(s, s);
+        var px = new Color32[s * s];
+        for (int y = 0; y < s; y++)
+            for (int x = 0; x < s; x++)
+            {
+                float dx = x + 0.5f - s * 0.5f, dy = y + 0.5f - s * 0.5f;
+                px[y * s + x] = White(s * 0.5f - Mathf.Sqrt(dx * dx + dy * dy));
+            }
         return ToSprite(tex, px);
     }
 
@@ -851,11 +1131,11 @@ public class StageClearPanel : MonoBehaviour
         var tex = NewTex(s, s);
         var px = new Color32[s * s];
         for (int y = 0; y < s; y++)
-        for (int x = 0; x < s; x++)
-        {
-            float d = Mathf.Abs(x + 0.5f - s * 0.5f) + Mathf.Abs(y + 0.5f - s * 0.5f);
-            px[y * s + x] = White(s * 0.5f - d);
-        }
+            for (int x = 0; x < s; x++)
+            {
+                float d = Mathf.Abs(x + 0.5f - s * 0.5f) + Mathf.Abs(y + 0.5f - s * 0.5f);
+                px[y * s + x] = White(s * 0.5f - d);
+            }
         return ToSprite(tex, px);
     }
 
@@ -865,18 +1145,18 @@ public class StageClearPanel : MonoBehaviour
         var tex = NewTex(s, s);
         var px = new Color32[s * s];
         for (int y = 0; y < s; y++)
-        for (int x = 0; x < s; x++)
-        {
-            float dx = (x + 0.5f) / s * 2f - 1f, dy = (y + 0.5f) / s * 2f - 1f;
-            float r = Mathf.Sqrt(dx * dx + dy * dy);
-            float ang = Mathf.Atan2(dy, dx);
-            // 角度によって半径が変わる（とがり）
-            float spike = Mathf.Pow(Mathf.Abs(Mathf.Cos(ang * points * 0.5f)), 6f);
-            float limit = Mathf.Lerp(0.18f, 1f, spike);
-            float a = Mathf.Clamp01((limit - r) * s * 0.25f);
-            a = Mathf.Max(a, Mathf.Exp(-r * r / (core * core)));   // 中心の光
-            px[y * s + x] = White(a);
-        }
+            for (int x = 0; x < s; x++)
+            {
+                float dx = (x + 0.5f) / s * 2f - 1f, dy = (y + 0.5f) / s * 2f - 1f;
+                float r = Mathf.Sqrt(dx * dx + dy * dy);
+                float ang = Mathf.Atan2(dy, dx);
+                // 角度によって半径が変わる（とがり）
+                float spike = Mathf.Pow(Mathf.Abs(Mathf.Cos(ang * points * 0.5f)), 6f);
+                float limit = Mathf.Lerp(0.18f, 1f, spike);
+                float a = Mathf.Clamp01((limit - r) * s * 0.25f);
+                a = Mathf.Max(a, Mathf.Exp(-r * r / (core * core)));   // 中心の光
+                px[y * s + x] = White(a);
+            }
         return ToSprite(tex, px);
     }
 
@@ -887,53 +1167,53 @@ public class StageClearPanel : MonoBehaviour
         var px = new Color32[s * s];
         float pxSize = 2f / s;   // 1ピクセルの大きさ（-1〜1 の座標で）
         for (int y = 0; y < s; y++)
-        for (int x = 0; x < s; x++)
-        {
-            float dx = (x + 0.5f) / s * 2f - 1f, dy = (y + 0.5f) / s * 2f - 1f;
-            float r = Mathf.Sqrt(dx * dx + dy * dy);
-            float ang = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
-            float a = 0f;
+            for (int x = 0; x < s; x++)
+            {
+                float dx = (x + 0.5f) / s * 2f - 1f, dy = (y + 0.5f) / s * 2f - 1f;
+                float r = Mathf.Sqrt(dx * dx + dy * dy);
+                float ang = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+                float a = 0f;
 
-            if (!inner)
-            {
-                a = Mathf.Max(a, Ring(r, 0.97f, 0.012f, pxSize));
-                a = Mathf.Max(a, Ring(r, 0.90f, 0.006f, pxSize));
-                a = Mathf.Max(a, Ring(r, 0.80f, 0.004f, pxSize) * 0.8f);
-                // 目盛り（0.90〜0.97 の間）
-                if (r > 0.905f && r < 0.965f)
+                if (!inner)
                 {
-                    float m = Mathf.Repeat(ang, 5f);
-                    float d = Mathf.Min(m, 5f - m) * Mathf.Deg2Rad * r;
-                    a = Mathf.Max(a, Mathf.Clamp01(1f - (d - 0.004f) / pxSize) * 0.9f);
+                    a = Mathf.Max(a, Ring(r, 0.97f, 0.012f, pxSize));
+                    a = Mathf.Max(a, Ring(r, 0.90f, 0.006f, pxSize));
+                    a = Mathf.Max(a, Ring(r, 0.80f, 0.004f, pxSize) * 0.8f);
+                    // 目盛り（0.90〜0.97 の間）
+                    if (r > 0.905f && r < 0.965f)
+                    {
+                        float m = Mathf.Repeat(ang, 5f);
+                        float d = Mathf.Min(m, 5f - m) * Mathf.Deg2Rad * r;
+                        a = Mathf.Max(a, Mathf.Clamp01(1f - (d - 0.004f) / pxSize) * 0.9f);
+                    }
+                    // 小さな点の列（0.85 の輪の上）
+                    {
+                        float m = Mathf.Repeat(ang, 15f);
+                        float da = Mathf.Min(m, 15f - m) * Mathf.Deg2Rad * 0.85f;
+                        float dr = r - 0.85f;
+                        float d = Mathf.Sqrt(da * da + dr * dr);
+                        a = Mathf.Max(a, Mathf.Clamp01(1f - (d - 0.012f) / pxSize));
+                    }
+                    // 重なった2つの四角形（輪の内側）
+                    a = Mathf.Max(a, Square(dx, dy, 0.56f, 0f, pxSize) * 0.85f);
+                    a = Mathf.Max(a, Square(dx, dy, 0.56f, 45f, pxSize) * 0.85f);
                 }
-                // 小さな点の列（0.85 の輪の上）
+                else
                 {
-                    float m = Mathf.Repeat(ang, 15f);
-                    float da = Mathf.Min(m, 15f - m) * Mathf.Deg2Rad * 0.85f;
-                    float dr = r - 0.85f;
-                    float d = Mathf.Sqrt(da * da + dr * dr);
-                    a = Mathf.Max(a, Mathf.Clamp01(1f - (d - 0.012f) / pxSize));
+                    a = Mathf.Max(a, Ring(r, 0.95f, 0.02f, pxSize));
+                    a = Mathf.Max(a, Ring(r, 0.75f, 0.012f, pxSize));
+                    // 放射状の線
+                    if (r > 0.3f && r < 0.75f)
+                    {
+                        float m = Mathf.Repeat(ang, 30f);
+                        float d = Mathf.Min(m, 30f - m) * Mathf.Deg2Rad * r;
+                        a = Mathf.Max(a, Mathf.Clamp01(1f - (d - 0.006f) / pxSize) * 0.7f);
+                    }
+                    a = Mathf.Max(a, Ring(r, 0.3f, 0.012f, pxSize));
                 }
-                // 重なった2つの四角形（輪の内側）
-                a = Mathf.Max(a, Square(dx, dy, 0.56f, 0f, pxSize) * 0.85f);
-                a = Mathf.Max(a, Square(dx, dy, 0.56f, 45f, pxSize) * 0.85f);
+                // 全体を外側ほど少し薄く
+                px[y * s + x] = White(a * Mathf.Lerp(1f, 0.75f, r));
             }
-            else
-            {
-                a = Mathf.Max(a, Ring(r, 0.95f, 0.02f, pxSize));
-                a = Mathf.Max(a, Ring(r, 0.75f, 0.012f, pxSize));
-                // 放射状の線
-                if (r > 0.3f && r < 0.75f)
-                {
-                    float m = Mathf.Repeat(ang, 30f);
-                    float d = Mathf.Min(m, 30f - m) * Mathf.Deg2Rad * r;
-                    a = Mathf.Max(a, Mathf.Clamp01(1f - (d - 0.006f) / pxSize) * 0.7f);
-                }
-                a = Mathf.Max(a, Ring(r, 0.3f, 0.012f, pxSize));
-            }
-            // 全体を外側ほど少し薄く
-            px[y * s + x] = White(a * Mathf.Lerp(1f, 0.75f, r));
-        }
         return ToSprite(tex, px);
     }
 
