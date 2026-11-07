@@ -69,37 +69,69 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     /// StageIdはTitleSaveSlotSelectionControllerが
     /// BattleLaunchSessionへ登録済み。
     /// </summary>
+
     public void OpenContinueFromSlot(int slotNumber)
     {
-        if (!BattleLaunchSession.HasContinuePending ||
-            BattleLaunchSession.CurrentSlot != slotNumber)
+        Debug.Log(
+            "【CONTINUE受信確認】" +
+            $"\nイベントDATA：{slotNumber}" +
+            $"\n保持DATA：{BattleLaunchSession.CurrentSlot}" +
+            $"\nモード：{BattleLaunchSession.Mode}" +
+            $"\nPending：{BattleLaunchSession.HasContinuePending}" +
+            $"\nStageID：{BattleLaunchSession.StageId}",
+            this
+        );
+
+        if (!BattleLaunchSession.HasContinuePending)
         {
             Debug.LogError(
-                "CONTINUEの引き継ぎ情報がありません。",
+                "CONTINUEの引き継ぎ情報がありません。" +
+                "\nBeginContinueが実行されたか確認してください。",
                 this
             );
             return;
         }
 
-        // 現在の戦闘Sceneはステージ1だけ。
-        if (BattleLaunchSession.StageId != "1")
+        if (BattleLaunchSession.CurrentSlot != slotNumber)
+        {
+            Debug.LogError(
+                "CONTINUEのDATA番号が一致しません。" +
+                "\nUnityEventのDynamic int設定を確認してください。",
+                this
+            );
+            return;
+        }
+
+        string stageId =
+            BattleLaunchSession.StageId.Trim();
+
+        // 現段階はステージ1のみ対応
+        bool isStage01 =
+            stageId == "1" ||
+            stageId.Equals(
+                "ST01",
+                System.StringComparison.OrdinalIgnoreCase
+            );
+
+        if (!isStage01)
         {
             Debug.LogWarning(
-                "現在はステージ1のCONTINUEのみ対応。" +
-                $" 保存StageID={BattleLaunchSession.StageId}",
+                $"未対応のStageID：{stageId}" +
+                "\n現在はステージ1のみ読み込めます。",
                 this
             );
             return;
         }
 
         Debug.Log(
-            $"【CONTINUE】DATA{slotNumber}" +
-            " → ステージ1",
+            $"【CONTINUE開始】DATA{slotNumber}" +
+            $" / StageID={stageId}",
             this
         );
 
         OpenStage01();
     }
+
 
     /// <summary>
     /// マップセレクトでステージ1を選択。
