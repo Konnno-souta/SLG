@@ -498,8 +498,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -792.5, y: 292.5}
+  m_SizeDelta: {x: -1615, y: -615}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &425539223
 MonoBehaviour:
@@ -540,14 +540,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 21300000, guid: a6d4b9ccbc80e894b8bcb3be587f141c, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -838,7 +838,7 @@ RectTransform:
   m_GameObject: {fileID: 519149909}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5569, y: 1.5569, z: 1.5569}
+  m_LocalScale: {x: 1.4881006, y: 1.4881006, z: 1.4881006}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 893203515}
@@ -846,7 +846,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 74.900024, y: -350.00195}
+  m_AnchoredPosition: {x: 102, y: -322.64}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &519149911
@@ -1618,6 +1618,8 @@ MonoBehaviour:
   commandPanel: {fileID: 1008976830}
   attackPreviewPanel: {fileID: 2146361615}
   attackRangeOverlay: {fileID: 237458815}
+  effectPlayer: {fileID: 0}
+  attackHitDelay: 0.18
   units: []
   enableDebugResetKey: 0
 --- !u!4 &876830315
@@ -2080,7 +2082,7 @@ RectTransform:
   m_GameObject: {fileID: 1033050388}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5569, y: 1.5569, z: 1.5569}
+  m_LocalScale: {x: 1.4881006, y: 1.4881006, z: 1.4881006}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 792336024}
@@ -2088,7 +2090,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 74.900024, y: -138.42697}
+  m_AnchoredPosition: {x: 102, y: -120.41}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1033050390
@@ -2209,7 +2211,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 30, y: 0}
-  m_SizeDelta: {x: 340, y: 600}
+  m_SizeDelta: {x: 340, y: 880}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1040332381
 MonoBehaviour:
@@ -2231,8 +2233,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: a6d4b9ccbc80e894b8bcb3be587f141c, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2414,7 +2416,7 @@ RectTransform:
   m_GameObject: {fileID: 1129507823}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5569, y: 1.5569, z: 1.5569}
+  m_LocalScale: {x: 1.4881006, y: 1.4881006, z: 1.4881006}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1669946617}
@@ -2422,7 +2424,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 74.9, y: -52.8}
+  m_AnchoredPosition: {x: 102, y: -38.567}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1129507825
@@ -2801,10 +2803,37 @@ MonoBehaviour:
   closeTime: 0.3
   showTestButton: 1
   testButtonScale: 1.5
+  showNextButton: 1
+  nextSceneName: 
+  nextLabel: "\u9589\u3058\u308B"
+  nextKeyLabel: A
+  nextButtonIcon: {fileID: 0}
+  nextButtonDelay: 0.2
+  clickOnlyOnButton: 1
+  uiBarColor: {r: 0, g: 0, b: 0, a: 0.55}
+  uiBarHoverColor: {r: 0.2, g: 0.35, b: 0.5, a: 0.75}
+  uiBarHeight: 56
+  uiItemWidth: 190
+  uiBarMargin: {x: 24, y: 20}
+  uiTextSize: 24
+  uiTextColor: {r: 1, g: 1, b: 1, a: 1}
+  uiBadgeColor: {r: 1, g: 1, b: 1, a: 0.9}
+  uiBadgeTextColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
+  playConversationOnClose: 1
+  conversationPlayer: {fileID: 0}
+  conversationStoryId: story_clear_001
+  conversationCsv: {fileID: 0}
+  conversationTiming: 0
   onShown:
     m_PersistentCalls:
       m_Calls: []
   onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+  onNext:
+    m_PersistentCalls:
+      m_Calls: []
+  onConversationFinished:
     m_PersistentCalls:
       m_Calls: []
 --- !u!4 &1222821564
@@ -2945,7 +2974,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 69.6272, z: 0, w: 78.17792}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -3843,7 +3872,7 @@ RectTransform:
   m_GameObject: {fileID: 1937403942}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5569, y: 1.5569, z: 1.5569}
+  m_LocalScale: {x: 1.4881006, y: 1.4881006, z: 1.4881006}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1215485641}
@@ -3851,7 +3880,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 74.900024, y: -238.22197}
+  m_AnchoredPosition: {x: 102, y: -215.79}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1937403944
