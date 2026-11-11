@@ -47,6 +47,15 @@ public sealed class UnitSelectionController : MonoBehaviour
     [SerializeField]
     private AttackRangeOverlay attackRangeOverlay;
 
+
+    [Header("攻撃エフェクト")]
+    [SerializeField]
+    private BattleCombatEffectPlayer effectPlayer;
+
+    [SerializeField, Min(0f)]
+    private float attackHitDelay = 0.18f;
+
+
     [Header("手動配置用ユニット")]
     [SerializeField]
     private List<UnitView> units =
@@ -99,6 +108,8 @@ public sealed class UnitSelectionController : MonoBehaviour
     // 移動アニメーション中か
     private bool isMoving;
 
+    private bool isAttacking;
+
     // UI決定ボタンがグリッド側で
     // 二重処理されることを防ぐ
     private int suppressCellSelectionUntilFrame = -1;
@@ -114,8 +125,9 @@ public sealed class UnitSelectionController : MonoBehaviour
     /// ロードを禁止する。
     /// </summary>
     public bool CanRestoreBattleState =>
-        currentStep == SelectionStep.None &&
-        !isMoving;
+    currentStep == SelectionStep.None &&
+    !isMoving &&
+    !isAttacking;
 
     // ====================================
     // 初期化
@@ -800,10 +812,15 @@ public sealed class UnitSelectionController : MonoBehaviour
     /// <summary>
     /// 攻撃実行・HP減少・戦闘不能判定。
     /// </summary>
-    private void ExecuteSelectedAttack(
-        UnitView target)
+
+    /// <summary>
+    /// 第25段階：味方の攻撃実行。
+    /// 事前確認後、攻撃演出を開始する。
+    /// </summary>
+    private void ExecuteSelectedAttack(UnitView target)
     {
-        if (selectedUnit == null ||
+        if (isMoving || isAttacking ||
+            selectedUnit == null ||
             target == null ||
             target.State == null ||
             selectedAttackTarget != target ||
@@ -820,12 +837,86 @@ public sealed class UnitSelectionController : MonoBehaviour
             return;
         }
 
-        // =================================
-        // ダメージ計算・HP減少
-        // =================================
+        // 攻撃できる状態か、先に確認する。
+        if (!BattleAttackExecutor.TryPreview(
+            selectedUnit,
+            target,
+            out _))
+        {
+            Debug.LogWarning(
+                "攻撃プレビューに失敗しました。",
+                this
+            );
+
+            selectedAttackTarget = null;
+            attackPreviewPanel.ShowSearching();
+            return;
+        }
+
+        StartCoroutine(
+            ExecuteAttackEffectRoutine(
+                selectedUnit,
+                target
+            )
+        );
+    }
+
+    /// <summary>
+    /// 攻撃エフェクト
+    /// → 約0.18秒待機
+    /// → ダメージと被弾エフェクト
+    /// → 撃破判定・行動終了
+    /// </summary>
+    private IEnumerator ExecuteAttackEffectRoutine(
+        UnitView attacker,
+        UnitView target)
+    {
+        // ====================================
+        // 1. 攻撃中の操作停止
+        // ====================================
+
+        isAttacking = true;
+
+        gridInput.SetGridInputEnabled(false);
+
+        attackRangeOverlay.Clear();
+        attackPreviewPanel.Hide();
+
+        // ====================================
+        // 2. 攻撃エフェクト
+        // ====================================
+
+        if (effectPlayer != null)
+        {
+            effectPlayer.PlayAttack(
+                attacker.transform,
+                target.transform
+            );
+        }
+
+        // エフェクトが敵に届くまで待つ。
+        if (attackHitDelay > 0f)
+        {
+            yield return new WaitForSeconds(
+                attackHitDelay
+            );
+        }
+
+        if (attacker == null ||
+            target == null ||
+            attacker.State == null ||
+            target.State == null)
+        {
+            isAttacking = false;
+            yield break;
+        }
+
+        // ====================================
+        // 3. 既存のダメージ処理
+        // ====================================
 
         if (!BattleAttackExecutor.TryExecute(
-            selectedUnit,
+            attacker,
             target,
             out BattleAttackPreview result))
         {
@@ -835,26 +926,49 @@ public sealed class UnitSelectionController : MonoBehaviour
             );
 
             selectedAttackTarget = null;
+
+            attackPreviewPanel.Show();
             attackPreviewPanel.ShowSearching();
 
-            return;
+            attackRangeOverlay.ShowRange(
+                attackableCells
+            );
+
+            isAttacking = false;
+
+            gridInput.SetGridInputEnabled(true);
+
+            yield break;
         }
 
         string attackerName =
-            selectedUnit.State.CombatStats.CharacterName;
+            attacker.State.CombatStats.CharacterName;
 
         string targetName =
             target.State.CombatStats.CharacterName;
 
-        // =================================
-        // 第20段階：戦闘不能の表示反映
-        // =================================
-
         bool isDefeated =
             result.RemainingHP <= 0;
 
+        // ====================================
+        // 4. 被弾エフェクト
+        // ====================================
+
+        if (effectPlayer != null)
+        {
+            effectPlayer.PlayHit(
+                attacker.transform,
+                target.transform
+            );
+        }
+
+        // ====================================
+        // 5. 戦闘不能表示
+        // ====================================
+
         BattleUnitDefeatVisual defeatVisual =
-            target.GetComponent<BattleUnitDefeatVisual>();
+            target.GetComponent<
+                BattleUnitDefeatVisual>();
 
         if (defeatVisual != null)
         {
@@ -877,15 +991,15 @@ public sealed class UnitSelectionController : MonoBehaviour
             );
         }
 
-        // =================================
-        // 攻撃側の行動終了
-        // =================================
+        // ====================================
+        // 6. 攻撃側の行動終了
+        // ====================================
 
-        selectedUnit.State.CompleteAction();
+        attacker.State.CompleteAction();
 
-        // =================================
-        // 攻撃結果
-        // =================================
+        // ====================================
+        // 7. 攻撃結果ログ
+        // ====================================
 
         Debug.Log(
             "【味方の攻撃成功】" +
@@ -899,8 +1013,17 @@ public sealed class UnitSelectionController : MonoBehaviour
             this
         );
 
+        // ====================================
+        // 8. 選択解除・操作復帰
+        // ====================================
+
         DeselectUnit();
+
+        isAttacking = false;
+
+        gridInput.SetGridInputEnabled(true);
     }
+
 
 
     // ====================================
