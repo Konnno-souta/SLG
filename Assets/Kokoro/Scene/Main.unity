@@ -218,6 +218,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAiMovementController
   grid: {fileID: 555877683}
+  effectPlayer: {fileID: 285367935}
+  combatCamera: {fileID: 431209990}
   showLogs: 1
 --- !u!4 &99772369
 Transform:
@@ -414,6 +416,157 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &285367934
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 285367936}
+  - component: {fileID: 285367935}
+  m_Layer: 0
+  m_Name: BattleCombatEfectPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &285367935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285367934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e2fecf8a2f2bf9469fbbb9af63abfe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleCombatEffectPlayer
+  atkKesa: {fileID: 5930517942032891304, guid: 1795b57fa1e373046982dfd2cc8f6538, type: 3}
+  atkThrust: {fileID: 8861805321578869943, guid: fc856a4d75bf2c1458ab8fb1347f73be, type: 3}
+  atkSweep: {fileID: 4993738248401598846, guid: f4a63db3927c2024b8509284ef2b752e, type: 3}
+  atkRising: {fileID: 2679805952201396114, guid: 5a1ad9ba7294ea54683638a5b6914548, type: 3}
+  atkArrow: {fileID: 1941986112534207830, guid: b60d84caf29619b45b9ba2d13de6bf4d, type: 3}
+  hitSlash: {fileID: 8329899208237755622, guid: ce037702cb0f1e640bda683925fb013f, type: 3}
+  hitSlashCrit: {fileID: 7731629550897597864, guid: ec176eb2a35444449b3f685d185f4174, type: 3}
+  hitPierce: {fileID: 7602047831733072502, guid: e5fc7629109200a42b6be9a41314e6cd, type: 3}
+  hitPierceCrit: {fileID: 1434552313296656656, guid: 3683690dae5e9fb449136351ed20f967, type: 3}
+  hitBlunt: {fileID: 214783647705361590, guid: db7331baef2957643b69d00cd5872d8f, type: 3}
+  atkKesaRed: {fileID: 5031985577106139778, guid: bf6850f5b597d2547be869e3e77444ed, type: 3}
+  atkThrustRed: {fileID: 2818432908668509992, guid: 7651c881f20d03d47b9233c8cfe3bea3, type: 3}
+  atkSweepRed: {fileID: 5377340832328787448, guid: 8fefedfc10e38104a8691ffd94f92e43, type: 3}
+  atkRisingRed: {fileID: 6065569311201388694, guid: 8f3703feea4d2464396019036ad72f37, type: 3}
+  atkArrowRed: {fileID: 3779535174618617166, guid: 65738bc49110a0e45bc180e69bc7457f, type: 3}
+  hitSlashRed: {fileID: 504834506195473385, guid: fbc30a669121e8b4d832ab992700c993, type: 3}
+  hitSlashCritRed: {fileID: 9186197692484138835, guid: 5d4d49cf1cf6f1b4eb932d38699051c4, type: 3}
+  hitPierceRed: {fileID: 1545464178997606794, guid: a4197369281d14c459a3ba1aa581b598, type: 3}
+  hitPierceCritRed: {fileID: 6313687874874984294, guid: 3a06e4d7a3e3a4f4da42fc400acbe751, type: 3}
+  hitBluntRed: {fileID: 1237584986227793398, guid: 62f2730d0a1c3004a862d3b66aa8d196, type: 3}
+  attackHeight: 0
+  hitHeight: 1.1
+  hitForwardOffset: 0.2
+  arrowHeight: 1.1
+  arrowTravelSpeed: 12
+  rules:
+  - classId: 
+    rangeType: Braver
+    attack: 1
+    hit: 1
+    hitDelay: 0.18
+    slashAngle: -35
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  - classId: 
+    rangeType: Trident
+    attack: 2
+    hit: 2
+    hitDelay: 0.17
+    slashAngle: 0
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  - classId: 
+    rangeType: Spartan
+    attack: 0
+    hit: 3
+    hitDelay: 0.12
+    slashAngle: 0
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  - classId: 
+    rangeType: Phalanx
+    attack: 2
+    hit: 2
+    hitDelay: 0.17
+    slashAngle: 0
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  - classId: 
+    rangeType: Cavalier
+    attack: 3
+    hit: 1
+    hitDelay: 0.19
+    slashAngle: 0
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  - classId: 
+    rangeType: Artemis
+    attack: 5
+    hit: 2
+    hitDelay: 0
+    slashAngle: 0
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  - classId: 
+    rangeType: Light Sorcerer
+    attack: 0
+    hit: 0
+    hitDelay: 0
+    slashAngle: 0
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  - classId: 
+    rangeType: Dark Wizard
+    attack: 0
+    hit: 0
+    hitDelay: 0
+    slashAngle: 0
+    customAttack: {fileID: 0}
+    customHit: {fileID: 0}
+    customAttackRed: {fileID: 0}
+    customHitRed: {fileID: 0}
+  showLogs: 0
+--- !u!4 &285367936
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285367934}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &367216539
 GameObject:
   m_ObjectHideFlags: 0
@@ -577,6 +730,8 @@ GameObject:
   - component: {fileID: 431209986}
   - component: {fileID: 431209985}
   - component: {fileID: 431209988}
+  - component: {fileID: 431209989}
+  - component: {fileID: 431209990}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -702,6 +857,43 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &431209989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 431209984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89e7465a099d04348942f5599fa307d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FECameraShake
+  strength: 1
+--- !u!114 &431209990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 431209984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 345d8226c3921e843b29efebbee4ada4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleCombatCameraController
+  targetCamera: {fileID: 431209986}
+  temporarilyDisabledScripts: []
+  backDistance: 3.5
+  sideDistance: 1.3
+  cameraHeight: 2.8
+  focusHeight: 1
+  usePerspectiveForCombat: 1
+  combatFieldOfView: 48
+  combatOrthographicSize: 2.8
+  enterDuration: 0.4
+  exitDuration: 0.4
+  holdAfterHit: 0.45
 --- !u!1 &475331836
 GameObject:
   m_ObjectHideFlags: 0
@@ -1618,9 +1810,9 @@ MonoBehaviour:
   commandPanel: {fileID: 1008976830}
   attackPreviewPanel: {fileID: 2146361615}
   attackRangeOverlay: {fileID: 237458815}
-  effectPlayer: {fileID: 0}
-  attackHitDelay: 0.18
+  effectPlayer: {fileID: 285367935}
   units: []
+  combatCamera: {fileID: 431209990}
   enableDebugResetKey: 0
 --- !u!4 &876830315
 Transform:
@@ -2546,6 +2738,7 @@ MonoBehaviour:
   stageClearPanel: {fileID: 1558792746}
   gameOverPanel: {fileID: 880656992}
   stageClearPresentation: {fileID: 1222821563}
+  combatCamera: {fileID: 0}
 --- !u!4 &1169402819
 Transform:
   m_ObjectHideFlags: 0
@@ -4211,6 +4404,59 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d6b4ca5cb092602479f0bde3dee0887f, type: 3}
+--- !u!1 &2060810546
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2060810548}
+  - component: {fileID: 2060810547}
+  m_Layer: 0
+  m_Name: BattleEffectDebugTester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2060810547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060810546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1924bc1df2f60704090aba1958b37b7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleEffectDebugTester
+  effectPlayer: {fileID: 285367935}
+  turnManager: {fileID: 1169402818}
+  grid: {fileID: 555877683}
+  rangeTypeFilter: Braver
+  attackerOverride: {fileID: 0}
+  targetOverride: {fileID: 0}
+  applyDamage: 1
+  ignoreAttackRange: 1
+  defaultHitDelay: 0.18
+--- !u!4 &2060810548
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060810546}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2146361613
 GameObject:
   m_ObjectHideFlags: 0
@@ -4356,3 +4602,5 @@ SceneRoots:
   - {fileID: 1626952945}
   - {fileID: 1222821564}
   - {fileID: 1264202563}
+  - {fileID: 285367936}
+  - {fileID: 2060810548}

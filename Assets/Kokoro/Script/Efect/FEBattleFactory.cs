@@ -16,6 +16,17 @@ public static partial class FEEffectFactory
     public static readonly string[] HitIds = { "HIT_Slash", "HIT_SlashCrit", "HIT_Pierce", "HIT_PierceCrit", "HIT_Blunt" };
     public static readonly string[] HitNames = { "斬撃ヒット", "斬撃クリティカル", "刺突ヒット", "刺突クリティカル", "打撃ヒット(スマブラ風)" };
 
+    // 赤ver: 同じ形で、青系の色だけを赤に置き換えたもの (ID の末尾に _Red)
+    public const string RedSuffix = "_Red";
+    public static readonly string[] AttackIdsRed = { "ATK_Kesa_Red", "ATK_Thrust_Red", "ATK_Sweep_Red", "ATK_Rising_Red", "ATK_Arrow_Red" };
+    public static readonly string[] HitIdsRed = { "HIT_Slash_Red", "HIT_SlashCrit_Red", "HIT_Pierce_Red", "HIT_PierceCrit_Red", "HIT_Blunt_Red" };
+
+    /// 生成・書き出し用: 青 (通常) と赤ver のすべての ID グループ
+    public static string[][] AllBattleIdGroups
+    {
+        get { return new[] { AttackIds, HitIds, AttackIdsRed, HitIdsRed }; }
+    }
+
     // 攻撃エフェクトから取り除く「当たった瞬間」の部品
     static readonly string[] HitPartNames =
     {
@@ -30,7 +41,10 @@ public static partial class FEEffectFactory
         var fx = root.AddComponent<FEEffect>();
         fx.effectId = id;
 
-        switch (id)
+        bool red = id.EndsWith(RedSuffix);
+        string baseId = red ? id.Substring(0, id.Length - RedSuffix.Length) : id;
+
+        switch (baseId)
         {
             // ---------------- 攻撃
             case "ATK_Kesa":   BuildSlash(fx, id, 115f, -65f, new Vector3(0f, 0f, 28f), 1.3f, 1.0f, 0.42f); MakeAttackOnly(fx, SkillWindup + 0.42f * 0.22f); break;
@@ -49,7 +63,44 @@ public static partial class FEEffectFactory
                 UnityEngine.Object.DestroyImmediate(root);
                 return null;
         }
+        if (red) RecolorToRed(root);
         return root;
+    }
+
+    // ================================================================ 赤ver の色変換
+    //  青〜水色〜紫 (色相 170°〜270°) だけを赤〜朱色へ移す。白・黒・金・オレンジはそのまま。
+    //  水色 → 明るい朱色 (11°)、青 → 赤 (355°)、紫 → 深紅 (342°)。明るさ (HDR の強さ) は保つ。
+    static readonly string[] ColorProps = { "_CoreColor", "_MainColor", "_MainColor2", "_OutlineColor", "_GlowColor" };
+
+    static void RecolorToRed(GameObject root)
+    {
+        var done = new System.Collections.Generic.HashSet<Material>();
+        foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+        {
+            foreach (var m in r.sharedMaterials)
+            {
+                if (m == null || !done.Add(m)) continue;
+                foreach (var prop in ColorProps)
+                    if (m.HasProperty(prop)) m.SetColor(prop, BlueToRed(m.GetColor(prop)));
+            }
+        }
+        foreach (var l in root.GetComponentsInChildren<Light>(true)) l.color = BlueToRed(l.color);
+    }
+
+    public static Color BlueToRed(Color c)
+    {
+        float peak = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+        if (peak <= 1e-5f) return c;
+        float scale = Mathf.Max(peak, 1f);                     // HDR (1 超え) は一旦 0〜1 に収めて変換し、あとで戻す
+        float h, sat, v;
+        Color.RGBToHSV(new Color(c.r / scale, c.g / scale, c.b / scale), out h, out sat, out v);
+        if (sat < 0.12f || h < 0.47f || h > 0.75f) return c;   // ほぼ白・黒、または青系以外は変えない
+        float nh = 0.03f - (h - 0.5f) * 0.375f;
+        nh -= Mathf.Floor(nh);
+        sat = 1f - (1f - sat) * 0.5f;                         // 淡い青はそのままだとピンクになるので、彩度を上げて赤に寄せる
+        var o = Color.HSVToRGB(nh, sat, v) * scale;
+        o.a = c.a;
+        return o;
     }
 
     // 当たった瞬間の部品・ヒットストップ・揺れを外して、攻撃側だけにする

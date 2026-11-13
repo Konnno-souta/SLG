@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: HIT_Pierce_Red_Flash
+  m_Shader: {fileID: 4800000, guid: 06eb793caf303724f9f27c9053b8b7d8, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Additive: 0.25
+    - _CoreTh: 0.55
+    - _Dissolve: 0
+    - _Intensity: 2.2
+    - _MainTh: 0.3
+    - _NoiseAmt: 0
+    - _OutlineTh: 0.1
+    - _Shape: 3
+    m_Colors:
+    - _CoreColor: {r: 1, g: 1, b: 1, a: 1}
+    - _GlowColor: {r: 1.6, g: 0.25, b: 0.3521703, a: 0.9}
+    - _MainColor: {r: 1.25, g: 0.45000002, b: 0.54599994, a: 1}
+    - _MainColor2: {r: 1.1375, g: 0.4725, b: 0.5522999, a: 1}
+    - _NoiseScale: {r: 2, g: 2, b: 1, a: 0}
+    - _OutlineColor: {r: 1.2, g: 0.17499998, b: 0.21660307, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
