@@ -1153,9 +1153,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfd111f22c8e1714e8121104b73576f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridDebugView
-  lightColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  darkColor: {r: 1, g: 1, b: 1, a: 1}
+  lightColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.05882353}
+  darkColor: {r: 1, g: 1, b: 1, a: 0.19607843}
   selectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  transparent: 1
+  tileMaterial: {fileID: 0}
+  fillRatio: 0.95
+  thickness: 0.02
+  heightOffset: 0
+  castShadows: 0
 --- !u!114 &555877683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1186,143 +1192,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &584073969
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 584073970}
-  - component: {fileID: 584073972}
-  - component: {fileID: 584073971}
-  m_Layer: 5
-  m_Name: ClearText
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &584073970
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 584073969}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1558792747}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &584073971
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 584073969}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: Clear
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
-  m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
-  m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!222 &584073972
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 584073969}
-  m_CullTransparentMesh: 1
 --- !u!1 &612165871
 GameObject:
   m_ObjectHideFlags: 0
@@ -2901,6 +2770,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1222821564}
   - component: {fileID: 1222821563}
+  - component: {fileID: 1222821566}
   m_Layer: 0
   m_Name: StageClearDirector
   m_TagString: Untagged
@@ -3013,10 +2883,12 @@ MonoBehaviour:
   uiBadgeColor: {r: 1, g: 1, b: 1, a: 0.9}
   uiBadgeTextColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
   playConversationOnClose: 1
-  conversationPlayer: {fileID: 0}
+  conversationPlayer: {fileID: 1558792751}
   conversationStoryId: story_clear_001
-  conversationCsv: {fileID: 0}
+  conversationCsv: {fileID: 4900000, guid: 889b97742e87a4444aac8c3fd97e032e, type: 3}
   conversationTiming: 0
+  slgStory: {fileID: 1558792750}
+  slgStageId: 1
   onShown:
     m_PersistentCalls:
       m_Calls: []
@@ -3044,6 +2916,397 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1222821566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222821562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb22ec95635e33c41ada0543eb7d491a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationPlayer
+  database: {fileID: 0}
+  scriptAsset: {fileID: 0}
+  playOnStart: 1
+  hideOnFinish: 1
+  source: 0
+  csvAsset: {fileID: 0}
+  storyId: 
+  csvColumns:
+    storyId: story_id
+    textId: text_id
+    characterId: character_id
+    visual: visual
+    characterName: name
+    text: text
+    bgm: bgm
+    se: se
+    delimiter: ','
+  autoShowSpeakers: 1
+  referenceResolution: {x: 1920, y: 1080}
+  sortingOrder: 100
+  font: {fileID: 0}
+  windowSprite: {fileID: 0}
+  windowColor: {r: 1, g: 1, b: 1, a: 1}
+  boxHeight: 400
+  boxGradient:
+    serializedVersion: 2
+    key0: {r: 0.04, g: 0.08, b: 0.16, a: 0.88}
+    key1: {r: 0.04, g: 0.08, b: 0.16, a: 0.75}
+    key2: {r: 0, g: 0, b: 0, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 65535
+    ctime2: 0
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 36044
+    atime2: 65535
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 3
+  sidePadding: 180
+  nameAreaTop: 100
+  nameSize: 46
+  nameColor: {r: 1, g: 1, b: 1, a: 1}
+  affiliationSize: 30
+  affiliationColor: {r: 0.45, g: 0.78, b: 1, a: 1}
+  separatorColor: {r: 1, g: 1, b: 1, a: 0.45}
+  bodySize: 38
+  bodyColor: {r: 1, g: 1, b: 1, a: 1}
+  bodyLineSpacing: 12
+  cursorSprite: {fileID: 0}
+  cursorColor: {r: 0.45, g: 0.78, b: 1, a: 1}
+  cursorSize: {x: 30, y: 22}
+  cursorOffset: {x: 150, y: 100}
+  cursorBobHeight: 6
+  cursorBobSpeed: 1.5
+  characterHeight: 1050
+  leftX: 0.22
+  centerX: 0.5
+  rightX: 0.78
+  speakerHop: 1
+  hopHeight: 18
+  hopDuration: 0.22
+  dimNonSpeakers: 1
+  dimAlpha: 0.5
+  dimAllOnNarration: 0
+  characterFadeTime: 0.25
+  characterMoveTime: 0.3
+  appearRise: 30
+  jumpHeight: 40
+  shakeStrength: 18
+  emoteSize: 90
+  emoteColor: {r: 1, g: 0.82, b: 0.2, a: 1}
+  backgroundFadeTime: 0.5
+  defaultScreenFadeTime: 0.6
+  screenFadeColor: {r: 0, g: 0, b: 0, a: 1}
+  showUiBar: 1
+  uiBarColor: {r: 0, g: 0, b: 0, a: 0.55}
+  uiBarHeight: 56
+  uiItemWidth: 190
+  uiBarMargin: {x: 24, y: 20}
+  uiTextSize: 24
+  uiTextColor: {r: 1, g: 1, b: 1, a: 1}
+  uiBadgeColor: {r: 1, g: 1, b: 1, a: 0.9}
+  uiBadgeTextColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
+  logLabel: "\u30ED\u30B0"
+  skipLabel: "\u30B9\u30AD\u30C3\u30D7"
+  logKeyLabel: L2
+  skipKeyLabel: OPT
+  logButtonIcon: {fileID: 0}
+  skipButtonIcon: {fileID: 0}
+  allowStorySkip: 1
+  skipHoldSeconds: 2
+  skipRingColor: {r: 0.45, g: 0.78, b: 1, a: 1}
+  skipRingBackColor: {r: 1, g: 1, b: 1, a: 0.2}
+  skipFadeTime: 0.5
+  logDimAlpha: 0.65
+  maxLogEntries: 200
+  logEntryWidth: 1400
+  logEntrySpacing: 36
+  logIconSize: 170
+  logTextSize: 34
+  logNameSize: 28
+  logCurrentOffsetY: -280
+  logCurrentScale: 1.1
+  logCurrentExtendLeft: 0
+  logWindowSprite: {fileID: 0}
+  logWindowShape: 0
+  logWindowFill: {r: 0.08, g: 0.17, b: 0.19, a: 0.9}
+  logWindowFillCurrent: {r: 0.1, g: 0.22, b: 0.24, a: 0.96}
+  logWindowBorder: {r: 0.55, g: 0.75, b: 0.72, a: 0.45}
+  logNameTabFill: {r: 0.1, g: 0.16, b: 0.18, a: 0.96}
+  logNameTabBorder: {r: 0.7, g: 0.82, b: 0.78, a: 0.6}
+  logNameColor: {r: 0.9, g: 0.92, b: 0.88, a: 1}
+  logNameTabMinWidth: 240
+  logNameTabX: 110
+  logIconBackground: {r: 1, g: 1, b: 1, a: 0}
+  logShowPortrait: 1
+  logPortraitSize: {x: 340, y: 420}
+  logPortraitZoom: 1.8
+  logPortraitOffset: {x: -10, y: -30}
+  logShowScrollbar: 1
+  logScrollbarX: -70
+  logScrollbarHeight: 640
+  logScrollbarWidth: 6
+  logScrollbarTrack: {r: 1, g: 1, b: 1, a: 0.15}
+  logScrollbarThumb: {r: 0.75, g: 0.88, b: 0.85, a: 0.85}
+  logScrollSpeed: 1400
+  logWheelStep: 160
+  choiceWidth: 900
+  choiceHeight: 96
+  choiceTextSize: 36
+  choiceColor: {r: 1, g: 1, b: 1, a: 0.95}
+  choiceTextColor: {r: 0.15, g: 0.2, b: 0.3, a: 1}
+  advanceAction:
+    m_Name: Advance
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 6e05698d-5560-4ae8-8528-3fc1a8c8d196
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 7736a29c-e21d-4c46-9694-7656ca2ef9a3
+      m_Path: <Gamepad>/buttonSouth
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Advance
+      m_Flags: 0
+    - m_Name: 
+      m_Id: d355ca89-92f2-4bdb-807c-6ceeeb59415e
+      m_Path: <Keyboard>/space
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Advance
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 0f6ecffc-e5c5-48e8-a812-dd45e050b29e
+      m_Path: <Keyboard>/enter
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Advance
+      m_Flags: 0
+    m_Flags: 0
+  storySkipAction:
+    m_Name: StorySkip
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 56dc114a-0c41-4ef0-af18-a57093267b41
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 71af0ed2-40c9-4e8c-94d0-c846ce8642d7
+      m_Path: <Gamepad>/start
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: StorySkip
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 68ba4634-15db-4595-859d-67565501eea7
+      m_Path: <Keyboard>/escape
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: StorySkip
+      m_Flags: 0
+    m_Flags: 0
+  logAction:
+    m_Name: Log
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 4b168c17-cf78-4556-874a-38affec46560
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 9c19f861-b2e6-402e-a2ae-d638a7304758
+      m_Path: <Gamepad>/leftTrigger
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Log
+      m_Flags: 0
+    - m_Name: 
+      m_Id: cfa006fb-d111-4f7c-a84b-b7ac736b3b25
+      m_Path: <Keyboard>/l
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Log
+      m_Flags: 0
+    m_Flags: 0
+  logCloseAction:
+    m_Name: LogClose
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 16a0a7f8-02b1-40f5-821c-c9566cd394a6
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 4640d590-f486-4827-a05c-eef9ecdc542e
+      m_Path: <Gamepad>/buttonEast
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogClose
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 23c7303e-f1b9-4dc0-b3a3-3dcb5a54b671
+      m_Path: <Keyboard>/backspace
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogClose
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 72fae62c-4a96-425d-80c4-1ceebec19b0a
+      m_Path: <Mouse>/rightButton
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogClose
+      m_Flags: 0
+    m_Flags: 0
+  logScrollAction:
+    m_Name: LogScroll
+    m_Type: 0
+    m_ExpectedControlType: Axis
+    m_Id: be5ff58e-5683-407d-9d54-f68ca87d7212
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: bdf6bda0-6a93-4780-a537-f35befbf8644
+      m_Path: <Gamepad>/leftStick/y
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 1b791db4-ea86-4791-9c3e-a96308d15b98
+      m_Path: <Gamepad>/dpad/y
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 0
+    - m_Name: 1DAxis
+      m_Id: 0f202c21-5d44-407f-88e0-6f19cd98a785
+      m_Path: 1DAxis
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 4
+    - m_Name: Negative
+      m_Id: dd53864d-1d9d-4905-bc9e-8f41a8e08b6e
+      m_Path: <Keyboard>/downArrow
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 8
+    - m_Name: Positive
+      m_Id: 7a6a6207-cbdc-4b44-828c-cd9a70454329
+      m_Path: <Keyboard>/upArrow
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 8
+    m_Flags: 0
+  padAdvance: 0
+  padLog: 6
+  padLogClose: 1
+  padStorySkip: 9
+  debugInput: 1
+  titleCard:
+    enabled: 1
+    autoShowOnStoryStart: 1
+    hideUiBar: 1
+    defaultBackground: {fileID: 0}
+    backgroundColor: {r: 0.12, g: 0.06, b: 0.04, a: 1}
+    backgroundTint: {r: 1, g: 1, b: 1, a: 1}
+    vignetteStrength: 0.6
+    defaultEmblem: {fileID: 0}
+    emblemAlpha: 0.35
+    emblemSize: {x: 560, y: 680}
+    emblemOffset: {x: 0, y: 0}
+    defaultFrame: {fileID: 0}
+    frameColor: {r: 1, g: 1, b: 1, a: 1}
+    font: {fileID: 0}
+    titleSize: 76
+    titleColor: {r: 1, g: 0.95, b: 0.88, a: 1}
+    titleSpacing: 4
+    titleOffsetY: 100
+    chapterSize: 34
+    chapterColor: {r: 1, g: 0.95, b: 0.88, a: 1}
+    chapterSpacing: 6
+    chapterOffsetY: -170
+    chapterNameSize: 34
+    chapterNameColor: {r: 1, g: 0.95, b: 0.88, a: 1}
+    chapterNameOffsetY: -222
+    textRise: 16
+    backgroundFadeIn: 0.8
+    titleDelay: 0.3
+    subtitleDelay: 0.6
+    textFadeIn: 0.8
+    holdTime: 2.5
+    waitForInput: 0
+    fadeOut: 0.8
+    skippable: 1
+  audioPlayer: {fileID: 0}
+  stopBgmOnFinish: 1
+  finishBgmFadeOut: 1.5
+  stopSeOnFinish: 1
+  skipSoundFadeOut: 0.5
+  advanceSe: {fileID: 0}
+  logOpenSe: {fileID: 0}
+  logCloseSe: {fileID: 0}
+  skipSe: {fileID: 0}
+  choiceSelectSe: {fileID: 0}
+  uiSeVolume: 1
+  onStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onFinished:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkipped:
+    m_PersistentCalls:
+      m_Calls: []
+  onChoiceSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onTextShown:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1228553774
 GameObject:
   m_ObjectHideFlags: 0
@@ -3563,6 +3826,9 @@ GameObject:
   - component: {fileID: 1558792747}
   - component: {fileID: 1558792749}
   - component: {fileID: 1558792748}
+  - component: {fileID: 1558792752}
+  - component: {fileID: 1558792751}
+  - component: {fileID: 1558792750}
   m_Layer: 5
   m_Name: StageClearPanel
   m_TagString: Untagged
@@ -3581,8 +3847,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 584073970}
+  m_Children: []
   m_Father: {fileID: 475331840}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3628,6 +3893,616 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1558792746}
   m_CullTransparentMesh: 1
+--- !u!114 &1558792750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1558792746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d16cd4c6122d08b4a980b803d1dbb3da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Conversation.SlgStoryPlayer
+  player: {fileID: 0}
+  introCsv: {fileID: 0}
+  afterCsv: {fileID: 4900000, guid: 889b97742e87a4444aac8c3fd97e032e, type: 3}
+  illustListCsv: {fileID: 4900000, guid: d08ccd78ce42dcc4594530826ab232eb, type: 3}
+  reactionListCsv: {fileID: 4900000, guid: eb0994b56a0499c47838dc4deb3c0d71, type: 3}
+  slotPositions:
+  - left
+  - center
+  - right
+  reactionEmotes:
+  - reactionId: Rea1
+    emote: '!'
+  - reactionId: Rea2
+    emote: '?'
+  - reactionId: Rea3
+    emote: "\u266A"
+  - reactionId: Rea4
+    emote: "\u2606"
+  - reactionId: Rea5
+    emote: 
+  narratorNames:
+  - "\u30ED\u30B0"
+  - "\u30CA\u30EC\u30FC\u30B7\u30E7\u30F3"
+  nameAliases: []
+  newlineMarks:
+  - /n
+  - n/
+  directionRules:
+  - match: "\u753B\u9762\u6697\u8EE2"
+    mode: 0
+    chara: 
+    commands: '@fade out 0.5 | @fade in 0.5'
+    showText: 0
+  - match: "\u76EE\u3092\u899A\u307E\u3059"
+    mode: 0
+    chara: 
+    commands: '@fade out 0 | @fade in 1.2'
+    showText: 0
+  - match: 
+    mode: 1
+    chara: "\u30B5\u30A6\u30F3\u30C9"
+    commands: 
+    showText: 0
+  - match: "\u30A8\u30D5\u30A7\u30AF\u30C8"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u5730\u9CF4\u308A"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u51FA\u73FE"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u753B\u9762\u53F3\u7AEF\u3078"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u6575\u30BE\u30ED\u30BE\u30ED"
+    mode: 0
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u5E02\u8857\u5730\u3078"
+    mode: 0
+    chara: 
+    commands: 
+    showText: 0
+  clearCharactersAtStart: 1
+  placeCardAsNarration: 1
+  logScript: 0
+  playOnStart: 0
+  startKind: 1
+  startStageId: 1
+  showTestButtons: 1
+  testButtonScale: 1.5
+  onFinished:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1558792751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1558792746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb22ec95635e33c41ada0543eb7d491a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationPlayer
+  database: {fileID: 11400000, guid: a817b81d4ef3ded4692a8f98f67fc3b8, type: 2}
+  scriptAsset: {fileID: 4900000, guid: 889b97742e87a4444aac8c3fd97e032e, type: 3}
+  playOnStart: 0
+  hideOnFinish: 1
+  source: 1
+  csvAsset: {fileID: 4900000, guid: 889b97742e87a4444aac8c3fd97e032e, type: 3}
+  storyId: story_001
+  csvColumns:
+    storyId: story_id
+    textId: text_id
+    characterId: character_id
+    visual: visual
+    characterName: name
+    text: text
+    bgm: bgm
+    se: se
+    delimiter: ','
+  autoShowSpeakers: 1
+  referenceResolution: {x: 1920, y: 1080}
+  sortingOrder: 100
+  font: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  windowSprite: {fileID: 0}
+  windowColor: {r: 1, g: 1, b: 1, a: 1}
+  boxHeight: 400
+  boxGradient:
+    serializedVersion: 2
+    key0: {r: 0.04, g: 0.08, b: 0.16, a: 0.88}
+    key1: {r: 0.04, g: 0.08, b: 0.16, a: 0.75}
+    key2: {r: 0, g: 0, b: 0, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 65535
+    ctime2: 0
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 36044
+    atime2: 65535
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 3
+  sidePadding: 180
+  nameAreaTop: 100
+  nameSize: 46
+  nameColor: {r: 1, g: 1, b: 1, a: 1}
+  affiliationSize: 30
+  affiliationColor: {r: 0.45, g: 0.78, b: 1, a: 1}
+  separatorColor: {r: 1, g: 1, b: 1, a: 0.45}
+  bodySize: 38
+  bodyColor: {r: 1, g: 1, b: 1, a: 1}
+  bodyLineSpacing: 12
+  cursorSprite: {fileID: 0}
+  cursorColor: {r: 0.45, g: 0.78, b: 1, a: 1}
+  cursorSize: {x: 30, y: 22}
+  cursorOffset: {x: 150, y: 100}
+  cursorBobHeight: 6
+  cursorBobSpeed: 1.5
+  characterHeight: 1050
+  leftX: 0.22
+  centerX: 0.5
+  rightX: 0.78
+  speakerHop: 1
+  hopHeight: 18
+  hopDuration: 0.22
+  dimNonSpeakers: 1
+  dimAlpha: 0.5
+  dimAllOnNarration: 0
+  characterFadeTime: 0.25
+  characterMoveTime: 0.3
+  appearRise: 30
+  jumpHeight: 40
+  shakeStrength: 18
+  emoteSize: 90
+  emoteColor: {r: 1, g: 0.82, b: 0.2, a: 1}
+  backgroundFadeTime: 0.5
+  defaultScreenFadeTime: 0.6
+  screenFadeColor: {r: 0, g: 0, b: 0, a: 1}
+  showUiBar: 1
+  uiBarColor: {r: 0, g: 0, b: 0, a: 0.55}
+  uiBarHeight: 56
+  uiItemWidth: 190
+  uiBarMargin: {x: 24, y: 20}
+  uiTextSize: 24
+  uiTextColor: {r: 1, g: 1, b: 1, a: 1}
+  uiBadgeColor: {r: 1, g: 1, b: 1, a: 0.9}
+  uiBadgeTextColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
+  logLabel: "\u30ED\u30B0"
+  skipLabel: "\u30B9\u30AD\u30C3\u30D7"
+  logKeyLabel: L2
+  skipKeyLabel: OPT
+  logButtonIcon: {fileID: 0}
+  skipButtonIcon: {fileID: 0}
+  allowStorySkip: 1
+  skipHoldSeconds: 2
+  skipRingColor: {r: 0.45, g: 0.78, b: 1, a: 1}
+  skipRingBackColor: {r: 1, g: 1, b: 1, a: 0.2}
+  skipFadeTime: 0.5
+  logDimAlpha: 0.65
+  maxLogEntries: 200
+  logEntryWidth: 1400
+  logEntrySpacing: 36
+  logIconSize: 170
+  logTextSize: 34
+  logNameSize: 28
+  logCurrentOffsetY: -280
+  logCurrentScale: 1.1
+  logCurrentExtendLeft: 0
+  logWindowSprite: {fileID: 0}
+  logWindowShape: 0
+  logWindowFill: {r: 0.08, g: 0.17, b: 0.19, a: 0.9}
+  logWindowFillCurrent: {r: 0.1, g: 0.22, b: 0.24, a: 0.96}
+  logWindowBorder: {r: 0.55, g: 0.75, b: 0.72, a: 0.45}
+  logNameTabFill: {r: 0.1, g: 0.16, b: 0.18, a: 0.96}
+  logNameTabBorder: {r: 0.7, g: 0.82, b: 0.78, a: 0.6}
+  logNameColor: {r: 0.9, g: 0.92, b: 0.88, a: 1}
+  logNameTabMinWidth: 240
+  logNameTabX: 110
+  logIconBackground: {r: 1, g: 1, b: 1, a: 0}
+  logShowPortrait: 1
+  logPortraitSize: {x: 340, y: 420}
+  logPortraitZoom: 1.8
+  logPortraitOffset: {x: -10, y: -30}
+  logShowScrollbar: 1
+  logScrollbarX: -70
+  logScrollbarHeight: 640
+  logScrollbarWidth: 6
+  logScrollbarTrack: {r: 1, g: 1, b: 1, a: 0.15}
+  logScrollbarThumb: {r: 0.75, g: 0.88, b: 0.85, a: 0.85}
+  logScrollSpeed: 1400
+  logWheelStep: 160
+  choiceWidth: 900
+  choiceHeight: 96
+  choiceTextSize: 36
+  choiceColor: {r: 1, g: 1, b: 1, a: 0.95}
+  choiceTextColor: {r: 0.15, g: 0.2, b: 0.3, a: 1}
+  advanceAction:
+    m_Name: Advance
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 11c14a4e-4d56-4b25-87a4-3655a653e286
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 91800d48-6589-446f-961d-1c9e0f76b30b
+      m_Path: <Gamepad>/buttonSouth
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Advance
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 4143d7ac-6acd-4e36-b231-4608986d082e
+      m_Path: <Keyboard>/space
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Advance
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 9ccbc28f-1ef7-421e-adda-5d7d6e35e705
+      m_Path: <Keyboard>/enter
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Advance
+      m_Flags: 0
+    m_Flags: 0
+  storySkipAction:
+    m_Name: StorySkip
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 4fdfe1de-7b86-46df-a8df-8b36f2027b10
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: d07e03a3-8801-4f04-9be9-406030b5af89
+      m_Path: <Gamepad>/start
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: StorySkip
+      m_Flags: 0
+    - m_Name: 
+      m_Id: f89ecf84-bac3-4483-951c-66be10cc7a4c
+      m_Path: <Keyboard>/escape
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: StorySkip
+      m_Flags: 0
+    m_Flags: 0
+  logAction:
+    m_Name: Log
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 3e81affb-21e3-4a35-b63d-73ba7571694e
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 5ef84ffa-59ad-4288-9364-d5ede93291f4
+      m_Path: <Gamepad>/leftTrigger
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Log
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 2f11b5b3-225c-41cb-abe7-b8a753854f79
+      m_Path: <Keyboard>/l
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Log
+      m_Flags: 0
+    m_Flags: 0
+  logCloseAction:
+    m_Name: LogClose
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: e31f99b6-1c7f-4db8-a299-d75e37f44773
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: d6759e2b-3bff-4b60-b8d9-6eeaeddc02e3
+      m_Path: <Gamepad>/buttonEast
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogClose
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 03df1c75-8d89-43b6-a682-5193296da074
+      m_Path: <Keyboard>/backspace
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogClose
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 448844b3-7044-4615-9979-99e89e444e19
+      m_Path: <Mouse>/rightButton
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogClose
+      m_Flags: 0
+    m_Flags: 0
+  logScrollAction:
+    m_Name: LogScroll
+    m_Type: 0
+    m_ExpectedControlType: Axis
+    m_Id: 42b4c06f-e7db-4157-a914-c03d87c67378
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 54ce3471-4d66-46ba-bc7b-5adbe69634a9
+      m_Path: <Gamepad>/leftStick/y
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 96db9bd3-f7bd-47c4-b804-81a288ab3792
+      m_Path: <Gamepad>/dpad/y
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 0
+    - m_Name: 1DAxis
+      m_Id: f4ed7f47-6f89-4e71-8746-afcf96e0aa38
+      m_Path: 1DAxis
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 4
+    - m_Name: Negative
+      m_Id: 423e4335-6e65-4bce-8327-49d2580dc3ff
+      m_Path: <Keyboard>/downArrow
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 8
+    - m_Name: Positive
+      m_Id: 0a46f4fa-f6bd-471e-ab8b-b5a1077f79f2
+      m_Path: <Keyboard>/upArrow
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: LogScroll
+      m_Flags: 8
+    m_Flags: 0
+  padAdvance: 0
+  padLog: 6
+  padLogClose: 1
+  padStorySkip: 9
+  debugInput: 1
+  titleCard:
+    enabled: 1
+    autoShowOnStoryStart: 1
+    hideUiBar: 1
+    defaultBackground: {fileID: 0}
+    backgroundColor: {r: 0.12, g: 0.06, b: 0.04, a: 1}
+    backgroundTint: {r: 1, g: 1, b: 1, a: 1}
+    vignetteStrength: 0.6
+    defaultEmblem: {fileID: 0}
+    emblemAlpha: 0.35
+    emblemSize: {x: 560, y: 680}
+    emblemOffset: {x: 0, y: 0}
+    defaultFrame: {fileID: 0}
+    frameColor: {r: 1, g: 1, b: 1, a: 1}
+    font: {fileID: 0}
+    titleSize: 76
+    titleColor: {r: 1, g: 0.95, b: 0.88, a: 1}
+    titleSpacing: 4
+    titleOffsetY: 100
+    chapterSize: 34
+    chapterColor: {r: 1, g: 0.95, b: 0.88, a: 1}
+    chapterSpacing: 6
+    chapterOffsetY: -170
+    chapterNameSize: 34
+    chapterNameColor: {r: 1, g: 0.95, b: 0.88, a: 1}
+    chapterNameOffsetY: -222
+    textRise: 16
+    backgroundFadeIn: 0.8
+    titleDelay: 0.3
+    subtitleDelay: 0.6
+    textFadeIn: 0.8
+    holdTime: 2.5
+    waitForInput: 0
+    fadeOut: 0.8
+    skippable: 1
+  audioPlayer: {fileID: 0}
+  stopBgmOnFinish: 1
+  finishBgmFadeOut: 1.5
+  stopSeOnFinish: 1
+  skipSoundFadeOut: 0.5
+  advanceSe: {fileID: 0}
+  logOpenSe: {fileID: 0}
+  logCloseSe: {fileID: 0}
+  skipSe: {fileID: 0}
+  choiceSelectSe: {fileID: 0}
+  uiSeVolume: 1
+  onStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onFinished:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkipped:
+    m_PersistentCalls:
+      m_Calls: []
+  onChoiceSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onTextShown:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1558792752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1558792746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262d2809c13854d4fbdd1751a3042f50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageClearPanel
+  playOnStart: 0
+  closeMode: 1
+  autoCloseTime: 3
+  skipIntroWithInput: 1
+  pauseGame: 0
+  buildInto: {fileID: 1558792747}
+  hidePanelOnClose: 1
+  sortingOrder: 220
+  titleFont: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  textFont: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  dimColor: {r: 0.12, g: 0.08, b: 0.03, a: 0.55}
+  smoke: 1
+  smokeColor: {r: 0.25, g: 0.2, b: 0.08, a: 0.7}
+  title: STAGE CLEAR
+  titlePosition: {x: 0, y: 250}
+  titleSize: 120
+  titleColor: {r: 1, g: 0.94, b: 0.8, a: 1}
+  titleItalic: 1
+  titleBold: 1
+  titleGlow: 1
+  titleGlowColor: {r: 1, g: 0.75, b: 0.25, a: 0.8}
+  titleFlash: 1
+  bandHeight: 190
+  bandColor: {r: 0.08, g: 0.06, b: 0.03, a: 0.55}
+  lineColor: {r: 1, g: 0.85, b: 0.55, a: 0.95}
+  lineThickness: 4
+  lineLength: 1500
+  lineOrnaments: 1
+  emblem: 1
+  emblemSprite: {fileID: 0}
+  emblemSize: 440
+  emblemColor: {r: 1, g: 0.85, b: 0.5, a: 0.75}
+  emblemRotateSpeed: 6
+  sparkles: 1
+  sparkleSprite: {fileID: 0}
+  sparkleCount: 10
+  sparkleColor: {r: 1, g: 0.85, b: 0.35, a: 1}
+  sparkleArea: {x: 1300, y: 520}
+  sparkleSizeRange: {x: 24, y: 64}
+  character: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
+  characterPosition: {x: -470, y: -210}
+  characterHeight: 480
+  characterFlipX: 0
+  rows:
+  - label: MVP
+    value: "\u30A4\u30B7\u30E5\u30DE\u30FC\u30EB"
+  - label: TURN
+    value: 6
+  rowsPosition: {x: -150, y: -158}
+  rowWidth: 720
+  rowSpacing: 122
+  rowTextSize: 40
+  valueX: 510
+  labelColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  valueColor: {r: 1, g: 1, b: 1, a: 1}
+  bulletColor: {r: 1, g: 0.92, b: 0.75, a: 1}
+  rowLineColor: {r: 1, g: 0.92, b: 0.75, a: 0.6}
+  dimTime: 0.3
+  bandStart: 0.1
+  bandTime: 0.35
+  emblemStart: 0.2
+  emblemTime: 0.6
+  titleStart: 0.35
+  titleTime: 0.4
+  titleSlide: 80
+  sparkleStart: 0.6
+  characterStart: 0.7
+  characterTime: 0.45
+  characterSlide: 160
+  rowsStart: 0.9
+  rowStagger: 0.15
+  rowTime: 0.35
+  rowSlide: 50
+  closeTime: 0.3
+  showTestButton: 1
+  testButtonScale: 1.5
+  showNextButton: 1
+  nextSceneName: 
+  nextLabel: "\u9589\u3058\u308B"
+  nextKeyLabel: A
+  nextButtonIcon: {fileID: 0}
+  nextButtonDelay: 0.2
+  clickOnlyOnButton: 1
+  uiBarColor: {r: 0, g: 0, b: 0, a: 0.55}
+  uiBarHoverColor: {r: 0.2, g: 0.35, b: 0.5, a: 0.75}
+  uiBarHeight: 56
+  uiItemWidth: 190
+  uiBarMargin: {x: 24, y: 20}
+  uiTextSize: 24
+  uiTextColor: {r: 1, g: 1, b: 1, a: 1}
+  uiBadgeColor: {r: 1, g: 1, b: 1, a: 0.9}
+  uiBadgeTextColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
+  playConversationOnClose: 1
+  conversationPlayer: {fileID: 1558792751}
+  conversationStoryId: story_clear_001
+  conversationCsv: {fileID: 4900000, guid: 889b97742e87a4444aac8c3fd97e032e, type: 3}
+  conversationTiming: 0
+  slgStory: {fileID: 1558792750}
+  slgStageId: 1
+  onShown:
+    m_PersistentCalls:
+      m_Calls: []
+  onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+  onNext:
+    m_PersistentCalls:
+      m_Calls: []
+  onConversationFinished:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1607386810
 GameObject:
   m_ObjectHideFlags: 0
@@ -3822,7 +4697,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleStageLoader
   stageConfigCsv: {fileID: 4900000, guid: a69f430f55d696e4297428ad85603f01, type: 3}
   stageCharaLayoutCsv: {fileID: 4900000, guid: 01e73bc49a473ca48ad88c23ee490a9a, type: 3}
-  stageId: 1
+  stageId: 3
   grid: {fileID: 555877683}
   spawner: {fileID: 1610487110}
 --- !u!4 &1651776097

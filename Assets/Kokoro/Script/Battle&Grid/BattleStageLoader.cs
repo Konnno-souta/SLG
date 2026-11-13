@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// StageConfigをAwakeで読み込み、GridDebugView.Startより前にサイズを適用。
 /// StartでBattleUnitSpawnerを呼んで配置する。
-/// この段階では3D_Nameの地形Prefabは自動ロードしない。
+/// 3D_Nameの地形PrefabはResources/Stages/から読み込む(無ければ警告のみ)。
 /// </summary>
 public sealed class BattleStageLoader : MonoBehaviour
 {
@@ -42,9 +42,10 @@ public sealed class BattleStageLoader : MonoBehaviour
                 throw new FormatException($"StageID={stageId} の行数が{matches}件です。1件だけ必要です。");
 
             grid.Initialize(CurrentStage.Width, CurrentStage.Height);
+            LoadField();
             initialized = true;
             Debug.Log($"ステージ初期化: {stageId}, {CurrentStage.Width}×{CurrentStage.Height}, " +
-                $"地形Prefab名={CurrentStage.FieldName}(読み込みは未実装)", this);
+                $"地形Prefab名={CurrentStage.FieldName}", this);
         }
         catch (Exception ex)
         {
@@ -61,5 +62,25 @@ public sealed class BattleStageLoader : MonoBehaviour
             return;
         }
         spawner.SpawnStage(stageId, stageCharaLayoutCsv);
+    }
+    private GameObject fieldInstance;
+
+    /// <summary>
+    /// Resources/Stages/{3D_Name} の地形Prefabを、グリッドの原点(マス(0,0)の角)に生成する。
+    /// Prefabが無いステージは警告だけ出して続行する。
+    /// </summary>
+    private void LoadField()
+    {
+        string fieldName = CurrentStage.FieldName;
+        if (string.IsNullOrEmpty(fieldName)) return;
+
+        GameObject prefab = Resources.Load<GameObject>($"Stages/{fieldName}");
+        if (prefab == null)
+        {
+            Debug.LogWarning($"地形Prefabが見つかりません: Resources/Stages/{fieldName}", this);
+            return;
+        }
+        fieldInstance = Instantiate(prefab, grid.transform.position, Quaternion.identity);
+        fieldInstance.name = fieldName;
     }
 }
