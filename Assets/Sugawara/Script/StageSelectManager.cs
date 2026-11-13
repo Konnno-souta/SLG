@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
- 
+
 // ステージ選択シーンの進行役
 // ・最初は Start Stage（Stage1）に立った状態から始まる（ステージから戻ったときはそのステージ）
 // ・Stageをクリック → Playerが移動（パネルは隠れる）。まだ開放されていないステージには行けない
@@ -52,9 +52,14 @@ public class StageSelectManager : MonoBehaviour
     [Tooltip("寄りながら暗くなるまでの秒数")]
     [SerializeField] float transitionDuration = 1.2f;
 
+    [Header("ダイアログのカーソル（カーソルの追加）")]
+    [Tooltip("DiaLogPanel を開いたときに最初に選ぶボタン（「いいえ」がおすすめ）")]
+    [SerializeField] UnityEngine.UI.Selectable dialogFirstSelected;
+
     StagePoint selectedStage;
     bool panelsShown;
     bool loading;   // 会話中〜シーンに移るまで（操作を受け付けない）
+    GameObject selectedBeforeDialog;   // ダイアログを開く前に選んでいたボタン（カーソルの追加）
 
     void Awake()
     {
@@ -79,6 +84,9 @@ public class StageSelectManager : MonoBehaviour
         // 道の開放演出中は操作を受け付けない（道の追加）
         if (StageRoad.AnyOpening) return;
 
+        // 設定などのウィンドウが開いている間は操作を受け付けない（ウィンドウの追加）
+        if (UIPopupWindow.AnyOpen) return;
+
         // 会話中・シーンに移る途中は操作を受け付けない
         if (loading) return;
 
@@ -94,7 +102,8 @@ public class StageSelectManager : MonoBehaviour
         if (PressedSelect(out StagePoint stage)) SelectStage(stage);
 
         // WASD（方向入力）で、その方向にあるステージへ移動する（WASDの追加）
-        if (PressedMove(out Vector2 dir))
+        // メニューが開いている間は、WASD はメニューのカーソル操作に使うので移動しない（カーソルの追加）
+        if (!panelsShown && PressedMove(out Vector2 dir))
         {
             StagePoint next = FindStageInDirection(dir);
             if (next != null) SelectStage(next);
@@ -181,7 +190,14 @@ public class StageSelectManager : MonoBehaviour
     // ---- ボタンの OnClick に登録する ----
     public void OnClickStart()
     {
+        // 開く前に選んでいたボタンを覚えておく（閉じたときにカーソルを戻すため）（カーソルの追加）
+        selectedBeforeDialog = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+
         dialogPanel.SetActive(true);
+
+        // ダイアログのボタンを選択する（カーソルの追加）
+        if (EventSystem.current != null && dialogFirstSelected != null)
+            EventSystem.current.SetSelectedGameObject(dialogFirstSelected.gameObject);
     }
 
     public void OnClickYes()
@@ -280,6 +296,10 @@ public class StageSelectManager : MonoBehaviour
     public void OnClickNo()
     {
         dialogPanel.SetActive(false);
+
+        // 開く前に選んでいたボタンに選択を戻す（カーソルが戻る）（カーソルの追加）
+        if (EventSystem.current != null && selectedBeforeDialog != null && selectedBeforeDialog.activeInHierarchy)
+            EventSystem.current.SetSelectedGameObject(selectedBeforeDialog);
     }
 
     // ---- デバッグ（再生中に Inspector の「︙」から実行）（道の追加） ----

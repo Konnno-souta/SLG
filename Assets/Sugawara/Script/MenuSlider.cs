@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 // MenuPanel に付ける。横からスライドして出入りする
 // 隠す位置はパネルの幅から自動計算するので、ボタンが増えて幅が変わっても調整不要
@@ -12,7 +14,14 @@ public class MenuSlider : MonoBehaviour
     [SerializeField] bool fromLeft = true;    // false にすると右から出る
     [SerializeField] bool debugLog = true;    // 原因が分かったらオフにする
 
+    [Header("選択（カーソル用）")]
+    [Tooltip("出てきたときに最初に選択するボタン（空なら選択しない）")]
+    [SerializeField] Selectable firstSelected;
+    [Tooltip("次に出てきたとき、前回選んでいたボタンから始める")]
+    [SerializeField] bool rememberLastSelected = true;
+
     RectTransform rect;
+    GameObject lastSelected;
     CanvasGroup group;
     Vector2 shownPos;   // 配置した位置 = 表示位置
     Coroutine running;
@@ -48,7 +57,11 @@ public class MenuSlider : MonoBehaviour
 
     IEnumerator Slide(Vector2 target, bool show)
     {
-        if (!show) SetInteractable(false); // 隠れ始めたらすぐ押せなくする
+        if (!show)
+        {
+            SetInteractable(false); // 隠れ始めたらすぐ押せなくする
+            ReleaseSelection();
+        }
 
         Vector2 start = rect.anchoredPosition;
         float t = 0f;
@@ -61,7 +74,11 @@ public class MenuSlider : MonoBehaviour
         }
         rect.anchoredPosition = target;
 
-        if (show) SetInteractable(true); // 出きってから押せるようにする
+        if (show)
+        {
+            SetInteractable(true); // 出きってから押せるようにする
+            SelectFirst();
+        }
         running = null;
 
         Log($"スライド完了: {rect.anchoredPosition}");
@@ -82,6 +99,30 @@ public class MenuSlider : MonoBehaviour
     {
         float offset = rect.rect.width + hideMargin;
         return shownPos + new Vector2(fromLeft ? -offset : offset, 0f);
+    }
+
+    // 出てきたときにボタンを選択する（カーソルがそこに出る）
+    void SelectFirst()
+    {
+        if (EventSystem.current == null) return;
+
+        GameObject target = null;
+        if (rememberLastSelected && lastSelected != null && lastSelected.activeInHierarchy) target = lastSelected;
+        else if (firstSelected != null) target = firstSelected.gameObject;
+
+        if (target != null) EventSystem.current.SetSelectedGameObject(target);
+    }
+
+    // 隠れるときに、このパネルのボタンが選ばれていたら選択を外す
+    void ReleaseSelection()
+    {
+        if (EventSystem.current == null) return;
+        GameObject current = EventSystem.current.currentSelectedGameObject;
+        if (current != null && current.transform.IsChildOf(transform))
+        {
+            lastSelected = current;
+            EventSystem.current.SetSelectedGameObject(null);
+        }
     }
 
     void SetInteractable(bool on)
