@@ -43,36 +43,51 @@ public static class FEEffectsGenerator
     }
 
     // 攻撃エフェクト (ATK_*) → Generated/Battle/Attack、被弾エフェクト (HIT_*) → Generated/Battle/Hit
+    // 赤ver (*_Red)          → Generated/Battle/Red/Attack と Generated/Battle/Red/Hit
     const string AttackDir = BattleDir + "/Attack";
     const string HitDir = BattleDir + "/Hit";
+    const string RedDir = BattleDir + "/Red";
+
+    static bool IsRed(string id) { return id.EndsWith(FEEffectFactory.RedSuffix); }
 
     static string BattlePath(string id)
     {
-        return (id.StartsWith("ATK_") ? AttackDir : HitDir) + "/" + id + ".prefab";
+        string dir = IsRed(id) ? RedDir + (id.StartsWith("ATK_") ? "/Attack" : "/Hit")
+                               : (id.StartsWith("ATK_") ? AttackDir : HitDir);
+        return dir + "/" + id + ".prefab";
+    }
+
+    static bool IsBattleId(string id)
+    {
+        foreach (var ids in FEEffectFactory.AllBattleIdGroups)
+            foreach (var x in ids) if (x == id) return true;
+        return false;
     }
 
     static void GenerateBattlePrefabs()
     {
         Directory.CreateDirectory(AttackDir);
         Directory.CreateDirectory(HitDir);
+        Directory.CreateDirectory(RedDir + "/Attack");
+        Directory.CreateDirectory(RedDir + "/Hit");
         AssetDatabase.Refresh();
 
-        // 旧配置 (Battle 直下) のプレハブは Attack/ Hit/ へ「移動」(GUID が変わらないので参照は切れない)。
-        // 打撃の統合で無くなった HIT_BluntCrit だけは削除する
+        // 前のバージョンで別の場所に生成されたプレハブは、正しいフォルダへ「移動」(GUID が変わらないので参照は切れない)。
+        // 打撃の統合で無くなった HIT_BluntCrit (と赤ver) は削除する
         foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { BattleDir }))
         {
             var path = AssetDatabase.GUIDToAssetPath(guid);
-            if (path.EndsWith("/HIT_BluntCrit.prefab")) { AssetDatabase.DeleteAsset(path); continue; }
-            bool oldLayout = Path.GetDirectoryName(path).Replace('\\', '/') == BattleDir;
-            if (!oldLayout) continue;
             var id = Path.GetFileNameWithoutExtension(path);
+            if (id.StartsWith("HIT_BluntCrit")) { AssetDatabase.DeleteAsset(path); continue; }
+            if (!IsBattleId(id)) continue;
             var dest = BattlePath(id);
+            if (path == dest) continue;
             if (AssetDatabase.LoadAssetAtPath<GameObject>(dest) == null) AssetDatabase.MoveAsset(path, dest);
             else AssetDatabase.DeleteAsset(path);
         }
 
         int ok = 0;
-        foreach (var ids in new[] { FEEffectFactory.AttackIds, FEEffectFactory.HitIds })
+        foreach (var ids in FEEffectFactory.AllBattleIdGroups)
         {
             foreach (var id in ids)
             {
@@ -125,7 +140,7 @@ public static class FEEffectsGenerator
     {
         // プレハブが無ければ先に生成
         bool missing = false;
-        foreach (var ids in new[] { FEEffectFactory.AttackIds, FEEffectFactory.HitIds })
+        foreach (var ids in FEEffectFactory.AllBattleIdGroups)
             foreach (var id in ids)
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(BattlePath(id)) == null) missing = true;
         if (missing) GenerateBattlePrefabs();
@@ -139,10 +154,22 @@ public static class FEEffectsGenerator
             }
         }
 
-        Directory.CreateDirectory(ExportDir);
+        // 青 → FEEffects_Export/ 、赤ver → FEEffects_Export/Red/ に1個ずつ + それぞれの全部入り
+        int ok = 0;
+        ok += ExportGroup(new[] { FEEffectFactory.AttackIds, FEEffectFactory.HitIds }, ExportDir, "FE_AllAttackAndHit");
+        ok += ExportGroup(new[] { FEEffectFactory.AttackIdsRed, FEEffectFactory.HitIdsRed }, ExportDir + "/Red", "FE_AllAttackAndHit_Red");
+
+        var full = Path.GetFullPath(ExportDir);
+        Debug.Log("[FE] " + ok + " packages (+ 青・赤の全部入り) exported to " + full);
+        EditorUtility.RevealInFinder(full);
+    }
+
+    static int ExportGroup(string[][] groups, string dir, string allName)
+    {
+        Directory.CreateDirectory(dir);
         var all = new HashSet<string>(RuntimeFiles);
         int ok = 0;
-        foreach (var ids in new[] { FEEffectFactory.AttackIds, FEEffectFactory.HitIds })
+        foreach (var ids in groups)
         {
             foreach (var id in ids)
             {
@@ -153,19 +180,15 @@ public static class FEEffectsGenerator
                     if (!d.Contains("/Editor/")) files.Add(d);
                 var arr = new string[files.Count];
                 files.CopyTo(arr);
-                AssetDatabase.ExportPackage(arr, ExportDir + "/FE_" + id + ".unitypackage", ExportPackageOptions.Default);
+                AssetDatabase.ExportPackage(arr, dir + "/FE_" + id + ".unitypackage", ExportPackageOptions.Default);
                 all.UnionWith(files);
                 ok++;
             }
         }
-        // まとめて全部入りも作る
         var allArr = new string[all.Count];
         all.CopyTo(allArr);
-        AssetDatabase.ExportPackage(allArr, ExportDir + "/FE_AllAttackAndHit.unitypackage", ExportPackageOptions.Default);
-
-        var full = Path.GetFullPath(ExportDir);
-        Debug.Log("[FE] " + ok + " packages (+ 全部入り1つ) exported to " + full);
-        EditorUtility.RevealInFinder(full);
+        AssetDatabase.ExportPackage(allArr, dir + "/" + allName + ".unitypackage", ExportPackageOptions.Default);
+        return ok;
     }
 
     // EF01〜EF09 などの単体エフェクトも含めた、すべてのプレハブの全部入り
@@ -320,6 +343,8 @@ public static class FEEffectsGenerator
         Undo.RecordObject(bfx, "FE Demo");
         bfx.attackPrefabs = LoadBattle(FEEffectFactory.AttackIds);
         bfx.hitPrefabs = LoadBattle(FEEffectFactory.HitIds);
+        bfx.attackPrefabsRed = LoadBattle(FEEffectFactory.AttackIdsRed);
+        bfx.hitPrefabsRed = LoadBattle(FEEffectFactory.HitIdsRed);
         EditorUtility.SetDirty(bfx);
         var bdemo = demoGo.GetComponent<FEBattleDemo>();
         if (bdemo == null) bdemo = Undo.AddComponent<FEBattleDemo>(demoGo);

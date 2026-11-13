@@ -62,6 +62,10 @@ public sealed class TurnManager : MonoBehaviour
     [SerializeField]
     private StageClearPanel stageClearPresentation;
 
+    [Header("戦闘カメラ")]
+    [SerializeField]
+    private BattleCombatCameraController combatCamera;
+
 
     // =====================================
     // 主人公の識別
@@ -196,6 +200,14 @@ public sealed class TurnManager : MonoBehaviour
     {
         if (CurrentPhase == BattlePhase.None ||
             isBattleFinished)
+        {
+            return;
+        }
+
+        // 戦闘カメラの演出中は、
+        // 勝敗判定とフェーズ進行を一時停止する。
+        if (combatCamera != null &&
+            combatCamera.IsInCombat)
         {
             return;
         }

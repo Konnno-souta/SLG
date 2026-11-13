@@ -12,6 +12,7 @@ public enum FEHitType { Slash, Pierce, Blunt }
 ///   // ダメージが入った瞬間 (当たった点・攻撃方向・クリティカルか)
 ///   FEBattleFX.PlayHit(FEHitType.Slash, hitPoint, attacker.transform.forward, isCritical, FEBattleFX.SlashRoll(FEAttackType.Kesa));
 ///   // 外れた (ミス) ときは PlayHit を呼ばなければ攻撃エフェクトだけになる
+///   // 赤ver は最後の引数に red: true (PlayAttack(type, attacker, red: true) / PlayHit(..., red: true))
 ///
 /// atk.hitTime に「当たるタイミングの目安 (秒)」が入っているので、ダメージ処理の時刻合わせにも使える。
 /// </summary>
@@ -24,33 +25,39 @@ public class FEBattleFX : MonoBehaviour
     [Tooltip("斬撃, 斬撃クリティカル, 刺突, 刺突クリティカル, 打撃 (スマブラ風の1種類)")]
     public GameObject[] hitPrefabs = new GameObject[5];
 
+    [Header("赤ver (並びは上と同じ)")]
+    public GameObject[] attackPrefabsRed = new GameObject[5];
+    public GameObject[] hitPrefabsRed = new GameObject[5];
+
     void OnEnable() { Instance = this; }
     void OnDisable() { if (Instance == this) Instance = null; }
 
     // ---------------------------------------------------------------- 攻撃
-    public static FEEffect PlayAttack(FEAttackType type, Transform attacker)
+    public static FEEffect PlayAttack(FEAttackType type, Transform attacker, bool red = false)
     {
-        return PlayAttack(type, attacker.position, attacker.rotation);
+        return PlayAttack(type, attacker.position, attacker.rotation, red);
     }
 
     /// pos = 攻撃者の足元 (弓は矢の先端), rot = 攻撃方向が +Z
-    public static FEEffect PlayAttack(FEAttackType type, Vector3 pos, Quaternion rot)
+    public static FEEffect PlayAttack(FEAttackType type, Vector3 pos, Quaternion rot, bool red = false)
     {
         int i = (int)type;
-        var prefab = Instance != null && i < Instance.attackPrefabs.Length ? Instance.attackPrefabs[i] : null;
-        return Spawn(prefab, FEEffectFactory.AttackIds[i], pos, rot);
+        var list = Instance == null ? null : (red ? Instance.attackPrefabsRed : Instance.attackPrefabs);
+        var prefab = list != null && i < list.Length ? list[i] : null;
+        return Spawn(prefab, (red ? FEEffectFactory.AttackIdsRed : FEEffectFactory.AttackIds)[i], pos, rot);
     }
 
     // ---------------------------------------------------------------- 被弾
     /// hitPoint = 当たった点, attackDir = 攻撃が向かう方向, slashRollDeg = 斬線の傾き (斬撃のみ。SlashRoll() 参照)
     /// 打撃 (Blunt) はスマブラ風の1種類だけなので critical は無視される
-    public static FEEffect PlayHit(FEHitType type, Vector3 hitPoint, Vector3 attackDir, bool critical, float slashRollDeg = 0f)
+    public static FEEffect PlayHit(FEHitType type, Vector3 hitPoint, Vector3 attackDir, bool critical, float slashRollDeg = 0f, bool red = false)
     {
         int i = type == FEHitType.Blunt ? 4 : (int)type * 2 + (critical ? 1 : 0);
         if (attackDir.sqrMagnitude < 1e-6f) attackDir = Vector3.forward;
         var rot = Quaternion.LookRotation(attackDir.normalized) * Quaternion.AngleAxis(slashRollDeg, Vector3.forward);
-        var prefab = Instance != null && i < Instance.hitPrefabs.Length ? Instance.hitPrefabs[i] : null;
-        return Spawn(prefab, FEEffectFactory.HitIds[i], hitPoint, rot);
+        var list = Instance == null ? null : (red ? Instance.hitPrefabsRed : Instance.hitPrefabs);
+        var prefab = list != null && i < list.Length ? list[i] : null;
+        return Spawn(prefab, (red ? FEEffectFactory.HitIdsRed : FEEffectFactory.HitIds)[i], hitPoint, rot);
     }
 
     /// 攻撃の種類に合う被弾の種類
