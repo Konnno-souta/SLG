@@ -227,6 +227,10 @@ public class StageClearPanel : MonoBehaviour
     public TextAsset conversationCsv;
     [Tooltip("AfterClose: パネルが消えきってから会話 / Immediately: 押した瞬間に会話を始める（パネルは後ろで消える）")]
     public ConversationTiming conversationTiming = ConversationTiming.AfterClose;
+    [Tooltip("SLG_ストーリー会話テキストの CSV を流す SlgStoryPlayer。入れると Story Id の代わりにこちらの AfterText を流す")]
+    public SlgStoryPlayer slgStory;
+    [Tooltip("流す AfterText の Stage_ID（今のステージの番号）")]
+    public int slgStageId = 1;
 
     [Header("イベント")]
     [Tooltip("全部出きった時")]
@@ -333,7 +337,9 @@ public class StageClearPanel : MonoBehaviour
     /// <summary>閉じた後に会話を流す設定になっているか</summary>
     bool WillPlayConversation()
     {
-        if (!playConversationOnClose || string.IsNullOrEmpty(conversationStoryId)) return false;
+        if (!playConversationOnClose) return false;
+        if (UseSlg()) return true;
+        if (string.IsNullOrEmpty(conversationStoryId)) return false;
         if (!conversationPlayer) conversationPlayer = FindAnyObjectByType<ConversationPlayer>(FindObjectsInactive.Include);
         if (!conversationPlayer)
         {
@@ -342,6 +348,8 @@ public class StageClearPanel : MonoBehaviour
         }
         return true;
     }
+
+    bool UseSlg() => slgStory && slgStageId > 0;
 
     void StartConversation()
     {
@@ -353,10 +361,30 @@ public class StageClearPanel : MonoBehaviour
     IEnumerator ConversationRoutine()
     {
         if (pauseGame) Time.timeScale = 1f;   // 会話中はゲームの時間を戻す
-        if (!conversationPlayer.gameObject.activeInHierarchy) conversationPlayer.gameObject.SetActive(true);
 
-        if (conversationCsv) conversationPlayer.PlayStory(conversationCsv, conversationStoryId);
-        else conversationPlayer.PlayStory(conversationStoryId);
+        string storyName = conversationStoryId;
+        if (UseSlg())
+        {
+            // SLG_ストーリー会話テキスト（AfterText）の、この Stage_ID の会話
+            slgStory.PlayAfter(slgStageId);
+            conversationPlayer = slgStory.Player;
+            storyName = "AfterText Stage_ID " + slgStageId;
+        }
+        else
+        {
+            if (!conversationPlayer.gameObject.activeInHierarchy) conversationPlayer.gameObject.SetActive(true);
+            if (conversationCsv) conversationPlayer.PlayStory(conversationCsv, conversationStoryId);
+            else conversationPlayer.PlayStory(conversationStoryId);
+        }
+
+        if (!conversationPlayer)
+        {
+            conversationRoutine = null;
+            while (IsPlaying) yield return null;
+            if (buildInto && hidePanelOnClose) buildInto.gameObject.SetActive(false);
+            LoadNextScene();
+            yield break;
+        }
 
         // 会話が始まるのを少し待つ（ストーリーIDが見つからない時は始まらない）
         float wait = 0f;
@@ -366,7 +394,7 @@ public class StageClearPanel : MonoBehaviour
             yield return null;
         }
         if (!conversationPlayer.IsPlaying)
-            Debug.LogWarning($"[StageClearPanel] 会話「{conversationStoryId}」が始まりませんでした（CSV にそのストーリーIDがあるか確認してください）", this);
+            Debug.LogWarning($"[StageClearPanel] 会話「{storyName}」が始まりませんでした（CSV にそのIDがあるか確認してください）", this);
 
         // 会話が終わるまで待つ（ストーリースキップでも終わる）
         while (conversationPlayer.IsPlaying) yield return null;

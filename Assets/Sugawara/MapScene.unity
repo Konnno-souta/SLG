@@ -266,6 +266,7 @@ GameObject:
   m_Component:
   - component: {fileID: 82155192}
   - component: {fileID: 82155193}
+  - component: {fileID: 82155194}
   m_Layer: 0
   m_Name: Conversation_001
   m_TagString: Untagged
@@ -301,7 +302,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationPlayer
   database: {fileID: 11400000, guid: a817b81d4ef3ded4692a8f98f67fc3b8, type: 2}
-  scriptAsset: {fileID: 4900000, guid: f4640d5e8aa5cf44ab25fb787462286a, type: 3}
+  scriptAsset: {fileID: 4900000, guid: b32671d076d4333418b677bd6136b935, type: 3}
   playOnStart: 0
   hideOnFinish: 1
   source: 1
@@ -677,6 +678,102 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onTextShown:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &82155194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 82155190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d16cd4c6122d08b4a980b803d1dbb3da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Conversation.SlgStoryPlayer
+  player: {fileID: 0}
+  introCsv: {fileID: 4900000, guid: b32671d076d4333418b677bd6136b935, type: 3}
+  afterCsv: {fileID: 4900000, guid: 889b97742e87a4444aac8c3fd97e032e, type: 3}
+  illustListCsv: {fileID: 4900000, guid: d08ccd78ce42dcc4594530826ab232eb, type: 3}
+  reactionListCsv: {fileID: 4900000, guid: eb0994b56a0499c47838dc4deb3c0d71, type: 3}
+  slotPositions:
+  - left
+  - center
+  - right
+  reactionEmotes:
+  - reactionId: Rea1
+    emote: '!'
+  - reactionId: Rea2
+    emote: '?'
+  - reactionId: Rea3
+    emote: "\u266A"
+  - reactionId: Rea4
+    emote: "\u2606"
+  - reactionId: Rea5
+    emote: 
+  narratorNames:
+  - "\u30ED\u30B0"
+  - "\u30CA\u30EC\u30FC\u30B7\u30E7\u30F3"
+  nameAliases: []
+  newlineMarks:
+  - /n
+  - n/
+  directionRules:
+  - match: "\u753B\u9762\u6697\u8EE2"
+    mode: 0
+    chara: 
+    commands: '@fade out 0.5 | @fade in 0.5'
+    showText: 0
+  - match: "\u76EE\u3092\u899A\u307E\u3059"
+    mode: 0
+    chara: 
+    commands: '@fade out 0 | @fade in 1.2'
+    showText: 0
+  - match: 
+    mode: 1
+    chara: "\u30B5\u30A6\u30F3\u30C9"
+    commands: 
+    showText: 0
+  - match: "\u30A8\u30D5\u30A7\u30AF\u30C8"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u5730\u9CF4\u308A"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u51FA\u73FE"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u753B\u9762\u53F3\u7AEF\u3078"
+    mode: 1
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u6575\u30BE\u30ED\u30BE\u30ED"
+    mode: 0
+    chara: 
+    commands: 
+    showText: 0
+  - match: "\u5E02\u8857\u5730\u3078"
+    mode: 0
+    chara: 
+    commands: 
+    showText: 0
+  clearCharactersAtStart: 1
+  placeCardAsNarration: 1
+  logScript: 0
+  playOnStart: 0
+  startKind: 0
+  startStageId: 1
+  showTestButtons: 1
+  testButtonScale: 1.5
+  onFinished:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &131332858
@@ -1437,12 +1534,10 @@ MonoBehaviour:
   - stage: {fileID: 1270041874}
     storyId: story_001
     csv: {fileID: 4900000, guid: f4640d5e8aa5cf44ab25fb787462286a, type: 3}
+    slgStageId: 1
   defaultStoryId: 
   delayAfterConversation: 0.2
-  screenFader: {fileID: 1349417439}
-  zoomRatio: 0.4
-  transitionDuration: 1.2
-  dialogFirstSelected: {fileID: 1354129401}
+  slgStory: {fileID: 82155194}
 --- !u!4 &421720431
 Transform:
   m_ObjectHideFlags: 0
@@ -2010,7 +2105,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -2.7799988, y: -276.29144}
+  m_AnchoredPosition: {x: -2.7800293, y: -276.29144}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &732907501
