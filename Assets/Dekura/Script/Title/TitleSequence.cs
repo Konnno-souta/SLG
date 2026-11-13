@@ -1,5 +1,5 @@
-using System.Collections;
 using DG.Tweening;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
@@ -11,16 +11,16 @@ namespace Title
     public class TitleSequence : MonoBehaviour
     {
         [Header("表示物")]
+        [SerializeField] private Transform TitleUiLoot;
         [SerializeField] private CanvasGroup logoBack;
         [SerializeField] private CanvasGroup logo;
         [SerializeField] private CanvasGroup pressKeyText;
+        [SerializeField] private GameObject buttonsObj;
 
-        [Header("演出の長さ(秒)")]
+        [Header("演出")]
         [SerializeField] private float logoBackDuration = 1.5f;
         [SerializeField] private float logoDuration = 1.5f;
         [SerializeField] private float pressKeyDuration = 1f;
-
-        [Header("点滅")]
         [SerializeField] private float blinkInterval = 0.8f;
         [SerializeField] private float blinkMinAlpha = 0.3f;
 
@@ -35,6 +35,7 @@ namespace Title
         private Coroutine current;
         private Tween blinkTween;
         private bool decided;
+        private GameObject menus;
 
         private float idleTimeCount = 0f;
 
@@ -42,14 +43,30 @@ namespace Title
 
         private void Start()
         {
+            logoBack.alpha = 0f;
+            logo.alpha = 0f;
+            pressKeyText.alpha = 0f;
+
             videoPlayer.loopPointReached += OnMovieEnd;
             videoPlayer.Prepare();   // 事前に準備しておくと再生開始が速い
             videoScreen.SetActive(false);
-            Restart();
+
+            enabled = false;
         }
 
         private void Update()
         {
+            if (decided)
+            {
+                if (InputEnabled && Keyboard.current.escapeKey.wasPressedThisFrame)
+                {
+                    decided = false;
+                    menus.GetComponent<MenuDeploy>().Retract();
+                    menus = null;
+                    return;
+                }
+            }
+
             if (InputEnabled && Mouse.current.leftButton.wasPressedThisFrame)
             {
                 idleTimeCount = 0f;
@@ -66,12 +83,12 @@ namespace Title
                 }
                 else if (!decided)
                 {
-                    //decided = true;
+                    decided = true;
+                    menus = Instantiate(buttonsObj, TitleUiLoot);
                 }
                 return;
             }
 
-            // 放置時間の計測は入力待機中だけ
             if (state == State.WaitInput && !decided)
             {
                 idleTimeCount += Time.deltaTime;
@@ -87,6 +104,7 @@ namespace Title
             logoBack.alpha = 0f;
             logo.alpha = 0f;
             pressKeyText.alpha = 0f;
+            idleTimeCount = 0f;
             decided = false;
 
             ChangeState(State.LogoBack);
@@ -184,6 +202,12 @@ namespace Title
         private void OnMovieEnd(VideoPlayer source)
         {
             if (state == State.IdleMovie) ScreenFader.FadeOutIn(0.5f, 0.5f, Restart);   // 最後まで流れたらタイトルへ戻す
+        }
+
+        public void StartSequence()
+        {
+            enabled = true;
+            Restart();
         }
     }
 }

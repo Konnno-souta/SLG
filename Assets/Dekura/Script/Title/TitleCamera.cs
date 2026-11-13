@@ -14,7 +14,18 @@ public class TitleCamera : MonoBehaviour
 
     private float angle; // 度
 
-    private void Update()
+    private void Awake()
+    {
+        TurnCamera();
+        enabled = false;
+    }
+
+    private void LateUpdate()
+    {
+        TurnCamera();
+    }
+
+    private void TurnCamera()
     {
         angle -= angleSpeed * Time.deltaTime;
 
@@ -24,4 +35,6 @@ public class TitleCamera : MonoBehaviour
         transform.position = forcus + offset;
         transform.LookAt(forcus);
     }
+
+    public void StartRotate() => enabled = true;
 }
