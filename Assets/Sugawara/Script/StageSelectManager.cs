@@ -65,14 +65,65 @@ public class StageSelectManager : MonoBehaviour
     bool loading;   // 会話中〜シーンに移るまで（操作を受け付けない）
     GameObject selectedBeforeDialog;   // ダイアログを開く前に選んでいたボタン（カーソルの追加）
 
+
     void Awake()
     {
-        // ステージから戻ってきたときは、そのステージに立たせる（道の追加）
-        selectedStage = FindStage(StageProgress.CurrentStageId);
-        if (selectedStage == null || !selectedStage.IsUnlocked) selectedStage = startStage;
+        // ====================================
+        // マップ進行データをロード
+        // ====================================
 
-        if (selectedStage != null) player.Warp(selectedStage.StandPosition);
+        // タイトルから選択されたスロット
+        int slot = BattleLaunchSession.CurrentSlot;
+
+        // UnityでマップSceneを直接再生した場合、
+        // DATA1の保存データを勝手に使用しない。
+        if (BattleLaunchSession.Mode.ToString() == "Direct")
+        {
+            StageProgress.ResetAll();
+
+            Debug.Log(
+                "[StageSelectManager] デバッグ起動：" +
+                "マップ進行情報は初期状態です。",
+                this
+            );
+        }
+        else
+        {
+            if (!StageProgressSaveSystem.LoadSlot(slot))
+            {
+                Debug.LogError(
+                    $"DATA{slot}のマップロードに失敗しました。",
+                    this
+                );
+
+                // 他のスロットの情報が
+                // メモリに残ることを防ぐ
+                StageProgress.ResetAll();
+
+                enabled = false;
+                return;
+            }
+        }
+
+        // ====================================
+        // 既存処理：プレイヤーの初期位置
+        // ====================================
+
+        selectedStage =
+            FindStage(StageProgress.CurrentStageId);
+
+        if (selectedStage == null ||
+            !selectedStage.IsUnlocked)
+        {
+            selectedStage = startStage;
+        }
+
+        if (selectedStage != null)
+        {
+            player.Warp(selectedStage.StandPosition);
+        }
     }
+
 
     void Start()
     {
@@ -203,6 +254,47 @@ public class StageSelectManager : MonoBehaviour
         if (EventSystem.current != null && dialogFirstSelected != null)
             EventSystem.current.SetSelectedGameObject(dialogFirstSelected.gameObject);
     }
+
+
+    /// <summary>
+    /// 追加：マップのセーブボタン用OnClick
+    /// DATA1～DATA3の選択スロットへ保存する。
+    /// </summary>
+    public void OnClickSave()
+    {
+        if (loading || StageRoad.AnyOpening)
+        {
+            Debug.LogWarning(
+                "演出中はマップを保存できません。",
+                this
+            );
+            return;
+        }
+
+        // 直接Play時のDATA1誤上書きを防止
+        if (BattleLaunchSession.Mode.ToString() == "Direct")
+        {
+            Debug.LogWarning(
+                "デバッグ起動中のため保存しません。",
+                this
+            );
+            return;
+        }
+
+        int slot = BattleLaunchSession.CurrentSlot;
+
+        bool success =
+            StageProgressSaveSystem.SaveSlot(slot);
+
+        if (success)
+        {
+            Debug.Log(
+                $"【マップ保存完了】DATA{slot}",
+                this
+            );
+        }
+    }
+
 
     public void OnClickYes()
     {

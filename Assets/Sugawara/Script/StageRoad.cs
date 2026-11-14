@@ -201,9 +201,36 @@ public class StageRoad : MonoBehaviour
         }
         yield return new WaitForSeconds(popDuration);
 
+
+        // ====================================
+        // 追加：道の解放演出を保存
+        // ====================================
+
+        // この道の解放演出を見たことを記録
         StageProgress.SetRoadShown(RoadKey);
+
+        // デバッグ起動ではDATA1を変更しない
+        if (BattleLaunchSession.Mode.ToString() != "Direct")
+        {
+            int slot = BattleLaunchSession.CurrentSlot;
+
+            bool success =
+                StageProgressSaveSystem.SaveSlot(slot);
+
+            if (!success)
+            {
+                Debug.LogWarning(
+                    $"道 {RoadKey} の解放履歴を" +
+                    $"DATA{slot}に保存できませんでした。",
+                    this
+                );
+            }
+        }
+
+        // 既存の演出終了処理
         animating = false;
         OpeningCount--;
+
     }
 
     IEnumerator Pop(GameObject seg, Vector3 baseScale)
