@@ -69,6 +69,8 @@ namespace Conversation
         public bool clearCharactersAtStart = true;
         [Tooltip("「～城内～」のように ～ で囲んだ本文は、話者が書いてあっても名前なしのナレーションにする")]
         public bool placeCardAsNarration = true;
+        [Tooltip("DisplayChara が空欄でも、話者が画面にいなければ出す。空いている位置に出し、3人とも埋まっていたら一番長く話していないキャラと入れ替える（同じ位置に重ならない）")]
+        public bool autoShowSpeakers = true;
         [Tooltip("変換した結果（会話スクリプト）をコンソールに出す。うまく出ない時の確認用")]
         public bool logScript = false;
 
@@ -91,6 +93,7 @@ namespace Conversation
 
         int testStage = 1;
         bool waitingEnd;
+        bool restoreAutoShow = true;
 
         // =====================================================================
         // 公開API
@@ -113,6 +116,10 @@ namespace Conversation
 
             if (!player.gameObject.activeInHierarchy) player.gameObject.SetActive(true);
             if (!player.enabled) player.enabled = true;
+            // 位置は CSV（とこちらの自動配置）で決めるので、ConversationPlayer の自動登場は会話中だけ止める
+            // （止めないと、ConversationPlayer が別の位置に勝手に出して、同じ位置に重なることがある）
+            if (!waitingEnd) restoreAutoShow = player.autoShowSpeakers;
+            player.autoShowSpeakers = false;
             player.Play(script);
             waitingEnd = true;
             return true;
@@ -135,6 +142,8 @@ namespace Conversation
                 directionRules = directionRules,
                 clearCharactersAtStart = clearCharactersAtStart,
                 placeCardAsNarration = placeCardAsNarration,
+                autoShowSpeakers = autoShowSpeakers,
+                knownCharacters = KnownCharacters(),
             };
 
             // 2Dイラスト一覧（別の CSV が無ければ、会話の CSV の右側の表から読む）
@@ -163,6 +172,16 @@ namespace Conversation
             return hasLine ? script : null;
         }
 
+        /// <summary>Database にいるキャラのID</summary>
+        HashSet<string> KnownCharacters()
+        {
+            var set = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            if (player && player.database)
+                foreach (var c in player.database.characters)
+                    if (c != null && !string.IsNullOrEmpty(c.id)) set.Add(c.id.Trim());
+            return set;
+        }
+
         // =====================================================================
         // Unity
         // =====================================================================
@@ -178,6 +197,7 @@ namespace Conversation
             if (waitingEnd && player && !player.IsPlaying)
             {
                 waitingEnd = false;
+                player.autoShowSpeakers = restoreAutoShow;
                 onFinished?.Invoke();
             }
         }

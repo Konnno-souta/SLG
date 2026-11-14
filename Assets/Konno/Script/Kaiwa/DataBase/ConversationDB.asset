@@ -18,24 +18,24 @@ MonoBehaviour:
     affiliation: 
     expressions:
     - name: normal
-      sprite: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
-      logIcon: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
-      logPortrait: {fileID: 21300000, guid: a6d7dd687247cc04f8a0aa5471b60f74, type: 3}
-    scale: 3
-    offset: {x: 0, y: -1800}
+      sprite: {fileID: 21300000, guid: 00b0d7b8cc6b33b459b8dd48a9693646, type: 3}
+      logIcon: {fileID: 21300000, guid: 00b0d7b8cc6b33b459b8dd48a9693646, type: 3}
+      logPortrait: {fileID: 21300000, guid: 00b0d7b8cc6b33b459b8dd48a9693646, type: 3}
+    scale: 1
+    offset: {x: 0, y: -300}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0.5, y: 0.8}
-    logIconZoom: 4.5
+    logIconZoom: 3
   - id: "\u30DF\u30EA\u30A2\u30EB\u30C9"
     displayName: "\u30DF\u30EA\u30A2\u30EB\u30C9"
     affiliation: 
     expressions:
-    - name: normal
-      sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logPortrait: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 2
-    offset: {x: 0, y: -1200}
+    - name: nomaml
+      sprite: {fileID: 21300000, guid: 2fa4b246e7c5005448ea3ff3aef59987, type: 3}
+      logIcon: {fileID: 21300000, guid: 2fa4b246e7c5005448ea3ff3aef59987, type: 3}
+      logPortrait: {fileID: 21300000, guid: 2fa4b246e7c5005448ea3ff3aef59987, type: 3}
+    scale: 1
+    offset: {x: 0, y: -300}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0.5, y: 0.85}
     logIconZoom: 3
@@ -44,24 +44,24 @@ MonoBehaviour:
     affiliation: 
     expressions:
     - name: normal
-      sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logPortrait: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 2
-    offset: {x: 0, y: -1200}
+      sprite: {fileID: 21300000, guid: 75cd35409e2d1e64c896f397f6731fab, type: 3}
+      logIcon: {fileID: 21300000, guid: 75cd35409e2d1e64c896f397f6731fab, type: 3}
+      logPortrait: {fileID: 21300000, guid: 75cd35409e2d1e64c896f397f6731fab, type: 3}
+    scale: 1
+    offset: {x: 0, y: -300}
     emoteAnchor: {x: 0, y: 0}
-    faceCenter: {x: 0.5, y: 0.85}
+    faceCenter: {x: -0.5, y: 0.85}
     logIconZoom: 3
   - id: "\u30A8\u30A2"
     displayName: "\u30A8\u30A2"
     affiliation: 
     expressions:
     - name: normal
-      sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logPortrait: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 2
-    offset: {x: 0, y: -1200}
+      sprite: {fileID: 21300000, guid: dc4d2d27fb15236478c986236854292b, type: 3}
+      logIcon: {fileID: 21300000, guid: dc4d2d27fb15236478c986236854292b, type: 3}
+      logPortrait: {fileID: 21300000, guid: dc4d2d27fb15236478c986236854292b, type: 3}
+    scale: 1
+    offset: {x: 0, y: -300}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0.5, y: 0.85}
     logIconZoom: 3
@@ -70,11 +70,11 @@ MonoBehaviour:
     affiliation: 
     expressions:
     - name: normal
-      sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logPortrait: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 2
-    offset: {x: 0, y: -1200}
+      sprite: {fileID: 21300000, guid: 14642a6a5a38443429e82a1b7029ac0d, type: 3}
+      logIcon: {fileID: 21300000, guid: 14642a6a5a38443429e82a1b7029ac0d, type: 3}
+      logPortrait: {fileID: 21300000, guid: 14642a6a5a38443429e82a1b7029ac0d, type: 3}
+    scale: 1
+    offset: {x: 0, y: -300}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0.5, y: 0.85}
     logIconZoom: 3
@@ -83,11 +83,11 @@ MonoBehaviour:
     affiliation: 
     expressions:
     - name: normal
-      sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logPortrait: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 2
-    offset: {x: 0, y: -1200}
+      sprite: {fileID: 21300000, guid: 195f2188ad3215443ba380e3dd1cccfa, type: 3}
+      logIcon: {fileID: 21300000, guid: 195f2188ad3215443ba380e3dd1cccfa, type: 3}
+      logPortrait: {fileID: 21300000, guid: 195f2188ad3215443ba380e3dd1cccfa, type: 3}
+    scale: 1
+    offset: {x: 0, y: -300}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0.5, y: 0.85}
     logIconZoom: 3
@@ -96,11 +96,11 @@ MonoBehaviour:
     affiliation: 
     expressions:
     - name: normal
-      sprite: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logIcon: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-      logPortrait: {fileID: 21300000, guid: 1aaf34edb4e51104ab287786287ae8e5, type: 3}
-    scale: 2
-    offset: {x: 0, y: -1200}
+      sprite: {fileID: 21300000, guid: b91ba7daa0e88f14db14c37d41dfcea1, type: 3}
+      logIcon: {fileID: 21300000, guid: b91ba7daa0e88f14db14c37d41dfcea1, type: 3}
+      logPortrait: {fileID: 21300000, guid: b91ba7daa0e88f14db14c37d41dfcea1, type: 3}
+    scale: 1
+    offset: {x: 0, y: -300}
     emoteAnchor: {x: 0, y: 0}
     faceCenter: {x: 0.5, y: 0.85}
     logIconZoom: 3
@@ -118,8 +118,8 @@ MonoBehaviour:
     faceCenter: {x: 0.5, y: 0.85}
     logIconZoom: 3
   backgrounds:
-  - name: classroom
-    sprite: {fileID: 21300000, guid: d9219180ee22c214e9b550425456c4c4, type: 3}
+  - name: filed
+    sprite: {fileID: 21300000, guid: e38efd3e12b39f0469060f39b9fdaa3b, type: 3}
   bgms: []
   ses: []
   titles: []

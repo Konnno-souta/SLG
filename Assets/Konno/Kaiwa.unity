@@ -280,12 +280,12 @@ MonoBehaviour:
   closeMode: 0
   autoCloseTime: 3
   skipIntroWithInput: 1
-  pauseGame: 0
+  pauseGame: 1
   buildInto: {fileID: 262613975}
   hidePanelOnClose: 1
   sortingOrder: 220
-  titleFont: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
-  textFont: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  titleFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  textFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
   dimColor: {r: 0.12, g: 0.08, b: 0.03, a: 0.55}
   smoke: 1
   smokeColor: {r: 0.25, g: 0.2, b: 0.08, a: 0.7}
@@ -371,9 +371,9 @@ MonoBehaviour:
   playConversationOnClose: 1
   conversationPlayer: {fileID: 190039260}
   conversationStoryId: story_clear_001
-  conversationCsv: {fileID: 4900000, guid: 1cdef5cee0a01b948a0b664821cbeb2b, type: 3}
+  conversationCsv: {fileID: 4900000, guid: 2194f83ee7d97414a8524f769f51ea65, type: 3}
   conversationTiming: 0
-  slgStory: {fileID: 0}
+  slgStory: {fileID: 1333435945}
   slgStageId: 1
   onShown:
     m_PersistentCalls:
@@ -1873,11 +1873,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationPlayer
   database: {fileID: 11400000, guid: a817b81d4ef3ded4692a8f98f67fc3b8, type: 2}
-  scriptAsset: {fileID: 4900000, guid: f4640d5e8aa5cf44ab25fb787462286a, type: 3}
+  scriptAsset: {fileID: 4900000, guid: b32671d076d4333418b677bd6136b935, type: 3}
   playOnStart: 0
   hideOnFinish: 1
   source: 1
-  csvAsset: {fileID: 4900000, guid: f4640d5e8aa5cf44ab25fb787462286a, type: 3}
+  csvAsset: {fileID: 4900000, guid: b32671d076d4333418b677bd6136b935, type: 3}
   storyId: story_001
   csvColumns:
     storyId: story_id
@@ -1951,7 +1951,7 @@ MonoBehaviour:
   hopDuration: 0.22
   dimNonSpeakers: 1
   dimAlpha: 0.5
-  dimAllOnNarration: 0
+  dimAllOnNarration: 1
   characterFadeTime: 0.25
   characterMoveTime: 0.3
   appearRise: 30
@@ -2278,7 +2278,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d16cd4c6122d08b4a980b803d1dbb3da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.SlgStoryPlayer
-  player: {fileID: 0}
+  player: {fileID: 1333435943}
   introCsv: {fileID: 4900000, guid: b32671d076d4333418b677bd6136b935, type: 3}
   afterCsv: {fileID: 4900000, guid: 889b97742e87a4444aac8c3fd97e032e, type: 3}
   illustListCsv: {fileID: 4900000, guid: d08ccd78ce42dcc4594530826ab232eb, type: 3}
@@ -2353,6 +2353,7 @@ MonoBehaviour:
     showText: 0
   clearCharactersAtStart: 1
   placeCardAsNarration: 1
+  autoShowSpeakers: 1
   logScript: 0
   playOnStart: 0
   startKind: 0
@@ -2685,7 +2686,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2003974163
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2736,7 +2737,7 @@ MonoBehaviour:
   playerTag: Player
   faceTarget: {fileID: 0}
   disableDuringConversation: []
-  debugLog: 1
+  debugLog: 0
   onConversationStarted:
     m_PersistentCalls:
       m_Calls: []
