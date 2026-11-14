@@ -60,6 +60,12 @@ public class StageSelectManager : MonoBehaviour
     [Tooltip("DiaLogPanel を開いたときに最初に選ぶボタン（「いいえ」がおすすめ）")]
     [SerializeField] UnityEngine.UI.Selectable dialogFirstSelected;
 
+    [Header("確認ダイアログ（ダイアログ共通化の追加）")]
+    [Tooltip("DiaLogPanel に付けた UIConfirmDialog。入れると、ステージ開始の確認にもこれを使う")]
+    [SerializeField] UIConfirmDialog confirmDialog;
+    [Tooltip("ステージ開始の確認メッセージ（{0} にステージ名が入る）")]
+    [SerializeField] string startMessage = "{0} を開始しますか？";
+
     StagePoint selectedStage;
     bool panelsShown;
     bool loading;   // 会話中〜シーンに移るまで（操作を受け付けない）
@@ -194,6 +200,14 @@ public class StageSelectManager : MonoBehaviour
     // ---- ボタンの OnClick に登録する ----
     public void OnClickStart()
     {
+        // 共通の確認ダイアログを使う場合（はい → OnClickYes）（ダイアログ共通化の追加）
+        if (confirmDialog != null)
+        {
+            string stageName = selectedStage != null && selectedStage.data != null ? selectedStage.data.stageTitle : "";
+            confirmDialog.Open(string.Format(startMessage, stageName), OnClickYes);
+            return;
+        }
+
         // 開く前に選んでいたボタンを覚えておく（閉じたときにカーソルを戻すため）（カーソルの追加）
         selectedBeforeDialog = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
 
