@@ -804,9 +804,9 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5738457507460937271}
-  - {fileID: 7310630866374195059}
   - {fileID: 2009915179747171195}
+  - {fileID: 7310630866374195059}
+  - {fileID: 5738457507460937271}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -832,10 +832,10 @@ MonoBehaviour:
   - {fileID: 2009915179747171195}
   startPosition: {x: 0, y: -100}
   endPosition: {x: 0, y: -450}
-  duration: 0.5
+  duration: 0.2
   stagger: 0.08
-  deployEase: 27
-  retractEase: 26
+  deployEase: 0
+  retractEase: 0
   deployOnStart: 1
 --- !u!114 &5306492836991470817
 MonoBehaviour:

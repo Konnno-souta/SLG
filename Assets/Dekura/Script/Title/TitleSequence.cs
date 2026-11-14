@@ -15,7 +15,7 @@ namespace Title
         [SerializeField] private CanvasGroup logoBack;
         [SerializeField] private CanvasGroup logo;
         [SerializeField] private CanvasGroup pressKeyText;
-        [SerializeField] private GameObject buttonsObj;
+        [SerializeField] private MenuDeploy buttons;
 
         [Header("ââèo")]
         [SerializeField] private float logoBackDuration = 1.5f;
@@ -35,7 +35,6 @@ namespace Title
         private Coroutine current;
         private Tween blinkTween;
         private bool decided;
-        private GameObject menus;
 
         private float idleTimeCount = 0f;
 
@@ -61,8 +60,10 @@ namespace Title
                 if (InputEnabled && Keyboard.current.escapeKey.wasPressedThisFrame)
                 {
                     decided = false;
-                    menus.GetComponent<MenuDeploy>().Retract();
-                    menus = null;
+                    buttons.enabled = false;
+
+                    blinkTween.Play();
+                    ApplyWaitInputView();
                     return;
                 }
             }
@@ -84,7 +85,10 @@ namespace Title
                 else if (!decided)
                 {
                     decided = true;
-                    menus = Instantiate(buttonsObj, TitleUiLoot);
+                    buttons.enabled = true;
+
+                    blinkTween.Pause();
+                    hideInputView();
                 }
                 return;
             }
@@ -101,9 +105,7 @@ namespace Title
         {
             StopMovie();
             KillTweens();
-            logoBack.alpha = 0f;
-            logo.alpha = 0f;
-            pressKeyText.alpha = 0f;
+            hideInputView();
             idleTimeCount = 0f;
             decided = false;
 
@@ -164,6 +166,13 @@ namespace Title
             logo.alpha = 1f;
             pressKeyText.alpha = 1f;
         }
+        private void hideInputView()
+        {
+            logoBack.alpha = 0f;
+            logo.alpha = 0f;
+            pressKeyText.alpha = 0f;
+        }
+
 
         private void StartBlink()
         {
