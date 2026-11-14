@@ -377,11 +377,6 @@ public sealed class TitleSaveSlotSelectionController
         // DATA”Ô†‚ğŠm’è‚µ‚Ä‚©‚ç‰æ–ÊˆÚ“®
         onNewGameSlotChosen?.Invoke(slotNumber);
 
-
-        // «—ˆ‚ÌMAP‘I‘ğ‘JˆÚˆ—‚É“n‚¹‚éB
-        onNewGameSlotChosen?.Invoke(
-            slotNumber
-        );
     }
 
     // ========================================
