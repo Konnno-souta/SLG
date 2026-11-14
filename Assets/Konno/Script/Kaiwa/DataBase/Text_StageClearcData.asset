@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Text_StageClearcData
   m_EditorClassIdentifier: Assembly-CSharp::Conversation.ConversationDatabase
   characters:
-  - id: Kanade
-    displayName: Kanade
+  - id: "\u30AF\u30E9\u30F3"
+    displayName: "\u30AF\u30E9\u30F3"
     affiliation: 
     expressions:
     - name: normal
@@ -41,7 +41,7 @@ MonoBehaviour:
     logIconZoom: 3
   backgrounds:
   - name: field
-    sprite: {fileID: 21300000, guid: 74b9d7004bc72d54f8c46f0a06387b59, type: 3}
+    sprite: {fileID: 21300000, guid: e38efd3e12b39f0469060f39b9fdaa3b, type: 3}
   bgms: []
   ses: []
   titles: []

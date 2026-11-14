@@ -84,6 +84,13 @@ namespace Conversation
         public bool clearCharactersAtStart = true;
         public bool placeCardAsNarration = true;
 
+        /// <summary>話者が画面にいない時、空いている位置（無ければ一番長く話していないキャラの位置）に出す</summary>
+        public bool autoShowSpeakers = true;
+        /// <summary>話者を出す位置を探す順番（0: 左, 1: 真ん中, 2: 右）</summary>
+        public int[] autoShowOrder = { 0, 2, 1 };
+        /// <summary>Database にいるキャラのID（ここにいる話者だけ自動で出す）</summary>
+        public HashSet<string> knownCharacters;
+
         static bool IsPlaceCard(string t)
         {
             t = t.Trim();
@@ -238,6 +245,7 @@ namespace Conversation
             var sb = new StringBuilder();
             var slots = new string[3];       // 今それぞれの位置に出ているキャラ
             var faces = new string[3];       // その表情
+            var lastSpoke = new int[3];      // その位置のキャラが最後に話した順番
             int lines = 0;
 
             if (clearCharactersAtStart) sb.Append("@clear\n");
@@ -285,10 +293,22 @@ namespace Conversation
                 // 「～城内～」のような場所の表示は、話者が書いてあってもナレーションにする
                 bool place = placeCardAsNarration && IsPlaceCard(text);
                 bool narration = place || speaker.Length == 0 || narratorNames.Contains(speaker);
+
+                // 話者が画面にいなければ、ほかのキャラと重ならない位置に出す
+                // （この行で DisplayChara を指定している時は、CSV の指定どおりにする）
+                bool rowSetsIllust = row.illusts[0].Length > 0 || row.illusts[1].Length > 0 || row.illusts[2].Length > 0;
+                if (!narration && !rowSetsIllust) AutoShowSpeaker(sb, Id(speaker), slots, faces, lastSpoke);
                 sb.Append(narration ? "" : Id(speaker)).Append(": ").Append(parts[0].Trim()).Append('\n');
                 for (int p = 1; p < parts.Length; p++)
                     if (parts[p].Trim().Length > 0) sb.Append("  ").Append(parts[p].Trim()).Append('\n');
                 lines++;
+
+                // 話した順番を覚えておく（入れ替える時に、一番長く話していないキャラを選ぶ）
+                if (!narration)
+                {
+                    int k = Array.IndexOf(slots, Id(speaker));
+                    if (k >= 0) lastSpoke[k] = lines;
+                }
             }
 
             if (lines == 0) warnings.Add($"{label}: Stage_ID「{stageId}」のセリフがありません");
@@ -299,11 +319,13 @@ namespace Conversation
         {
             var newSlots = (string[])slots.Clone();
             var newFaces = (string[])faces.Clone();
+            var setThisRow = new bool[3];
 
             for (int k = 0; k < 3; k++)
             {
                 string id = row.illusts[k];
                 if (id.Length == 0) continue;   // 空欄は前の行のまま
+                setThisRow[k] = true;
                 if (!illusts.TryGetValue(id, out var il))
                 {
                     warnings.Add($"{label} {row.rowNumber}行目: 2DイラストID「{id}」が一覧にありません");
@@ -311,6 +333,14 @@ namespace Conversation
                 }
                 if (il.hidden) { newSlots[k] = null; newFaces[k] = null; }
                 else { newSlots[k] = Id(il.chara); newFaces[k] = il.expression; }
+            }
+
+            // この行で別の位置に指定されたキャラは、空欄（前のまま）の位置からは外す（同じキャラが2か所にならないように）
+            for (int k = 0; k < 3; k++)
+            {
+                if (setThisRow[k] || newSlots[k] == null) continue;
+                for (int j = 0; j < 3; j++)
+                    if (j != k && setThisRow[j] && newSlots[j] == newSlots[k]) { newSlots[k] = null; newFaces[k] = null; break; }
             }
 
             // いなくなったキャラを退場させる（別の位置に移るキャラはそのまま）
@@ -332,6 +362,30 @@ namespace Conversation
 
             Array.Copy(newSlots, slots, 3);
             Array.Copy(newFaces, faces, 3);
+        }
+
+        void AutoShowSpeaker(StringBuilder sb, string id, string[] slots, string[] faces, int[] lastSpoke)
+        {
+            if (!autoShowSpeakers || knownCharacters == null || !knownCharacters.Contains(id)) return;
+            if (Array.IndexOf(slots, id) >= 0) return;   // もう出ている
+
+            // 空いている位置を探す
+            int slot = -1;
+            foreach (int k in autoShowOrder)
+                if (k >= 0 && k < 3 && slots[k] == null) { slot = k; break; }
+
+            // 空きが無ければ、一番長く話していないキャラと入れ替える
+            if (slot < 0)
+            {
+                slot = 0;
+                for (int k = 1; k < 3; k++) if (lastSpoke[k] < lastSpoke[slot]) slot = k;
+                sb.Append("@hide ").Append(slots[slot]).Append('\n');
+            }
+
+            sb.Append("@show ").Append(id).Append(' ').Append(slotPositions[slot]).Append('\n');
+            slots[slot] = id;
+            faces[slot] = null;
+            lastSpoke[slot] = 0;
         }
 
         string EmoteFor(string reactionId)
