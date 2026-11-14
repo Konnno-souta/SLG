@@ -7,8 +7,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 // ステージ選択シーンの進行役
-// ・最初は Start Stage（Stage1）に立った状態から始まる
-// ・Stageをクリック → Playerが移動（パネルは隠れる）
+// ・最初は Start Stage（Stage1）に立った状態から始まる（ステージから戻ったときはそのステージ）
+// ・Stageをクリック / WASD → Playerが移動（パネルは隠れる）。まだ開放されていないステージには行けない
 // ・P キー → MenuPanel と StageInfo を出す／しまう
 // ・Start → DiaLogPanel を表示
 // ・はい → 会話パート（設定があれば）→ 会話が終わったらそのステージのシーンへ / いいえ → ダイアログを閉じる
@@ -48,15 +48,30 @@ public class StageSelectManager : MonoBehaviour
     [Tooltip("SLG_ストーリー会話テキストの CSV を流す SlgStoryPlayer（Stage Stories の Slg Stage Id を使う時に入れる）")]
     [SerializeField] SlgStoryPlayer slgStory;
 
+    [Header("会話に入る前の演出（演出の追加）")]
+    [Tooltip("画面を暗くする MapScreenFader（空なら暗くしない）")]
+    [SerializeField] MapScreenFader screenFader;
+    [Tooltip("カメラをどこまで寄せるか（1 = 今の距離、0.4 = 4割の距離まで寄る）")]
+    [SerializeField, Range(0.1f, 1f)] float zoomRatio = 0.4f;
+    [Tooltip("寄りながら暗くなるまでの秒数")]
+    [SerializeField] float transitionDuration = 1.2f;
+
+    [Header("ダイアログのカーソル（カーソルの追加）")]
+    [Tooltip("DiaLogPanel を開いたときに最初に選ぶボタン（「いいえ」がおすすめ）")]
+    [SerializeField] UnityEngine.UI.Selectable dialogFirstSelected;
+
     StagePoint selectedStage;
     bool panelsShown;
     bool loading;   // 会話中〜シーンに移るまで（操作を受け付けない）
+    GameObject selectedBeforeDialog;   // ダイアログを開く前に選んでいたボタン（カーソルの追加）
 
     void Awake()
     {
-        // 最初から Start Stage に立たせる
-        selectedStage = startStage;
-        if (startStage != null) player.Warp(startStage.StandPosition);
+        // ステージから戻ってきたときは、そのステージに立たせる（道の追加）
+        selectedStage = FindStage(StageProgress.CurrentStageId);
+        if (selectedStage == null || !selectedStage.IsUnlocked) selectedStage = startStage;
+
+        if (selectedStage != null) player.Warp(selectedStage.StandPosition);
     }
 
     void Start()
@@ -69,6 +84,12 @@ public class StageSelectManager : MonoBehaviour
     {
         // カメラ演出中は操作を受け付けない
         if (cameraIntro != null && cameraIntro.IsPlaying) return;
+
+        // 道の開放演出中は操作を受け付けない（道の追加）
+        if (StageRoad.AnyOpening) return;
+
+        // 設定などのウィンドウが開いている間は操作を受け付けない（ウィンドウの追加）
+        if (UIPopupWindow.AnyOpen) return;
 
         // 会話中・シーンに移る途中は操作を受け付けない
         if (loading) return;
@@ -83,11 +104,61 @@ public class StageSelectManager : MonoBehaviour
         }
 
         if (PressedSelect(out StagePoint stage)) SelectStage(stage);
+
+        // WASD（方向入力）で、その方向にあるステージへ移動する（WASDの追加）
+        // メニューが開いている間は、WASD はメニューのカーソル操作に使うので移動しない（カーソルの追加）
+        if (!panelsShown && PressedMove(out Vector2 dir))
+        {
+            StagePoint next = FindStageInDirection(dir);
+            if (next != null) SelectStage(next);
+        }
+    }
+
+    // 今いるステージから見て、画面上で dir の方向にある一番近いステージを探す（WASDの追加）
+    // 開放されていないステージは候補にしない
+    StagePoint FindStageInDirection(Vector2 dir)
+    {
+        if (selectedStage == null || Camera.main == null) return null;
+
+        Camera cam = Camera.main;
+        Vector2 from = cam.WorldToScreenPoint(selectedStage.StandPosition);
+
+        StagePoint best = null;
+        float bestScore = float.MaxValue;
+
+        foreach (var s in FindObjectsByType<StagePoint>(FindObjectsSortMode.None))
+        {
+            if (s == selectedStage || !s.IsUnlocked) continue;
+
+            Vector2 to = cam.WorldToScreenPoint(s.StandPosition);
+            Vector2 diff = to - from;
+            float dist = diff.magnitude;
+            if (dist < 1f) continue;
+
+            float dot = Vector2.Dot(diff / dist, dir);
+            if (dot < 0.5f) continue; // 押した方向から60度以上ずれていたら対象外
+
+            // 近くて、押した方向にまっすぐなほど優先
+            float score = dist * (2f - dot);
+            if (score < bestScore)
+            {
+                bestScore = score;
+                best = s;
+            }
+        }
+        return best;
     }
 
     void SelectStage(StagePoint stage)
     {
         if (stage == selectedStage) return; // 今いるステージなら何もしない
+
+        // まだ開放されていないステージには行けない（道の追加）
+        if (!stage.IsUnlocked)
+        {
+            Debug.Log($"{stage.name} はまだ開放されていません");
+            return;
+        }
 
         selectedStage = stage;
         SetPanels(false);
@@ -111,10 +182,26 @@ public class StageSelectManager : MonoBehaviour
         }
     }
 
+    // ステージ番号から StagePoint を探す（道の追加）
+    StagePoint FindStage(int stageId)
+    {
+        if (stageId < 0) return null;
+        foreach (var s in FindObjectsByType<StagePoint>(FindObjectsSortMode.None))
+            if (s.stageId == stageId) return s;
+        return null;
+    }
+
     // ---- ボタンの OnClick に登録する ----
     public void OnClickStart()
     {
+        // 開く前に選んでいたボタンを覚えておく（閉じたときにカーソルを戻すため）（カーソルの追加）
+        selectedBeforeDialog = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+
         dialogPanel.SetActive(true);
+
+        // ダイアログのボタンを選択する（カーソルの追加）
+        if (EventSystem.current != null && dialogFirstSelected != null)
+            EventSystem.current.SetSelectedGameObject(dialogFirstSelected.gameObject);
     }
 
     public void OnClickYes()
@@ -126,7 +213,34 @@ public class StageSelectManager : MonoBehaviour
             dialogPanel.SetActive(false);
             return;
         }
-        StartCoroutine(ConversationThenLoad(selectedStage));
+
+        // どのステージを遊ぶか覚えておく（クリア判定とマップに戻った時の立ち位置に使う）（道の追加）
+        StageProgress.CurrentStageId = selectedStage.stageId;
+
+        StartCoroutine(TransitionThenConversation(selectedStage));   // 演出のあとに会話へ（演出の追加）
+    }
+
+    // カメラを Player へ寄せながら画面を暗くして、そのあと会話へ（演出の追加）
+    IEnumerator TransitionThenConversation(StagePoint stage)
+    {
+        loading = true;
+
+        // ダイアログとパネルを閉じる
+        dialogPanel.SetActive(false);
+        SetPanels(false);
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+
+        // 寄るのと暗くなるのを同時に行う
+        Coroutine zoom = null;
+        if (cameraIntro != null) zoom = StartCoroutine(cameraIntro.ZoomTo(zoomRatio, transitionDuration));
+
+        if (screenFader != null) yield return StartCoroutine(screenFader.FadeOut(transitionDuration));
+        else yield return new WaitForSeconds(transitionDuration);
+
+        if (zoom != null) yield return zoom;
+
+        // ここから先は今までの会話の処理
+        yield return StartCoroutine(ConversationThenLoad(stage));
     }
 
     // 会話を流して、終わったらシーンへ（会話の設定が無ければすぐシーンへ）
@@ -200,6 +314,23 @@ public class StageSelectManager : MonoBehaviour
     public void OnClickNo()
     {
         dialogPanel.SetActive(false);
+
+        // 開く前に選んでいたボタンに選択を戻す（カーソルが戻る）（カーソルの追加）
+        if (EventSystem.current != null && selectedBeforeDialog != null && selectedBeforeDialog.activeInHierarchy)
+            EventSystem.current.SetSelectedGameObject(selectedBeforeDialog);
+    }
+
+    // ---- デバッグ（再生中に Inspector の「︙」から実行）（道の追加） ----
+    [ContextMenu("デバッグ：今いるステージをクリアにする")]
+    void DebugClearCurrent()
+    {
+        if (selectedStage != null) StageProgress.SetCleared(selectedStage.stageId);
+    }
+
+    [ContextMenu("デバッグ：進行状況をリセット")]
+    void DebugReset()
+    {
+        StageProgress.ResetAll();
     }
 
     // ---- 入力（操作を増やすときはここだけ変える） ----
@@ -215,6 +346,33 @@ public class StageSelectManager : MonoBehaviour
         // if (g != null && g.buttonNorth.wasPressedThisFrame) return true;
 
         return false;
+    }
+
+    // 移動する方向（WASD・矢印キー）（WASDの追加）
+    bool PressedMove(out Vector2 dir)
+    {
+        dir = Vector2.zero;
+
+        var k = Keyboard.current;
+        if (k != null)
+        {
+            if (k.wKey.wasPressedThisFrame || k.upArrowKey.wasPressedThisFrame) dir = Vector2.up;
+            else if (k.sKey.wasPressedThisFrame || k.downArrowKey.wasPressedThisFrame) dir = Vector2.down;
+            else if (k.aKey.wasPressedThisFrame || k.leftArrowKey.wasPressedThisFrame) dir = Vector2.left;
+            else if (k.dKey.wasPressedThisFrame || k.rightArrowKey.wasPressedThisFrame) dir = Vector2.right;
+        }
+
+        // コントローラー対応時はここに追加する（例：十字キー）
+        // var g = Gamepad.current;
+        // if (g != null)
+        // {
+        //     if (g.dpad.up.wasPressedThisFrame) dir = Vector2.up;
+        //     else if (g.dpad.down.wasPressedThisFrame) dir = Vector2.down;
+        //     else if (g.dpad.left.wasPressedThisFrame) dir = Vector2.left;
+        //     else if (g.dpad.right.wasPressedThisFrame) dir = Vector2.right;
+        // }
+
+        return dir != Vector2.zero;
     }
 
     // ステージを選ぶ（今はマウスクリック）
