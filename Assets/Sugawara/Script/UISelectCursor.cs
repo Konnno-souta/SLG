@@ -33,6 +33,14 @@ public class UISelectCursor : MonoBehaviour
     [Tooltip("揺れる速さ")]
     [SerializeField] float bobSpeed = 5f;
 
+    [Header("演出")]
+    [Tooltip("カーソルが動いたときに、きらきらを出す UISparkleBurst（空なら出さない）")]
+    [SerializeField] UISparkleBurst sparkle;
+    [Tooltip("きらきらを出す位置を、カーソルからずらす量（UIの単位）")]
+    [SerializeField] Vector2 sparkleOffset = Vector2.zero;
+    [Tooltip("カーソルが最初に出たときにも、きらきらを出す")]
+    [SerializeField] bool sparkleOnAppear = false;
+
     RectTransform rect;
     RectTransform parentRect;
     Graphic[] graphics;
@@ -87,8 +95,12 @@ public class UISelectCursor : MonoBehaviour
 
         Vector3 goal = GetGoal((RectTransform)selected.transform);
 
+        bool burst = false;
         if (selected != lastSelected)
         {
+            // きらきら：別のボタンに移ったとき（設定によっては最初に出たときも）
+            burst = lastSelected != null || sparkleOnAppear;
+
             // 表示し始めたときはその場に出す。別のボタンに移ったときは、今の位置からなめらかに移る
             smoothOffset = (lastSelected == null || moveSpeed <= 0f) ? Vector3.zero : rect.localPosition - goal;
             lastSelected = selected;
@@ -103,6 +115,13 @@ public class UISelectCursor : MonoBehaviour
 
         rect.localPosition = goal + smoothOffset + bobVec;
         SetVisible(true);
+
+        // 移動先（ボタンの横）できらきらを出す
+        if (burst && sparkle != null)
+        {
+            Vector3 at = goal + (Vector3)sparkleOffset;
+            sparkle.Burst(parentRect != null ? parentRect.TransformPoint(at) : at);
+        }
     }
 
     bool IsValidTarget(GameObject selected)
