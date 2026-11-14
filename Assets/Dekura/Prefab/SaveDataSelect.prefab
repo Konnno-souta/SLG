@@ -2048,7 +2048,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SceneFlowNavigator
   titleSceneName: title_pre
   mapSelectSceneName: MapScene
-  stage01SceneName: main
+  stage01SceneName: Main
   useConversationBeforeBattle: 0
   conversationSceneName: 
 --- !u!1 &3637654172890303942
