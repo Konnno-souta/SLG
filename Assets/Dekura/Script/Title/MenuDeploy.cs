@@ -19,6 +19,9 @@ public class MenuDeploy : MonoBehaviour
     [SerializeField] private Ease retractEase = Ease.InBack;
     [SerializeField] private bool deployOnStart = true;
 
+    private void OnEnable() => Deploy();
+    private void OnDisable() => Retract();
+
     //-----------------------------------------------------------------------------//
 
     private Sequence sequence;
@@ -27,16 +30,16 @@ public class MenuDeploy : MonoBehaviour
 
     private void Awake()
     {
+        enabled = false;
+
         foreach (var ui in menuUis)
         {
             SetInteractable(ui, false);
 
-            ui.anchorMax = new Vector2(0f, 1f);
-            ui.anchorMin = new Vector2(0f, 1f);
+            ui.anchorMax = new Vector2(0.5f, 0.5f);
+            ui.anchorMin = new Vector2(0.5f, 0.5f);
             ui.anchoredPosition = startPosition;
         }
-
-        Deploy();
     }
 
     private void Start()
@@ -50,7 +53,7 @@ public class MenuDeploy : MonoBehaviour
     }
 
     /// <summary>メニューを展開する</summary>
-    private void Deploy()
+    public void Deploy()
     {
         sequence?.Kill();
         sequence = DOTween.Sequence();
@@ -60,7 +63,9 @@ public class MenuDeploy : MonoBehaviour
         {
             var ui = menuUis[i];
             float t = count > 1 ? (float)i / (count - 1) : 1f;
-            float delay = (count - 1 - i) * stagger; 
+            float delay = (count - 1 - i) * stagger;
+
+            SetAlpha(ui, 1f);
 
             sequence.Insert(delay,
                 ui.DOAnchorPos(Vector2.Lerp(startPosition, endPosition, t), duration)
@@ -84,10 +89,9 @@ public class MenuDeploy : MonoBehaviour
             SetInteractable(ui, false);
             sequence.Join(ui.DOAnchorPos(startPosition, duration * 0.6f).SetEase(retractEase));
         }
-
         sequence.OnComplete(() =>
         {
-            Destroy(gameObject);
+            foreach (var ui in menuUis) SetAlpha(ui, 0f);
         });
     }
 
@@ -95,5 +99,11 @@ public class MenuDeploy : MonoBehaviour
     {
         var button = ui.GetComponent<Button>();
         if (button != null) button.interactable = value;
+    }
+
+    private static void SetAlpha(RectTransform ui, float value)
+    {
+        var button = ui.GetComponent<CanvasGroup>();
+        if (button != null) button.alpha = value;
     }
 }
