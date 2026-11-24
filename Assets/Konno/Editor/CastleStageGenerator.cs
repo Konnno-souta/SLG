@@ -66,6 +66,11 @@ public sealed class CastleStageGenerator : EditorWindow
     [SerializeField] private int propEverySegments = 2;
     [SerializeField] private float propHeight = 0f;
     [SerializeField] private float propScale = 1f;
+    [SerializeField] private bool torchFire = true;
+    [SerializeField] private Vector3 flameOffset = Vector3.zero;
+    [SerializeField] private float flameSize = 1f;
+    [SerializeField] private bool torchLights = true;
+    [SerializeField] private int lightEveryTorches = 1;
 
     [SerializeField] private bool tint = true;
     [SerializeField] private Color floorTint = new Color(1.2f, 1.15f, 1.05f);
@@ -73,6 +78,15 @@ public sealed class CastleStageGenerator : EditorWindow
     [SerializeField] private float floorVariation = 0.12f;
     [SerializeField] private float variationScale = 5f;
     [SerializeField] private string outputFolder = "Assets/Konno/CastleMaterials";
+
+    // 外周(カメラに映る部屋の外側)
+    [SerializeField] private bool buildOuter = true;
+    [SerializeField] private int outerMarginCells = 12;
+    [SerializeField] private int outerTileCells = 2;
+    [SerializeField] private Color outerTint = new Color(0.78f, 0.75f, 0.72f);
+    [SerializeField] private bool outerFloorWhereNoWall = true;
+    [SerializeField] private bool voidGround = true;
+    [SerializeField] private Color voidColor = new Color(0.06f, 0.055f, 0.05f);
 
     [SerializeField] private bool removeColliders = true;
     [SerializeField] private int seed = 1;
@@ -150,6 +164,11 @@ public sealed class CastleStageGenerator : EditorWindow
         Prop(so, "propEverySegments", "何枚の壁ごとに置くか");
         Prop(so, "propHeight", "置く高さ(m)");
         Prop(so, "propScale", "大きさ(倍率)");
+        Prop(so, "torchFire", "松明に火を付ける(TorchFlame)");
+        Prop(so, "flameOffset", "火の位置の調整(m。X=右 Y=上 Z=部屋側)");
+        Prop(so, "flameSize", "火の大きさ(倍率)");
+        Prop(so, "torchLights", "灯り(点光源)も付ける");
+        Prop(so, "lightEveryTorches", "灯りは何本に1つ(重いときは2〜3)");
 
         Header("色(明るいマテリアルを別ファイルで作成)");
         Prop(so, "tint", "色を調整する");
@@ -158,6 +177,15 @@ public sealed class CastleStageGenerator : EditorWindow
         Prop(so, "floorVariation", "床の明るさムラ");
         Prop(so, "variationScale", "ムラの大きさ(マス)");
         Prop(so, "outputFolder", "保存先フォルダ");
+
+        Header("外周(上からのカメラに映る部屋の外側)");
+        Prop(so, "buildOuter", "外周を作る");
+        Prop(so, "outerMarginCells", "外周の広さ(マス)");
+        Prop(so, "outerTileCells", "外周のタイル1枚の大きさ(マス。大きいほど軽い)");
+        Prop(so, "outerTint", "外周の色(乗算。暗めにすると部屋が目立つ)");
+        Prop(so, "outerFloorWhereNoWall", "壁のない側は床の高さで延ばす(カメラ側を塞がない)");
+        Prop(so, "voidGround", "さらに外側を暗い地面で覆う");
+        Prop(so, "voidColor", "暗い地面の色");
 
         Header("その他");
         Prop(so, "removeColliders", "コライダーを外す(マスのクリック判定を邪魔しない)");
@@ -202,6 +230,8 @@ public sealed class CastleStageGenerator : EditorWindow
         propEverySegments = Mathf.Max(1, propEverySegments);
         carpetWidthCells = Mathf.Clamp(carpetWidthCells, 1, gridWidth);
         materialCache.Clear();
+        torchIndex = 0;
+        lightEveryTorches = Mathf.Max(1, lightEveryTorches);
 
         GameObject old = GameObject.Find(rootName);
         if (old != null) Undo.DestroyObjectImmediate(old);
@@ -223,6 +253,7 @@ public sealed class CastleStageGenerator : EditorWindow
         if (carpet) BuildCarpet(carpetParent);
         float wallThickness = BuildWalls(wallParent, propParent, rng);
         BuildPillars(pillarParent, wallThickness, log);
+        if (buildOuter) BuildOuter(Child(root, "Outer"), wallThickness, rng);
 
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = root;
@@ -300,8 +331,11 @@ public sealed class CastleStageGenerator : EditorWindow
     }
 
     // 壁を建て、壁の厚み(m)を返す(柱の配置に使う)。
+    private float wallTopY;
+
     private float BuildWalls(Transform wallParent, Transform propParent, System.Random rng)
     {
+        wallTopY = floorTop;
         if (wallPrefab == null) return 0.3f * cellSize;
 
         Piece wall = Measure(wallPrefab, true);
@@ -319,6 +353,7 @@ public sealed class CastleStageGenerator : EditorWindow
         float wantSeg = wallSegmentCells * cellSize;
         float s = wantSeg / length;
         float thick = thickRaw * s;
+        wallTopY = floorTop + wall.bounds.size.y * s * wallHeightMul;
 
         // 辺ごと: 始点, 方向, 長さ, 壁の向き(内側を向く回転), 外側へのずらし
         // from〜to(辺の始点からの距離m)の区間に壁を並べる。propCounterは小物の間隔用
@@ -345,7 +380,8 @@ public sealed class CastleStageGenerator : EditorWindow
                     Piece pp = Measure(prop, false);
                     Vector3 pPos = start + dir * (from + (i + 0.5f) * seg) - outward * 0.15f * cellSize;
                     pPos.y = floorTop + propHeight;
-                    Place(pp, propParent, pPos, yaw, Vector3.one * propScale, false, null, Color.white);
+                    GameObject torch = Place(pp, propParent, pPos, yaw, Vector3.one * propScale, false, null, Color.white);
+                    if (torchFire) AddFlame(torch, pp);
                 }
             }
         }
@@ -404,6 +440,138 @@ public sealed class CastleStageGenerator : EditorWindow
         Side(wallSouth, new Vector3(x0, 0f, z0), Vector3.right, x1 - x0, 0f, Vector3.back, false);
 
         return thick;
+    }
+
+    // 部屋の外側を埋める。壁のある側は壁の上端の高さに石の面を敷き詰め(城の上面)、
+    // 壁のない側は床の高さで床を延ばす。さらに外側は暗い地面で覆う。
+    private void BuildOuter(Transform parent, float wallThickness, System.Random rng)
+    {
+        List<Piece> tiles = new List<Piece>();
+        foreach (GameObject p in floorPrefabs)
+            if (p != null) tiles.Add(Measure(p, false));
+        if (tiles.Count == 0) return;
+
+        bool hasWalls = wallPrefab != null;
+        float margin = Mathf.Max(1, outerMarginCells) * cellSize;
+        float tileSize = Mathf.Max(1, outerTileCells) * cellSize;
+        float t = hasWalls ? wallThickness : 0f;
+
+        // 部屋の床の端
+        float rx0 = -outerFloorCells * cellSize, rx1 = (gridWidth + outerFloorCells) * cellSize;
+        float rz0 = -outerFloorCells * cellSize, rz1 = (gridHeight + outerFloorCells) * cellSize;
+        // 内側の矩形(部屋+壁の外面)。壁のない辺は床の端そのまま
+        float ix0 = rx0 - (hasWalls && wallWest ? t : 0f);
+        float ix1 = rx1 + (hasWalls && wallEast ? t : 0f);
+        float iz0 = rz0 - (hasWalls && wallSouth ? t : 0f);
+        float iz1 = rz1 + (hasWalls && wallNorth ? t : 0f);
+        // 外側の矩形
+        float ox0 = ix0 - margin, ox1 = ix1 + margin, oz0 = iz0 - margin, oz1 = iz1 + margin;
+
+        // その辺を「城の上面(壁の高さ)」にするか「床の高さ」にするか
+        bool High(bool sideHasWall) => hasWalls && (sideHasWall || !outerFloorWhereNoWall);
+        bool westHigh = High(wallWest), eastHigh = High(wallEast);
+        bool northHigh = High(wallNorth), southHigh = High(wallSouth);
+        float TopOf(bool high) => high ? wallTopY : floorTop;
+
+        // 4つの帯に分けて敷く。高い帯どうしは角を東西が受け持ち、
+        // 床の高さの南北の帯は横幅いっぱいに広げる(手前が開けて見える)
+        float wz0 = southHigh ? oz0 : iz0;
+        float wz1 = northHigh ? oz1 : iz1;
+        OuterStrip(ox0, ix0, wz0, wz1, TopOf(westHigh), "West");
+        OuterStrip(ix1, ox1, wz0, wz1, TopOf(eastHigh), "East");
+        OuterStrip(northHigh ? ix0 : ox0, northHigh ? ix1 : ox1, iz1, oz1, TopOf(northHigh), "North");
+        OuterStrip(southHigh ? ix0 : ox0, southHigh ? ix1 : ox1, oz0, iz0, TopOf(southHigh), "South");
+
+        // 床の高さの辺では、左右の「城の上面」の端が宙に浮くので、そこに壁を立てて塞ぐ
+        if (hasWalls)
+        {
+            Piece wall = Measure(wallPrefab, true);
+            float flip = flipWall ? 180f : 0f;
+            if (!southHigh)
+            {
+                if (westHigh) CapWall(wall, ox0, ix0, iz0, -1f, 180f + flip);
+                if (eastHigh) CapWall(wall, ix1, ox1, iz0, -1f, 180f + flip);
+            }
+            if (!northHigh)
+            {
+                if (westHigh) CapWall(wall, ox0, ix0, iz1, 1f, flip);
+                if (eastHigh) CapWall(wall, ix1, ox1, iz1, 1f, flip);
+            }
+        }
+
+        if (voidGround)
+        {
+            Material dark = GetFlatMaterial("OuterVoid", voidColor);
+            float big = margin * 4f;
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "VoidGround";
+            DestroyImmediate(go.GetComponent<Collider>());
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = new Vector3((ox0 + ox1) * 0.5f, floorTop - 0.3f, (oz0 + oz1) * 0.5f);
+            go.transform.localScale = new Vector3(ox1 - ox0 + big * 2f, 0.1f, oz1 - oz0 + big * 2f);
+            go.GetComponent<MeshRenderer>().sharedMaterial = dark;
+            go.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
+        }
+
+        // X方向 x0〜x1 に、z の線上へ壁を並べる。outward=-1 なら南向き(手前)に外へずらす
+        void CapWall(Piece wall, float x0, float x1, float z, float outward, float yaw)
+        {
+            float len = x1 - x0;
+            if (len <= 0.01f) return;
+            float length = Mathf.Max(0.001f, wall.bounds.size.x);
+            float wantSeg = wallSegmentCells * cellSize;
+            int count = Mathf.Max(1, Mathf.RoundToInt(len / wantSeg));
+            float seg = len / count;
+            float sc = seg / length;
+            float th = wall.bounds.size.z * sc;
+            Transform group = new GameObject("CapWall").transform;
+            group.SetParent(parent, false);
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 pos = new Vector3(x0 + (i + 0.5f) * seg, floorTop, z + outward * th * 0.5f);
+                Place(wall, group, pos, yaw, new Vector3(sc, sc * wallHeightMul, sc), false,
+                    tint ? "Wall" : null, wallTint);
+            }
+        }
+
+        void OuterStrip(float x0, float x1, float z0, float z1, float top, string name)
+        {
+            float w = x1 - x0, d = z1 - z0;
+            if (w <= 0.01f || d <= 0.01f) return;
+            Transform group = new GameObject(name).transform;
+            group.SetParent(parent, false);
+
+            int nx = Mathf.Max(1, Mathf.RoundToInt(w / tileSize));
+            int nz = Mathf.Max(1, Mathf.RoundToInt(d / tileSize));
+            float tx = w / nx, tz = d / nz;
+            float offset = seed * 3.17f;
+
+            for (int ix = 0; ix < nx; ix++)
+            {
+                for (int iz = 0; iz < nz; iz++)
+                {
+                    Piece piece = tiles[rng.Next(tiles.Count)];
+                    float sx = tx / Mathf.Max(0.001f, piece.bounds.size.x);
+                    float sz = tz / Mathf.Max(0.001f, piece.bounds.size.z);
+                    Vector3 pos = new Vector3(x0 + (ix + 0.5f) * tx, top, z0 + (iz + 0.5f) * tz);
+                    // 回転は180度単位だけ(縦横の長さが違うタイルでも隙間が出ないように)
+                    float yaw = randomRotateFloor ? rng.Next(2) * 180f : 0f;
+
+                    int variant = 0;
+                    if (tint && floorVariation > 0f)
+                    {
+                        float n = Mathf.PerlinNoise(pos.x / (variationScale * cellSize) + offset,
+                                                    pos.z / (variationScale * cellSize) - offset);
+                        variant = n < 0.45f ? 1 : 0;
+                    }
+                    Color c = outerTint * (variant == 1 ? 1f - floorVariation : 1f);
+                    c.a = 1f;
+                    Place(piece, group, pos, yaw, new Vector3(sx, Mathf.Min(sx, sz), sz), true,
+                        tint ? $"Outer{variant}" : null, c);
+                }
+            }
+        }
     }
 
     private void BuildPillars(Transform parent, float wallThickness, StringBuilder log)
@@ -498,7 +666,7 @@ public sealed class CastleStageGenerator : EditorWindow
     /// 空の親(holder)を作って位置・向き・大きさを持たせ、その子にプレハブを置く。
     /// topAnchor=true なら上面の中心、false なら底面の中心が pos に来る。
     /// </summary>
-    private void Place(Piece piece, Transform parent, Vector3 pos, float yaw, Vector3 scale,
+    private GameObject Place(Piece piece, Transform parent, Vector3 pos, float yaw, Vector3 scale,
         bool topAnchor, string tintKind, Color tintColor)
     {
         GameObject holder = new GameObject(piece.prefab.name);
@@ -532,10 +700,56 @@ public sealed class CastleStageGenerator : EditorWindow
         }
 
         // 開け閉めする扉はStaticにすると動かなくなるので外す
-        if (inst.GetComponentInChildren<CastleDoubleDoor>(true) != null) return;
+        if (inst.GetComponentInChildren<CastleDoubleDoor>(true) != null) return holder;
         GameObjectUtility.SetStaticEditorFlags(holder, StaticEditorFlags.BatchingStatic);
         foreach (Transform t in inst.GetComponentsInChildren<Transform>(true))
             GameObjectUtility.SetStaticEditorFlags(t.gameObject, StaticEditorFlags.BatchingStatic);
+        return holder;
+    }
+
+    // ------------------------------------------------------------ 松明の火
+
+    private int torchIndex;
+
+    // 小物(松明)のてっぺんに TorchFlame を付ける。holderの+Zは部屋側を向いている
+    private void AddFlame(GameObject holder, Piece piece)
+    {
+        GameObject go = new GameObject("TorchFlame");
+        go.transform.SetParent(holder.transform, false);
+        float sc = Mathf.Max(0.001f, propScale);
+        go.transform.localPosition = new Vector3(0f, piece.bounds.size.y, 0f) + flameOffset / sc;
+
+        bool withLight = torchLights && torchIndex % lightEveryTorches == 0;
+        torchIndex++;
+        TorchFlame flame = go.AddComponent<TorchFlame>();
+        flame.Configure(GetTorchFlameMaterial(), flameSize, withLight);
+    }
+
+    // 炎用の加算合成マテリアルとテクスチャをアセットとして保存する(ビルドでも確実に表示されるように)
+    private Material GetTorchFlameMaterial()
+    {
+        EnsureFolder(outputFolder);
+        string matPath = $"{outputFolder}/TorchFlame{MatSuffix}.mat";
+        Material mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+        if (mat != null) return mat;
+
+        string texPath = $"{outputFolder}/TorchGlow{MatSuffix}.png";
+        Texture2D tmp = TorchFlame.CreateGlowTexture(128);
+        File.WriteAllBytes(texPath, tmp.EncodeToPNG());
+        DestroyImmediate(tmp);
+        AssetDatabase.ImportAsset(texPath, ImportAssetOptions.ForceUpdate);
+        if (AssetImporter.GetAtPath(texPath) is TextureImporter ti)
+        {
+            ti.alphaIsTransparency = true;
+            ti.wrapMode = TextureWrapMode.Clamp;
+            ti.SaveAndReimport();
+        }
+        Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+
+        mat = TorchFlame.CreateFlameMaterial(tex);
+        if (mat == null) return null;
+        AssetDatabase.CreateAsset(mat, matPath);
+        return mat;
     }
 
     private static Transform Child(GameObject root, string name)
