@@ -452,12 +452,27 @@ public class StageClearPanel : MonoBehaviour
 
     void Start()
     {
+        // 外部からすでに再生されている場合は
+        // 初期化による非表示処理を行わない。
+        if (IsPlaying)
+        {
+            return;
+        }
+
         Build();
-        if (playOnStart) Play();
+
+        if (playOnStart)
+        {
+            Play();
+        }
         else
         {
             HideImmediately();
-            if (buildInto && hidePanelOnClose) buildInto.gameObject.SetActive(false);
+
+            if (buildInto && hidePanelOnClose)
+            {
+                buildInto.gameObject.SetActive(false);
+            }
         }
     }
 
