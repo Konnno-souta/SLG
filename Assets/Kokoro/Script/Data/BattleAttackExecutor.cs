@@ -1,4 +1,3 @@
-
 using System;
 using UnityEngine;
 
@@ -7,6 +6,12 @@ using UnityEngine;
 /// </summary>
 public struct BattleAttackPreview
 {
+    public UnitView ActualDefender
+    {
+        get;
+        private set;
+    }
+
     public BattleDamageType DamageType
     {
         get;
@@ -35,17 +40,23 @@ public struct BattleAttackPreview
         BattleDamageType damageType,
         int calculatedDamage,
         int appliedDamage,
-        int remainingHP)
+        int remainingHP,
+        UnitView actualDefender = null)
     {
+        ActualDefender = actualDefender;
+
         DamageType = damageType;
+
         CalculatedDamage = calculatedDamage;
+
         AppliedDamage = appliedDamage;
+
         RemainingHP = remainingHP;
     }
 }
 
 /// <summary>
-/// 第20段階：HP0に対応した攻撃計算。
+/// 攻撃計算・攻撃実行。
 ///
 /// 物理：Attack - AttackDefense
 /// 魔法：Magic - MagicDefense
@@ -57,8 +68,10 @@ public struct BattleAttackPreview
 /// </summary>
 public static class BattleAttackExecutor
 {
+    private static int resolvingDepth;
+
     // ========================================
-    // 攻撃の予測
+    // 通常攻撃の予測
     // ========================================
 
     public static bool TryPreview(
@@ -66,19 +79,114 @@ public static class BattleAttackExecutor
         UnitView defender,
         out BattleAttackPreview preview)
     {
+        return TryPreview(
+            attacker,
+            defender,
+            out preview,
+            1f,
+            true
+        );
+    }
+
+    // ========================================
+    // 倍率指定攻撃の予測
+    // ========================================
+
+    public static bool TryPreview(
+        UnitView attacker,
+        UnitView defender,
+        out BattleAttackPreview preview,
+        float damageMultiplier,
+        bool useSkillHooks = true)
+    {
+        return TryBuildAttack(
+            attacker,
+            defender,
+            damageMultiplier,
+            useSkillHooks,
+            true,
+            false,
+            out _,
+            out preview
+        );
+    }
+
+    // ========================================
+    // 攻撃対象の有効判定
+    // ========================================
+
+    private static bool IsValidPair(
+        UnitView attacker,
+        UnitView defender)
+    {
+        return attacker != null &&
+               defender != null &&
+               attacker != defender &&
+               attacker.State != null &&
+               defender.State != null &&
+               attacker.State.Team !=
+                   defender.State.Team &&
+               attacker.State.CombatStats != null &&
+               defender.State.CombatStats != null &&
+               attacker.State.CombatStats.CurrentHP > 0 &&
+               defender.State.CombatStats.CurrentHP > 0;
+    }
+
+    // ========================================
+    // 共通攻撃計算
+    // ========================================
+
+    private static bool TryBuildAttack(
+        UnitView attacker,
+        UnitView defender,
+        float multiplier,
+        bool useSkillHooks,
+        bool isPreview,
+        bool isFollowUp,
+        out SkillAttackContext context,
+        out BattleAttackPreview preview)
+    {
+        context = null;
+
         preview = default(BattleAttackPreview);
 
-        if (attacker == null ||
-            defender == null ||
-            attacker == defender ||
-            attacker.State == null ||
-            defender.State == null ||
-            attacker.State.Team ==
-                defender.State.Team ||
-            attacker.State.CombatStats == null ||
-            defender.State.CombatStats == null ||
-            attacker.State.CombatStats.CurrentHP <= 0 ||
-            defender.State.CombatStats.CurrentHP <= 0)
+        if (!IsValidPair(attacker, defender))
+        {
+            return false;
+        }
+
+        context = new SkillAttackContext(
+            attacker,
+            defender,
+            multiplier,
+            isPreview,
+            isFollowUp
+        );
+
+        SkillManager manager =
+            useSkillHooks
+                ? SkillManager.Instance
+                : null;
+
+        // 攻撃前のスキル通知
+        manager?.NotifyAttackPreparing(context);
+
+        // 庇う等による対象変更を反映
+        defender = context.Defender;
+
+        if (!IsValidPair(attacker, defender) ||
+            float.IsNaN(context.DamageMultiplier) ||
+            float.IsInfinity(context.DamageMultiplier) ||
+            context.DamageMultiplier < 0f)
+        {
+            return false;
+        }
+
+        if (defender != context.OriginalDefender &&
+            (manager == null ||
+             !SkillBattleAPI.ContainsUnit(
+                 manager.AllUnits,
+                 defender)))
         {
             return false;
         }
@@ -109,7 +217,7 @@ public static class BattleAttackExecutor
                 attackStats,
                 defenseStats,
                 damageType
-            );
+            ) * context.DamageMultiplier;
 
         if (float.IsNaN(rawDamage) ||
             float.IsInfinity(rawDamage))
@@ -129,11 +237,24 @@ public static class BattleAttackExecutor
             Mathf.FloorToInt(rawDamage)
         );
 
-        // 第20段階：
-        // HP1制限を解除し、HP0を許可する。
-        // オーバーキルしてもHPは0未満にならない。
+        context.DamageType = damageType;
+
+        context.RequestedDamage =
+            calculatedDamage;
+
+        // ダメージ適用前の通知
+        manager?.NotifyDamagePreparing(context);
+
+        // この段階ではダメージ量のみ変更可能
+        if (context.Defender != defender ||
+            context.RequestedDamage < 0)
+        {
+            return false;
+        }
+
+        // HP0未満にならないようにする。
         int appliedDamage = Mathf.Min(
-            calculatedDamage,
+            context.RequestedDamage,
             defenseStats.CurrentHP
         );
 
@@ -141,14 +262,15 @@ public static class BattleAttackExecutor
             damageType,
             calculatedDamage,
             appliedDamage,
-            defenseStats.CurrentHP - appliedDamage
+            defenseStats.CurrentHP - appliedDamage,
+            defender
         );
 
         return true;
     }
 
     // ========================================
-    // 攻撃実行
+    // 通常攻撃実行
     // ========================================
 
     public static bool TryExecute(
@@ -156,29 +278,98 @@ public static class BattleAttackExecutor
         UnitView defender,
         out BattleAttackPreview preview)
     {
-        if (!TryPreview(
+        return TryExecute(
             attacker,
             defender,
+            out preview,
+            1f,
+            true
+        );
+    }
+
+    // ========================================
+    // 倍率指定攻撃・追加攻撃
+    // ========================================
+
+    public static bool TryExecute(
+        UnitView attacker,
+        UnitView defender,
+        out BattleAttackPreview preview,
+        float damageMultiplier,
+        bool useSkillHooks = true,
+        bool isFollowUp = false)
+    {
+        preview = default(BattleAttackPreview);
+
+        // 追加攻撃から更に追加攻撃することを禁止
+        if (resolvingDepth >= 2 ||
+            (resolvingDepth > 0 && !isFollowUp))
+        {
+            return false;
+        }
+
+        if (!TryBuildAttack(
+            attacker,
+            defender,
+            damageMultiplier,
+            useSkillHooks,
+            false,
+            isFollowUp,
+            out SkillAttackContext context,
             out preview))
         {
             return false;
         }
 
-        if (!defender.State.CombatStats.TryTakeDamage(
+        UnitView actual =
+            context.Defender;
+
+        UnitBattleStats stats =
+            actual.State.CombatStats;
+
+        // 実際のダメージ適用
+        if (!stats.TryTakeDamage(
             preview.AppliedDamage,
-            out int appliedDamage))
+            out int applied))
         {
             return false;
         }
 
-        if (appliedDamage != preview.AppliedDamage)
+        // 既存の予測結果との一致確認
+        if (applied != preview.AppliedDamage)
         {
             Debug.LogError(
                 "攻撃予測と実際のHP減少量が一致しません。",
-                defender
+                actual
             );
 
             return false;
+        }
+
+        preview = new BattleAttackPreview(
+            preview.DamageType,
+            preview.CalculatedDamage,
+            applied,
+            stats.CurrentHP,
+            actual
+        );
+
+        // 攻撃終了後のスキル通知
+        if (useSkillHooks)
+        {
+            resolvingDepth++;
+
+            try
+            {
+                SkillManager.Instance?.NotifyAttackResolved(
+                    context,
+                    preview
+                );
+            }
+            finally
+            {
+                resolvingDepth--;
+            }
         }
 
         return true;
@@ -205,6 +396,7 @@ public static class BattleAttackExecutor
 
                 damageType =
                     BattleDamageType.Physical;
+
                 return true;
 
             case "Light Sorcerer":
@@ -212,9 +404,11 @@ public static class BattleAttackExecutor
 
                 damageType =
                     BattleDamageType.Magic;
+
                 return true;
 
             default:
+
                 return false;
         }
     }

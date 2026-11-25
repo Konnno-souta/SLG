@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,24 +5,12 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// 第15段階：戦闘JSONセーブ管理。
-///
-/// 現段階の機能：
-/// ・現在の戦闘状態を収集
-/// ・JSONファイルに保存
-/// ・保存ファイルを読み戻す
-/// ・読み込んだデータの整合性を確認
-///
-/// 未実装：
-/// ・読み込んだ情報の戦闘シーンへの反映
-/// ・タイトル画面のセーブスロットUI連携
-/// ・ロード時のユニット再生成
-///
-/// 保存先にはApplication.persistentDataPathを使用。
-/// </summary>
 public sealed class BattleSaveManager : MonoBehaviour
 {
+    // ========================================
+    // Inspector参照
+    // ========================================
+
     [Header("ステージ参照")]
     [SerializeField]
     private BattleStageLoader stageLoader;
@@ -37,7 +24,8 @@ public sealed class BattleSaveManager : MonoBehaviour
 
     [Header("昼夜管理")]
     [SerializeField]
-    private BattleTimeOfDayController timeOfDayController;
+    private BattleTimeOfDayController
+        timeOfDayController;
 
     [Header("セーブスロット")]
     [SerializeField, Min(1)]
@@ -54,7 +42,7 @@ public sealed class BattleSaveManager : MonoBehaviour
     private const int SaveVersion = 1;
 
     // ========================================
-    // ファイル保存先
+    // セーブ先
     // ========================================
 
     public string SaveDirectory =>
@@ -63,11 +51,8 @@ public sealed class BattleSaveManager : MonoBehaviour
             "BattleSaves"
         );
 
-    /// <summary>
-    /// セーブファイルの保存先。
-    /// 例：BattleSaves/battle_slot_1.json
-    /// </summary>
-    public string GetSavePath(int slotNumber)
+    public string GetSavePath(
+        int slotNumber)
     {
         return Path.Combine(
             SaveDirectory,
@@ -79,7 +64,6 @@ public sealed class BattleSaveManager : MonoBehaviour
     // 開発用入力
     // ========================================
 
-
     private void Update()
     {
         if (!enableDebugKeys)
@@ -87,18 +71,18 @@ public sealed class BattleSaveManager : MonoBehaviour
             return;
         }
 
-        Keyboard keyboard = Keyboard.current;
+        Keyboard keyboard =
+            Keyboard.current;
 
         if (keyboard == null)
         {
             return;
         }
 
-        // タイトルで選択したスロット番号
         int currentSlot =
             BattleLaunchSession.CurrentSlot;
 
-        // F5：選択中のDATAに保存
+        // F5：セーブ
         if (keyboard.f5Key.wasPressedThisFrame)
         {
             Debug.Log(
@@ -112,7 +96,7 @@ public sealed class BattleSaveManager : MonoBehaviour
             SaveSlot(currentSlot);
         }
 
-        // F9：選択中のDATAの保存内容を確認
+        // F9：セーブ内容確認
         if (keyboard.f9Key.wasPressedThisFrame)
         {
             Debug.Log(
@@ -125,18 +109,12 @@ public sealed class BattleSaveManager : MonoBehaviour
         }
     }
 
-
     // ========================================
-    // セーブ処理
+    // セーブ実行
     // ========================================
 
-    /// <summary>
-    /// 指定したスロットへ保存する。
-    ///
-    /// 最終的にはタイトル・ゲーム内UIから
-    /// この関数を呼び出す予定。
-    /// </summary>
-    public bool SaveSlot(int slotNumber)
+    public bool SaveSlot(
+        int slotNumber)
     {
         if (!IsValidSlot(slotNumber))
         {
@@ -170,7 +148,6 @@ public sealed class BattleSaveManager : MonoBehaviour
                 new UTF8Encoding(false)
             );
 
-            // 実際に保存できた場合だけ通知する。
             BattleLaunchSession.NotifySaveCompleted(
                 slotNumber
             );
@@ -200,7 +177,7 @@ public sealed class BattleSaveManager : MonoBehaviour
     }
 
     // ========================================
-    // 保存データの収集
+    // セーブデータ作成
     // ========================================
 
     private bool TryCreateSaveData(
@@ -208,6 +185,7 @@ public sealed class BattleSaveManager : MonoBehaviour
     {
         saveData = null;
 
+        // Inspector参照確認
         if (stageLoader == null ||
             grid == null ||
             turnManager == null ||
@@ -236,8 +214,7 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
-        // 現段階では敵フェーズ中に
-        // 保存することを禁止する。
+        // PLAYER PHASE中のみ保存可能。
         if (turnManager.CurrentPhase !=
             BattlePhase.Player)
         {
@@ -250,19 +227,27 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
-        // 現在のステージ・ターン情報
+        // ====================================
+        // 基本情報
+        // ====================================
+
         BattleSaveData result =
             new BattleSaveData
             {
-                version = SaveVersion,
+                version =
+                    SaveVersion,
 
                 savedAtUtc =
                     DateTime.UtcNow.ToString("o"),
 
-                stageId = stage.StageId,
+                stageId =
+                    stage.StageId,
 
-                gridWidth = grid.Width,
-                gridHeight = grid.Height,
+                gridWidth =
+                    grid.Width,
+
+                gridHeight =
+                    grid.Height,
 
                 turnNumber =
                     turnManager.TurnNumber,
@@ -275,7 +260,8 @@ public sealed class BattleSaveManager : MonoBehaviour
                         .ToString()
             };
 
-        UnitView[] units = FindCurrentUnits();
+        UnitView[] units =
+            FindCurrentUnits();
 
         if (units.Length == 0)
         {
@@ -293,7 +279,7 @@ public sealed class BattleSaveManager : MonoBehaviour
             );
 
         // ====================================
-        // ユニットを1体ずつ収集
+        // 全ユニットの状態取得
         // ====================================
 
         foreach (UnitView unit in units)
@@ -324,6 +310,7 @@ public sealed class BattleSaveManager : MonoBehaviour
                 return false;
             }
 
+            // SpawnId確認
             if (string.IsNullOrWhiteSpace(
                 unit.SpawnId))
             {
@@ -336,7 +323,9 @@ public sealed class BattleSaveManager : MonoBehaviour
                 return false;
             }
 
-            if (!usedSpawnIds.Add(unit.SpawnId))
+            // SpawnIdの重複確認
+            if (!usedSpawnIds.Add(
+                unit.SpawnId))
             {
                 Debug.LogError(
                     $"SpawnIdが重複しています：" +
@@ -347,13 +336,7 @@ public sealed class BattleSaveManager : MonoBehaviour
                 return false;
             }
 
-            // =================================
-            // セーブできるタイミングか確認
-            // =================================
-
-            // 移動したが行動を確定していない場合は、
-            // コマンド選択中の可能性があるので
-            // セーブしない。
+            // 移動後に行動が確定していない場合。
             if (state.HasMoved &&
                 !state.HasActed)
             {
@@ -366,14 +349,17 @@ public sealed class BattleSaveManager : MonoBehaviour
                 return false;
             }
 
-            // アニメーション途中でState.Positionと
-            // 3Dモデルの位置がずれている場合も禁止。
+            // 実際のモデル座標と
+            // グリッド座標が一致しているか確認。
             Vector3 expectedWorldPosition =
-                grid.CellToWorld(state.Position);
+                grid.CellToWorld(
+                    state.Position
+                );
 
             float squaredDistance =
                 (unit.transform.position -
-                 expectedWorldPosition).sqrMagnitude;
+                 expectedWorldPosition)
+                    .sqrMagnitude;
 
             if (squaredDistance > 0.0004f)
             {
@@ -388,6 +374,25 @@ public sealed class BattleSaveManager : MonoBehaviour
 
             UnitBattleStats stats =
                 state.CombatStats;
+
+            // =================================
+            // スキル状態確認
+            // =================================
+
+            // 暫定処理：
+            // スキル状態の保存機能が完成するまで、
+            // 状態が失われたセーブデータの
+            // 作成を防止する。
+            if (stats.Skills.HasState)
+            {
+                Debug.LogWarning(
+                    "スキル状態の保存には未対応です。" +
+                    "セーブを中止します。",
+                    this
+                );
+
+                return false;
+            }
 
             // =================================
             // 1体分の状態を保存
@@ -411,8 +416,9 @@ public sealed class BattleSaveManager : MonoBehaviour
                     y =
                         state.Position.y,
 
+                    // スキル補正前の移動力を保存。
                     moveRange =
-                        state.MoveRange,
+                        state.BaseMoveRange,
 
                     currentHP =
                         stats.CurrentHP,
@@ -430,9 +436,12 @@ public sealed class BattleSaveManager : MonoBehaviour
                         stats.CurrentClassId
                 };
 
-            result.units.Add(savedUnit);
+            result.units.Add(
+                savedUnit
+            );
         }
 
+        // 保存対象確認
         if (result.units.Count == 0)
         {
             Debug.LogError(
@@ -443,13 +452,12 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
-        // ファイル内容の順序を安定させる。
+        // SpawnId順に並べる。
         result.units.Sort(
-            (a, b) =>
-                string.CompareOrdinal(
-                    a.spawnId,
-                    b.spawnId
-                )
+            (a, b) => string.CompareOrdinal(
+                a.spawnId,
+                b.spawnId
+            )
         );
 
         saveData = result;
@@ -458,18 +466,11 @@ public sealed class BattleSaveManager : MonoBehaviour
     }
 
     // ========================================
-    // ロードファイルの読み込み
+    // セーブデータ読み込み
     // ========================================
 
-    /// <summary>
-    /// 指定スロットを読み込んで検証する。
-    ///
-    /// 注意：
-    /// 今回はファイルを読むだけ。
-    /// 戦闘中のユニット配置やHPには
-    /// 一切反映しない。
-    /// </summary>
-    public bool ReadSlot(int slotNumber)
+    public bool ReadSlot(
+        int slotNumber)
     {
         return TryReadSlot(
             slotNumber,
@@ -477,12 +478,6 @@ public sealed class BattleSaveManager : MonoBehaviour
         );
     }
 
-    /// <summary>
-    /// 保存データをほかのシステムから
-    /// 利用できる形で返す。
-    ///
-    /// 次のロード機能実装でも再利用する。
-    /// </summary>
     public bool TryReadSlot(
         int slotNumber,
         out BattleSaveData saveData)
@@ -540,9 +535,11 @@ public sealed class BattleSaveManager : MonoBehaviour
                 this
             );
 
+            // 保存した全ユニットの内容表示
             if (showLogs)
             {
-                foreach (BattleSavedUnit unit
+                foreach (
+                    BattleSavedUnit unit
                     in loaded.units)
                 {
                     Debug.Log(
@@ -576,7 +573,7 @@ public sealed class BattleSaveManager : MonoBehaviour
     }
 
     // ========================================
-    // 保存内容の検証
+    // セーブデータの検証
     // ========================================
 
     private bool ValidateSaveData(
@@ -592,6 +589,7 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
+        // バージョン確認
         if (data.version != SaveVersion)
         {
             Debug.LogError(
@@ -603,8 +601,9 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
+        // 基本情報確認
         if (string.IsNullOrWhiteSpace(
-            data.stageId) ||
+                data.stageId) ||
             data.turnNumber < 1 ||
             data.gridWidth < 1 ||
             data.gridHeight < 1)
@@ -617,6 +616,7 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
+        // フェーズ情報確認
         if (data.battlePhase !=
                 BattlePhase.Player.ToString() &&
             data.battlePhase !=
@@ -630,6 +630,7 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
+        // 昼夜情報確認
         if (data.classMode !=
                 BattleClassMode.Light.ToString() &&
             data.classMode !=
@@ -643,6 +644,7 @@ public sealed class BattleSaveManager : MonoBehaviour
             return false;
         }
 
+        // ユニット確認
         if (data.units == null ||
             data.units.Count == 0)
         {
@@ -662,9 +664,9 @@ public sealed class BattleSaveManager : MonoBehaviour
         HashSet<Vector2Int> positions =
             new HashSet<Vector2Int>();
 
-        foreach (BattleSavedUnit unit
-            in data.units)
+        foreach (BattleSavedUnit unit in data.units)
         {
+            // ID確認
             if (unit == null ||
                 string.IsNullOrWhiteSpace(
                     unit.spawnId) ||
@@ -681,6 +683,7 @@ public sealed class BattleSaveManager : MonoBehaviour
                 return false;
             }
 
+            // ID重複確認
             if (!ids.Add(unit.spawnId))
             {
                 Debug.LogError(
@@ -692,6 +695,7 @@ public sealed class BattleSaveManager : MonoBehaviour
                 return false;
             }
 
+            // 座標範囲確認
             if (unit.x < 0 ||
                 unit.x >= data.gridWidth ||
                 unit.y < 0 ||
@@ -712,13 +716,7 @@ public sealed class BattleSaveManager : MonoBehaviour
                     unit.y
                 );
 
-
-
-            // HP0のユニットは盤面を占有しない。
-            // ただし、保存データからは除外しない。
-            //
-            // 生存ユニット同士が
-            // 同じ座標にいる場合だけエラー。
+            // 生存ユニットのみ座標重複確認。
             if (unit.currentHP > 0)
             {
                 if (!positions.Add(position))
@@ -733,7 +731,7 @@ public sealed class BattleSaveManager : MonoBehaviour
                 }
             }
 
-
+            // HP・移動力確認
             if (unit.maxHP <= 0 ||
                 unit.currentHP < 0 ||
                 unit.currentHP > unit.maxHP ||
@@ -748,6 +746,7 @@ public sealed class BattleSaveManager : MonoBehaviour
                 return false;
             }
 
+            // 所属チーム確認
             if (unit.team !=
                     UnitTeam.Ally.ToString() &&
                 unit.team !=
@@ -767,10 +766,11 @@ public sealed class BattleSaveManager : MonoBehaviour
     }
 
     // ========================================
-    // スロット番号の確認
+    // セーブスロット確認
     // ========================================
 
-    private bool IsValidSlot(int slotNumber)
+    private bool IsValidSlot(
+        int slotNumber)
     {
         if (slotNumber >= 1 &&
             slotNumber <= slotCount)
@@ -789,7 +789,7 @@ public sealed class BattleSaveManager : MonoBehaviour
     }
 
     // ========================================
-    // シーン内ユニットの取得
+    // 全ユニット取得
     // ========================================
 
     private UnitView[] FindCurrentUnits()
