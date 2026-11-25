@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 /// <summary>
@@ -12,14 +11,6 @@ public enum UnitTeam
 
 /// <summary>
 /// 戦闘中のユニット状態。
-///
-/// ・所属チーム
-/// ・グリッド位置
-/// ・移動力
-/// ・移動済み／行動済み
-/// ・戦闘ステータス
-///
-/// 第16段階ではセーブ復元機能を追加。
 /// </summary>
 public sealed class UnitState
 {
@@ -31,11 +22,26 @@ public sealed class UnitState
         private set;
     }
 
-    public int MoveRange
+    // 補正前の移動力
+    public int BaseMoveRange
     {
         get;
         private set;
     }
+
+    // スキル補正後の移動力
+    public int MoveRange =>
+        CombatStats == null
+            ? BaseMoveRange
+            : CombatStats.Skills.GetModifier(
+                SkillStat.MoveBlocked) > 0f
+                ? 0
+                : Mathf.Max(
+                    0,
+                    BaseMoveRange +
+                    Mathf.RoundToInt(
+                        CombatStats.Skills.GetModifier(
+                            SkillStat.MoveRange)));
 
     public bool HasMoved
     {
@@ -65,8 +71,10 @@ public sealed class UnitState
         int moveRange)
     {
         Team = team;
+
         Position = position;
-        MoveRange = Mathf.Max(0, moveRange);
+
+        BaseMoveRange = Mathf.Max(0, moveRange);
 
         HasMoved = false;
         HasActed = false;
@@ -98,11 +106,14 @@ public sealed class UnitState
 
     public void SetMoveRange(int newMoveRange)
     {
-        MoveRange = Mathf.Max(0, newMoveRange);
+        BaseMoveRange = Mathf.Max(
+            0,
+            newMoveRange
+        );
     }
 
     // ========================================
-    // 通常の移動
+    // 通常移動
     // ========================================
 
     public void CompleteMove(
@@ -130,6 +141,20 @@ public sealed class UnitState
     }
 
     // ========================================
+    // スキルによる強制移動
+    // ========================================
+
+    /// <summary>
+    /// 行動済み・移動済みでも座標を変更する。
+    /// 行動状態は変更しない。
+    /// </summary>
+    public void SetForcedPosition(
+        Vector2Int destination)
+    {
+        Position = destination;
+    }
+
+    // ========================================
     // 行動終了
     // ========================================
 
@@ -154,8 +179,6 @@ public sealed class UnitState
     /// 通常のCompleteMove()とは異なり、
     /// HasActedの状態に関係なく復元する。
     ///
-    /// 注意：
-    /// このメソッドだけでは3Dモデルは動かない。
     /// 復元後にUnitView.SyncPosition()を呼ぶ。
     /// </summary>
     public bool RestoreFromSave(
@@ -171,7 +194,10 @@ public sealed class UnitState
         }
 
         Position = position;
-        MoveRange = moveRange;
+
+        BaseMoveRange = moveRange;
+
+        CombatStats.Skills.Clear();
 
         HasMoved = hasMoved;
         HasActed = hasActed;

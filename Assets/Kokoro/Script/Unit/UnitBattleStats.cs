@@ -1,4 +1,3 @@
-
 using System;
 
 /// <summary>
@@ -62,22 +61,64 @@ public sealed class UnitBattleStats
     public bool IsDead => CurrentHP <= 0;
 
     // ========================================
+    // スキル状態
+    // ========================================
+
+    public SkillRuntimeState Skills { get; } =
+        new SkillRuntimeState();
+
+    // クリティカルの基本計算は未実装。
+    // スキルによる補正値のみ取得する。
+    public float CriticalBonus =>
+        Skills.GetModifier(SkillStat.Critical);
+
+    // ========================================
     // 能力値
     // ========================================
 
-    public float Attack { get; private set; }
+    private float baseAttack;
 
-    public float Magic { get; private set; }
+    public float Attack =>
+        baseAttack +
+        Skills.GetModifier(SkillStat.Attack);
 
-    public float AttackDefense { get; private set; }
+    private float baseMagic;
 
-    public float MagicDefense { get; private set; }
+    public float Magic =>
+        baseMagic +
+        Skills.GetModifier(SkillStat.Magic);
 
-    public float Speed { get; private set; }
+    private float baseAttackDefense;
 
-    public float Hit { get; private set; }
+    public float AttackDefense =>
+        baseAttackDefense +
+        Skills.GetModifier(
+            SkillStat.AttackDefense);
 
-    public float Evasion { get; private set; }
+    private float baseMagicDefense;
+
+    public float MagicDefense =>
+        baseMagicDefense +
+        Skills.GetModifier(
+            SkillStat.MagicDefense);
+
+    private float baseSpeed;
+
+    public float Speed =>
+        baseSpeed +
+        Skills.GetModifier(SkillStat.Speed);
+
+    private float baseHit;
+
+    public float Hit =>
+        baseHit +
+        Skills.GetModifier(SkillStat.Hit);
+
+    private float baseEvasion;
+
+    public float Evasion =>
+        baseEvasion +
+        Skills.GetModifier(SkillStat.Evasion);
 
     // ========================================
     // 攻撃範囲
@@ -105,6 +146,8 @@ public sealed class UnitBattleStats
     // 移動力
     // ========================================
 
+    // 補正前の移動力。
+    // スキル補正後はUnitState.MoveRangeを使用。
     public int MoveRange
     {
         get;
@@ -115,13 +158,17 @@ public sealed class UnitBattleStats
     // 表示用
     // ========================================
 
-    public string CharacterId => Character.Id;
+    public string CharacterId =>
+        Character.Id;
 
-    public string CharacterName => Character.Name;
+    public string CharacterName =>
+        Character.Name;
 
-    public string CurrentClassId => CurrentClass.Id;
+    public string CurrentClassId =>
+        CurrentClass.Id;
 
-    public string CurrentClassName => CurrentClass.Name;
+    public string CurrentClassName =>
+        CurrentClass.Name;
 
     // ========================================
     // 生成
@@ -154,6 +201,7 @@ public sealed class UnitBattleStats
         // 正式CSVにHP倍率はないため
         // Character.csvの基礎HPを使用する。
         MaxHP = Character.BaseHP;
+
         CurrentHP = MaxHP;
 
         SetClassMode(initialMode);
@@ -165,8 +213,7 @@ public sealed class UnitBattleStats
 
     /// <summary>
     /// 使用クラスと能力値を更新。
-    ///
-    /// 現在HPは変更しない。
+    /// 現在HPとスキル状態は変更しない。
     /// </summary>
     public void SetClassMode(
         BattleClassMode mode)
@@ -187,31 +234,31 @@ public sealed class UnitBattleStats
 
     private void RecalculateStats()
     {
-        Attack =
+        baseAttack =
             Character.BaseAttack *
             CurrentClass.AttackRatio;
 
-        Magic =
+        baseMagic =
             Character.BaseMagic *
             CurrentClass.MagicRatio;
 
-        AttackDefense =
+        baseAttackDefense =
             Character.BaseAttackDefense *
             CurrentClass.AttackDefenseRatio;
 
-        MagicDefense =
+        baseMagicDefense =
             Character.BaseMagicDefense *
             CurrentClass.MagicDefenseRatio;
 
-        Speed =
+        baseSpeed =
             Character.BaseSpeed *
             CurrentClass.SpeedRatio;
 
-        Hit =
+        baseHit =
             Character.BaseHit *
             CurrentClass.HitRatio;
 
-        Evasion =
+        baseEvasion =
             Character.BaseEvasion *
             CurrentClass.EvasionRatio;
 
@@ -228,11 +275,14 @@ public sealed class UnitBattleStats
             CurrentClass.MaxMovementRange;
     }
 
+    // ========================================
+    // 現在HPの復元
+    // ========================================
+
     /// <summary>
     /// JSONに保存された現在HPを復元。
     ///
     /// MaxHPは正式CSVの値を維持する。
-    ///
     /// 不正なHPなら変更しない。
     /// </summary>
     public bool TryRestoreCurrentHP(int hp)
@@ -247,6 +297,9 @@ public sealed class UnitBattleStats
         return true;
     }
 
+    // ========================================
+    // ダメージ適用
+    // ========================================
 
     /// <summary>
     /// 指定されたダメージで現在HPを減らす。
@@ -254,9 +307,6 @@ public sealed class UnitBattleStats
     /// ・ダメージ量の計算は行わない
     /// ・HPは0未満にならない
     /// ・実際に減ったHPを返す
-    ///
-    /// 今後、攻撃・敵AI・スキルなどから
-    /// 共通して呼び出す。
     /// </summary>
     public bool TryTakeDamage(
         int requestedDamage,
@@ -286,5 +336,4 @@ public sealed class UnitBattleStats
 
         return true;
     }
-
 }

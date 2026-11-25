@@ -1,22 +1,8 @@
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-///  敵AIの移動・攻撃処理。
-///
-/// ・物理型は物理防御が低い味方を優先
-/// ・魔法型は魔法防御が低い味方を優先
-/// ・移動後に攻撃できる位置を探索
-/// ・攻撃できない場合は最も近い味方へ接近
-///
-/// 敵用の赤色攻撃・被弾エフェクト
-/// FE風の戦闘カメラ
-///
-/// 行動終了はTurnManagerが担当。
-/// </summary>
 public sealed class EnemyAiMovementController : MonoBehaviour
 {
     [Header("グリッド")]
@@ -44,29 +30,28 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     };
 
     // ========================================
-    // 敵AIの行動計画
+    // 移動計画
     // ========================================
 
     private sealed class MovePlan
     {
         public UnitView Target;
+
         public Vector2Int Destination;
+
         public List<Vector2Int> Path;
+
         public float DefenseValue;
+
         public int DistanceToTarget;
     }
 
     // ========================================
-    // 敵1体の行動
+    // 敵の行動
     // ========================================
 
-    /// <summary>
-    /// TurnManagerから呼び出される。
-    /// 移動・攻撃・カメラ演出が終了するまで待つ。
-    ///
-    /// CompleteActionはTurnManagerが呼ぶ。
-    /// </summary>
-    public IEnumerator ExecuteAction(UnitView enemy)
+    public IEnumerator ExecuteAction(
+        UnitView enemy)
     {
         if (grid == null)
         {
@@ -98,10 +83,6 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             yield break;
         }
 
-        // ====================================
-        // 1. ユニット情報の取得
-        // ====================================
-
         UnitView[] allUnits =
             FindCurrentUnits();
 
@@ -111,6 +92,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
         HashSet<Vector2Int> occupied =
             new HashSet<Vector2Int>();
 
+        // 全ユニットの位置と攻撃対象を取得。
         foreach (UnitView unit in allUnits)
         {
             if (!IsUsable(unit))
@@ -124,7 +106,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 continue;
             }
 
-            occupied.Add(unit.State.Position);
+            occupied.Add(
+                unit.State.Position
+            );
 
             if (unit.State.Team == UnitTeam.Ally)
             {
@@ -142,8 +126,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             yield break;
         }
 
-        // 同じ条件なら同じ対象を選ぶように
-        // ID順で並び替える。
+        // 行動結果を安定させるためID順に並べる。
         allies.Sort(
             (a, b) => string.CompareOrdinal(
                 GetUnitId(a),
@@ -154,15 +137,13 @@ public sealed class EnemyAiMovementController : MonoBehaviour
         Vector2Int start =
             enemyState.Position;
 
-        // ====================================
-        // 2. 移動可能範囲を計算
-        // ====================================
-
         Func<Vector2Int, bool> isBlocked =
             position =>
                 occupied.Contains(position) &&
                 position != start;
 
+        // 移動可能範囲を取得。
+        // MoveRangeにはスキル補正が反映される。
         HashSet<Vector2Int> reachable =
             GridRangeCalculator.Calculate(
                 grid,
@@ -171,18 +152,17 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 isBlocked
             );
 
-        // 移動せず攻撃する場合も含める。
+        // 移動せず攻撃する場合にも対応。
         reachable.Add(start);
 
         List<Vector2Int> moveCandidates =
             new List<Vector2Int>(reachable);
 
-        moveCandidates.Sort(ComparePositions);
+        moveCandidates.Sort(
+            ComparePositions
+        );
 
-        // ====================================
-        // 3. 物理・魔法の優先対象
-        // ====================================
-
+        // 物理・魔法の対象優先判定。
         bool physicalType =
             enemyStats.Attack > enemyStats.Magic;
 
@@ -200,7 +180,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
         }
 
         // ====================================
-        // 4. 攻撃可能な相手を探索
+        // 攻撃可能な移動先を探索
         // ====================================
 
         MovePlan attackPlan =
@@ -215,16 +195,8 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 magicType
             );
 
-        // ====================================
-        // 5. 攻撃可能な場合
-        // ====================================
-
         if (attackPlan != null)
         {
-            // -------------------------------
-            // 攻撃可能な位置まで移動
-            // -------------------------------
-
             yield return MoveEnemy(
                 enemy,
                 attackPlan
@@ -233,10 +205,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             UnitView target =
                 attackPlan.Target;
 
-            // -------------------------------
-            // 移動後の生存確認
-            // -------------------------------
-
+            // 移動後の生存確認。
             if (!BattleUnitLife.IsAlive(enemy) ||
                 !BattleUnitLife.IsAlive(target))
             {
@@ -247,10 +216,6 @@ public sealed class EnemyAiMovementController : MonoBehaviour
 
                 yield break;
             }
-
-            // -------------------------------
-            // 現在位置から射程を再計算
-            // -------------------------------
 
             UnitBattleStats currentStats =
                 enemy.State.CombatStats;
@@ -265,6 +230,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             Vector2Int targetPosition =
                 target.State.Position;
 
+            // 移動後の射程確認。
             if (!AttackRangeCalculator.Contains(
                 currentAttackRange,
                 targetPosition))
@@ -279,10 +245,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 yield break;
             }
 
-            // -------------------------------
-            // ダメージの事前確認
-            // -------------------------------
-
+            // 攻撃の事前検証。
             if (!BattleAttackExecutor.TryPreview(
                 enemy,
                 target,
@@ -296,9 +259,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 yield break;
             }
 
-            // ====================================
-            // 第26段階：戦闘カメラへ移動
-            // ====================================
+            // =================================
+            // 戦闘カメラ開始
+            // =================================
 
             if (combatCamera != null)
             {
@@ -308,25 +271,19 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 );
             }
 
-            // ====================================
-            // 第25段階：赤色の攻撃エフェクト
-            // ====================================
+            // =================================
+            // 攻撃エフェクト
+            // =================================
 
             float hitDelay = 0f;
 
             if (effectPlayer != null)
             {
-                // Enemyチームなので、
-                // 現在のクラスに合った赤色FXを再生。
                 hitDelay = effectPlayer.PlayAttack(
                     enemy,
                     target
                 );
             }
-
-            // -------------------------------
-            // 攻撃が命中するまで待機
-            // -------------------------------
 
             if (hitDelay > 0f)
             {
@@ -335,14 +292,10 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 );
             }
 
-            // ====================================
-            // 演出中の戦闘不能確認
-            // ====================================
-
+            // 攻撃演出中に戦闘不能になった場合。
             if (!BattleUnitLife.IsAlive(enemy) ||
                 !BattleUnitLife.IsAlive(target))
             {
-                // カメラを戻してから終了する。
                 if (combatCamera != null)
                 {
                     yield return combatCamera.ExitCombat(
@@ -353,9 +306,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 yield break;
             }
 
-            // ====================================
-            // 6. ダメージ計算・HP減少
-            // ====================================
+            // =================================
+            // 攻撃実行
+            // =================================
 
             if (!BattleAttackExecutor.TryExecute(
                 enemy,
@@ -370,7 +323,6 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                     this
                 );
 
-                // 失敗時も元のカメラに戻す。
                 if (combatCamera != null)
                 {
                     yield return combatCamera.ExitCombat(
@@ -381,9 +333,18 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 yield break;
             }
 
-            // ====================================
-            // 第25段階：赤色の被弾エフェクト
-            // ====================================
+            // =================================
+            // スキルによる被弾対象変更
+            // =================================
+
+            // 「仲間を庇う」などによって、
+            // 実際の被弾先が変わった場合に対応。
+            target =
+                result.ActualDefender ?? target;
+
+            // =================================
+            // 被弾エフェクト
+            // =================================
 
             if (effectPlayer != null)
             {
@@ -393,12 +354,12 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 );
             }
 
-            // ====================================
-            // 7. 戦闘不能表示
-            // ====================================
+            // =================================
+            // 戦闘不能表示
+            // =================================
 
             bool isDefeated =
-                result.RemainingHP <= 0;
+                target.State.CombatStats.IsDead;
 
             BattleUnitDefeatVisual defeatVisual =
                 target.GetComponent<
@@ -417,16 +378,13 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 );
             }
 
-            // ====================================
-            // 8. 攻撃結果のログ
-            // ====================================
-
             string attackerName =
                 enemy.State.CombatStats.CharacterName;
 
             string targetName =
                 target.State.CombatStats.CharacterName;
 
+            // 攻撃結果のログ。
             Log(
                 "【敵AI攻撃成功】" +
                 $"\n攻撃側：{attackerName}" +
@@ -446,28 +404,20 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 );
             }
 
-            // ====================================
-            // 第26段階：通常カメラへ復帰
-            // ====================================
+            // =================================
+            // 戦闘カメラ終了
+            // =================================
 
             if (combatCamera != null)
             {
-                // 被弾エフェクトを少し見せてから
-                // 元の上俯瞰に戻す。
                 yield return combatCamera.ExitCombat();
             }
 
-            // ====================================
-            // 9. 敵の行動終了
-            // ====================================
-
-            // CompleteAction()はここでは呼ばない。
-            // TurnManagerが実施する。
             yield break;
         }
 
         // ====================================
-        // 攻撃できない場合：味方へ接近
+        // 攻撃できない場合は味方へ接近
         // ====================================
 
         MovePlan approachPlan =
@@ -502,14 +452,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // 攻撃対象と攻撃位置の探索
+    // 攻撃計画の探索
     // ========================================
 
-    /// <summary>
-    /// 物理型：物理防御の低い味方。
-    /// 魔法型：魔法防御の低い味方。
-    /// 同点なら移動歩数・ID・位置を比較。
-    /// </summary>
     private MovePlan FindAttackPlan(
         Vector2Int start,
         int moveRange,
@@ -524,11 +469,11 @@ public sealed class EnemyAiMovementController : MonoBehaviour
 
         Dictionary<Vector2Int, HashSet<Vector2Int>>
             attackRanges =
-            new Dictionary<
-                Vector2Int,
-                HashSet<Vector2Int>>();
+                new Dictionary<
+                    Vector2Int,
+                    HashSet<Vector2Int>>();
 
-        // 移動候補マスごとの攻撃範囲
+        // 各移動候補の攻撃範囲を計算。
         foreach (Vector2Int cell in moveCandidates)
         {
             attackRanges[cell] =
@@ -538,10 +483,6 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                     enemyStats
                 );
         }
-
-        // ====================================
-        // 攻撃する味方を選ぶ
-        // ====================================
 
         foreach (UnitView ally in allies)
         {
@@ -555,11 +496,13 @@ public sealed class EnemyAiMovementController : MonoBehaviour
 
             float defense;
 
+            // 物理型なら物理防御を参照。
             if (physicalType)
             {
                 defense =
                     allyStats.AttackDefense;
             }
+            // 魔法型なら魔法防御を参照。
             else if (magicType)
             {
                 defense =
@@ -573,17 +516,18 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             Vector2Int targetPosition =
                 ally.State.Position;
 
-            foreach (Vector2Int destination
+            foreach (
+                Vector2Int destination
                 in moveCandidates)
             {
-                // 射程に入るか確認
+                // 攻撃射程に入るか確認。
                 if (!attackRanges[destination].Contains(
                     targetPosition))
                 {
                     continue;
                 }
 
-                // 攻撃位置への移動経路
+                // 移動経路を確認。
                 if (!TryCreatePath(
                     start,
                     destination,
@@ -597,12 +541,12 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 int steps =
                     path.Count - 1;
 
+                // 防御力が低い味方を優先。
                 bool better =
                     best == null ||
                     defense <
-                    best.DefenseValue - 0.0001f;
+                        best.DefenseValue - 0.0001f;
 
-                // 防御力が同じ場合の優先順位
                 if (!better &&
                     best != null &&
                     Mathf.Abs(
@@ -612,6 +556,8 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                     int bestSteps =
                         best.Path.Count - 1;
 
+                    // 防御力が同じ場合は
+                    // 移動距離が短い方を優先。
                     if (steps < bestSteps)
                     {
                         better = true;
@@ -644,9 +590,13 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 best = new MovePlan
                 {
                     Target = ally,
+
                     Destination = destination,
+
                     Path = path,
+
                     DefenseValue = defense,
+
                     DistanceToTarget = 0
                 };
             }
@@ -656,7 +606,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // 攻撃できない場合の接近先探索
+    // 接近計画の探索
     // ========================================
 
     private MovePlan FindApproachPlan(
@@ -675,10 +625,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
         int nearestDistance =
             int.MaxValue;
 
-        // ====================================
-        // 最も近い味方を探す
-        // ====================================
-
+        // 最も近い味方を探索。
         foreach (UnitView ally in allies)
         {
             Dictionary<Vector2Int, int> distances =
@@ -698,7 +645,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             if (distance < nearestDistance)
             {
                 nearestDistance = distance;
+
                 nearestAlly = ally;
+
                 nearestDistances = distances;
             }
         }
@@ -711,11 +660,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
 
         MovePlan best = null;
 
-        // ====================================
-        // 接近先を探す
-        // ====================================
-
-        foreach (Vector2Int destination
+        // 対象との距離が最も短くなるマスを探索。
+        foreach (
+            Vector2Int destination
             in moveCandidates)
         {
             if (!nearestDistances.TryGetValue(
@@ -725,7 +672,6 @@ public sealed class EnemyAiMovementController : MonoBehaviour
                 continue;
             }
 
-            // 現在より近づかない場所は除外
             if (remainingDistance >= nearestDistance)
             {
                 continue;
@@ -776,10 +722,15 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             best = new MovePlan
             {
                 Target = nearestAlly,
+
                 Destination = destination,
+
                 Path = path,
+
                 DefenseValue = 0f,
-                DistanceToTarget = remainingDistance
+
+                DistanceToTarget =
+                    remainingDistance
             };
         }
 
@@ -787,13 +738,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // ターゲットまでの距離マップ
+    // 対象を起点とした距離計算
     // ========================================
 
-    /// <summary>
-    /// マップ上の通行可能な経路距離を計算。
-    /// 他のユニットは障害物として扱う。
-    /// </summary>
     private Dictionary<Vector2Int, int>
         BuildDistancesFromTarget(
             Vector2Int targetPosition,
@@ -823,7 +770,8 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             int nextDistance =
                 distances[current] + 1;
 
-            foreach (Vector2Int direction
+            foreach (
+                Vector2Int direction
                 in Directions)
             {
                 Vector2Int next =
@@ -852,7 +800,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // 経路作成
+    // 移動経路作成
     // ========================================
 
     private bool TryCreatePath(
@@ -862,7 +810,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
         Func<Vector2Int, bool> isBlocked,
         out List<Vector2Int> path)
     {
-        // 現在位置から攻撃できる場合
+        // 移動しない場合にも対応。
         if (start == destination)
         {
             path = new List<Vector2Int>
@@ -884,12 +832,9 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // 敵の移動
+    // 敵の移動実行
     // ========================================
 
-    /// <summary>
-    /// 既存のUnitView.MoveAlongPathを使用。
-    /// </summary>
     private IEnumerator MoveEnemy(
         UnitView enemy,
         MovePlan plan)
@@ -898,7 +843,6 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             plan.Path == null ||
             plan.Path.Count <= 1)
         {
-            // 移動しない場合
             yield break;
         }
 
@@ -910,7 +854,6 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             $"{plan.Destination.y + 1})"
         );
 
-        // 既存の移動アニメーション
         yield return enemy.MoveAlongPath(
             grid,
             plan.Path
@@ -932,7 +875,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // ユニット取得
+    // 全ユニット取得
     // ========================================
 
     private UnitView[] FindCurrentUnits()
@@ -947,7 +890,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // 生存確認
+    // ユニット有効判定
     // ========================================
 
     private static bool IsUsable(
@@ -957,7 +900,7 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     }
 
     // ========================================
-    // ユニットIDの取得
+    // ユニットID取得
     // ========================================
 
     private static string GetUnitId(
@@ -968,7 +911,8 @@ public sealed class EnemyAiMovementController : MonoBehaviour
             return "";
         }
 
-        if (!string.IsNullOrEmpty(unit.SpawnId))
+        if (!string.IsNullOrEmpty(
+            unit.SpawnId))
         {
             return unit.SpawnId;
         }
@@ -989,7 +933,8 @@ public sealed class EnemyAiMovementController : MonoBehaviour
         Vector2Int a,
         Vector2Int b)
     {
-        int x = a.x.CompareTo(b.x);
+        int x =
+            a.x.CompareTo(b.x);
 
         return x != 0
             ? x
@@ -1004,7 +949,10 @@ public sealed class EnemyAiMovementController : MonoBehaviour
     {
         if (showLogs)
         {
-            Debug.Log(message, this);
+            Debug.Log(
+                message,
+                this
+            );
         }
     }
 }
