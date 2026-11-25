@@ -2617,12 +2617,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 959303121}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: -0, z: -0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -960, y: -540, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1222821564}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1008976828
 GameObject:
@@ -3361,7 +3361,7 @@ MonoBehaviour:
   autoCloseTime: 3
   skipIntroWithInput: 1
   pauseGame: 0
-  buildInto: {fileID: 0}
+  buildInto: {fileID: 1558792747}
   hidePanelOnClose: 1
   sortingOrder: 220
   titleFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
@@ -3479,7 +3479,8 @@ Transform:
   m_LocalPosition: {x: 960, y: 540, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 959303124}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1228553774
@@ -4563,7 +4564,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1558792746}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 262d2809c13854d4fbdd1751a3042f50, type: 3}
   m_Name: 
@@ -5656,4 +5657,3 @@ SceneRoots:
   - {fileID: 285367936}
   - {fileID: 2060810548}
   - {fileID: 781400024}
-  - {fileID: 959303124}
