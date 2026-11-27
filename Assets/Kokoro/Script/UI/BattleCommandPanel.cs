@@ -41,6 +41,15 @@ public sealed class BattleCommandPanel : MonoBehaviour
     /// </summary>
     public event Action AttackRequested;
 
+    //---------出倉_スキル用に追加---------//
+
+    /// <summary>
+    /// 待機コマンドが押された通知。
+    /// </summary>
+    public event Action SkillRequested;
+
+    //-------------------------------------//
+
     /// <summary>
     /// 待機コマンドが押された通知。
     /// </summary>
@@ -77,13 +86,14 @@ public sealed class BattleCommandPanel : MonoBehaviour
         attackButton.interactable = true;
 
         // 戦技はまだ未実装
-        skillButton.interactable = false;
+        skillButton.interactable = true;                    //<-変更(出倉)
 
         waitButton.interactable = true;
         cancelButton.interactable = true;
 
         // ボタンイベント登録
         attackButton.onClick.AddListener(OnAttackClicked);
+        skillButton.onClick.AddListener(OnSkillClicked);
         waitButton.onClick.AddListener(OnWaitClicked);
         cancelButton.onClick.AddListener(OnCancelClicked);
 
@@ -100,6 +110,13 @@ public sealed class BattleCommandPanel : MonoBehaviour
             );
         }
 
+        if (skillButton != null)
+        {
+            waitButton.onClick.RemoveListener(
+                OnWaitClicked
+            );
+        }
+        
         if (waitButton != null)
         {
             waitButton.onClick.RemoveListener(
@@ -178,6 +195,14 @@ public sealed class BattleCommandPanel : MonoBehaviour
             return;
 
         AttackRequested?.Invoke();
+    }
+
+    private void OnSkillClicked()
+    {
+        if (!IsOpen)
+            return;
+
+        SkillRequested?.Invoke();
     }
 
     private void OnWaitClicked()
