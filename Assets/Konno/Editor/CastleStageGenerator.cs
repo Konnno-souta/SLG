@@ -90,6 +90,11 @@ public sealed class CastleStageGenerator : EditorWindow
     [SerializeField] private List<ObstacleSpec> obstacles = new List<ObstacleSpec> { new ObstacleSpec() };
     [SerializeField] private bool obstacleCollider = true;
 
+    // マップチップ(タイル配置CSV用)
+    [SerializeField] private string chipFolder = "Assets/Konno/MapChips";
+    [SerializeField] private float chipWallHeightMul = 1f;
+    [SerializeField] private float chipObstacleHeightMul = 0.45f;
+
     // 外周(カメラに映る部屋の外側)
     [SerializeField] private bool buildOuter = true;
     [SerializeField] private int outerMarginCells = 12;
@@ -193,6 +198,11 @@ public sealed class CastleStageGenerator : EditorWindow
         Prop(so, "obstacles", "障害物(マス・大きさ・高さ)");
         Prop(so, "obstacleCollider", "コライダー(物理の当たり判定)も付ける");
 
+        Header("マップチップ(タイル配置CSV: 1=壁 2=障害物)");
+        Prop(so, "chipFolder", "保存先フォルダ");
+        Prop(so, "chipWallHeightMul", "壁チップの高さ(倍率)");
+        Prop(so, "chipObstacleHeightMul", "障害物チップの高さ(倍率)");
+
         Header("外周(上からのカメラに映る部屋の外側)");
         Prop(so, "buildOuter", "外周を作る");
         Prop(so, "outerMarginCells", "外周の広さ(マス)");
@@ -219,6 +229,10 @@ public sealed class CastleStageGenerator : EditorWindow
             if (GUILayout.Button("生成", GUILayout.Height(32))) Generate();
         }
         if (GUILayout.Button("プレハブとして保存(Resources/Stages)", GUILayout.Height(26))) SaveAsPrefab();
+        using (new EditorGUI.DisabledScope(wallPrefab == null))
+        {
+            if (GUILayout.Button("城のマップチップを作る(壁・障害物)", GUILayout.Height(26))) BuildMapChips();
+        }
 
         EditorGUILayout.EndScrollView();
     }
@@ -654,16 +668,16 @@ public sealed class CastleStageGenerator : EditorWindow
                 Transform capGroup = new GameObject("Top").transform;
                 capGroup.SetParent(block.transform, false);
                 for (int x = 0; x < size.x; x++)
-                    for (int z = 0; z < size.y; z++)
-                    {
-                        Piece piece = tops[rng.Next(tops.Count)];
-                        float sx = cellSize / Mathf.Max(0.001f, piece.bounds.size.x);
-                        float sz = cellSize / Mathf.Max(0.001f, piece.bounds.size.z);
-                        Vector3 pos = new Vector3(x0 + (x + 0.5f) * cellSize, floorTop + height, z0 + (z + 0.5f) * cellSize);
-                        Color col = outerTint; col.a = 1f;
-                        Place(piece, capGroup, pos, rng.Next(4) * 90f, new Vector3(sx, Mathf.Min(sx, sz), sz), true,
-                            tint ? "Outer0" : null, col);
-                    }
+                for (int z = 0; z < size.y; z++)
+                {
+                    Piece piece = tops[rng.Next(tops.Count)];
+                    float sx = cellSize / Mathf.Max(0.001f, piece.bounds.size.x);
+                    float sz = cellSize / Mathf.Max(0.001f, piece.bounds.size.z);
+                    Vector3 pos = new Vector3(x0 + (x + 0.5f) * cellSize, floorTop + height, z0 + (z + 0.5f) * cellSize);
+                    Color col = outerTint; col.a = 1f;
+                    Place(piece, capGroup, pos, rng.Next(4) * 90f, new Vector3(sx, Mathf.Min(sx, sz), sz), true,
+                        tint ? "Outer0" : null, col);
+                }
             }
 
             if (obstacleCollider)
@@ -694,6 +708,87 @@ public sealed class CastleStageGenerator : EditorWindow
                 }
             }
         }
+    }
+
+    // ------------------------------------------------------------ マップチップ
+
+    // 1マス分の壁ブロック(1)と低い石垣(2)をプレハブにし、マップチップセットに登録する。
+    // 原点 = マスの中心・グリッドの高さ。四面は Face_N/S/E/W(隣が同じチップなら実行時に消える)。
+    private void BuildMapChips()
+    {
+        materialCache.Clear();
+        EnsureFolder(chipFolder);
+        if (tint) EnsureFolder(outputFolder);
+
+        GameObject wallChip = SaveChip(BuildChip("Castle_Wall", chipWallHeightMul));
+        GameObject obstacleChip = SaveChip(BuildChip("Castle_Obstacle", chipObstacleHeightMul));
+
+        string setPath = $"{chipFolder}/{rootName}_TileChips.asset";
+        TileChipSet set = AssetDatabase.LoadAssetAtPath<TileChipSet>(setPath);
+        if (set == null)
+        {
+            set = CreateInstance<TileChipSet>();
+            AssetDatabase.CreateAsset(set, setPath);
+        }
+        set.EditorSet(rootName, cellSize, new List<TileChipSet.Chip>
+        {
+            new TileChipSet.Chip { value = 1, note = "通行不可(壁)", prefab = wallChip },
+            new TileChipSet.Chip { value = 2, note = "障害物(低い石垣)", prefab = obstacleChip },
+        });
+        EditorUtility.SetDirty(set);
+        AssetDatabase.SaveAssets();
+        EditorGUIUtility.PingObject(set);
+        Debug.Log($"Castle Stage Generator: マップチップを作りました {setPath}", set);
+    }
+
+    private GameObject BuildChip(string name, float heightMul)
+    {
+        Piece wall = Measure(wallPrefab, true);
+        float flip = flipWall ? 180f : 0f;
+        float h = cellSize * 0.5f;
+        float baseScale = wallSegmentCells * cellSize / Mathf.Max(0.001f, wall.bounds.size.x);
+        float height = wall.bounds.size.y * baseScale * wallHeightMul * Mathf.Max(0.05f, heightMul);
+        float sc = cellSize / Mathf.Max(0.001f, wall.bounds.size.x); // 壁1枚 = 1マス
+        float sy = height / Mathf.Max(0.001f, wall.bounds.size.y);
+        float th = wall.bounds.size.z * sc;
+
+        GameObject root = new GameObject(name);
+        Face("Face_N", new Vector3(0f, 0f, h), 0f, Vector3.back);
+        Face("Face_S", new Vector3(0f, 0f, -h), 180f, Vector3.forward);
+        Face("Face_E", new Vector3(h, 0f, 0f), 90f, Vector3.left);
+        Face("Face_W", new Vector3(-h, 0f, 0f), -90f, Vector3.right);
+
+        // 上面(上からのカメラで中が空洞に見えないように)
+        GameObject top = floorPrefabs.Find(p => p != null);
+        if (top != null)
+        {
+            Piece piece = Measure(top, false);
+            float sx = cellSize / Mathf.Max(0.001f, piece.bounds.size.x);
+            float sz = cellSize / Mathf.Max(0.001f, piece.bounds.size.z);
+            Transform g = new GameObject("Top").transform;
+            g.SetParent(root.transform, false);
+            Color col = outerTint; col.a = 1f;
+            Place(piece, g, new Vector3(0f, floorTop + height, 0f), 0f, new Vector3(sx, Mathf.Min(sx, sz), sz), true,
+                tint ? "Outer0" : null, col);
+        }
+        return root;
+
+        void Face(string faceName, Vector3 edgeCenter, float yaw, Vector3 inward)
+        {
+            Transform g = new GameObject(faceName).transform;
+            g.SetParent(root.transform, false);
+            Vector3 pos = edgeCenter + inward * (th * 0.5f);
+            pos.y = floorTop;
+            Place(wall, g, pos, yaw + flip, new Vector3(sc, sy, sc), false, tint ? "Wall" : null, wallTint);
+        }
+    }
+
+    private GameObject SaveChip(GameObject temp)
+    {
+        string path = $"{chipFolder}/{temp.name}.prefab";
+        GameObject saved = PrefabUtility.SaveAsPrefabAsset(temp, path);
+        DestroyImmediate(temp);
+        return saved;
     }
 
     private void BuildPillars(Transform parent, float wallThickness, StringBuilder log)
