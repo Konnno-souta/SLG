@@ -4,9 +4,6 @@ using UnityEngine;
 [DefaultExecutionOrder(100)]
 public sealed class SkillBootstrapper : MonoBehaviour
 {
-    [Header("リオン2撃目の被弾エフェクト用,未設定でOk")]
-    [SerializeField] private BattleCombatEffectPlayer effectPlayer;
-
     private SkillManager mgr;
 
     private void Start()
@@ -23,18 +20,16 @@ public sealed class SkillBootstrapper : MonoBehaviour
 
         // スキル登録(新しいスキルはここに1行足す)
         ClanSkill.Register(mgr);
-        BitSkill.Register(mgr);
         MillardSkill.Register(mgr);
+        BitSkill.Register(mgr);
         RionSkill.Register(mgr);
         RaySkill.Register(mgr);
         KarmaSkill.Register(mgr);
-
-        RionSkill.EffectPlayer = effectPlayer;
+        AirSkill.Register(mgr);
 
         // イベント購読
         mgr.AttackPreparing += MillardSkill.OnAttackPreparing;
         mgr.AttackResolved += MillardSkill.OnAttackResolved;
-        mgr.AttackResolved += RionSkill.OnAttackResolved;
         mgr.BattleTurnStarted += MillardSkill.OnTurnStarted;
     }
 
@@ -45,9 +40,6 @@ public sealed class SkillBootstrapper : MonoBehaviour
         // シーン再読込での二重購読を防ぐ
         mgr.AttackPreparing -= MillardSkill.OnAttackPreparing;
         mgr.AttackResolved -= MillardSkill.OnAttackResolved;
-        mgr.AttackResolved -= RionSkill.OnAttackResolved;
         mgr.BattleTurnStarted -= MillardSkill.OnTurnStarted;
-
-        RionSkill.EffectPlayer = null;
     }
 }

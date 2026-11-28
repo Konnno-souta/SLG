@@ -40,10 +40,7 @@ public static class BitSkill
 
     private static bool Execute(SkillContext c)
     {
-        // 中心は使用者の位置に固定。Targets は信用せず再計算する
-        List<UnitView> targets = SkillTargeting.InSquare(
-            c.AllUnits, c.User.State.Position, Radius, t => IsAlly(c.User, t));
-
+        List<UnitView> targets = SkillTargeting.InSquare(c.AllUnits, c.User.State.Position, Radius, t => IsAlly(c.User, t));
         int healed = 0;
 
         foreach (UnitView t in targets)
@@ -51,11 +48,12 @@ public static class BitSkill
             // HP満タン・戦闘不能は TryHeal が false を返すので無視
             if (SkillBattleAPI.TryHeal(t, HealAmount, out _))
             {
+                Debug.Log($"BitSkillGenarate : Heal{HealAmount}_ to{t}");
                 healed++;
             }
         }
 
         // 誰も回復できなければ失敗(行動を消費しない)
-        return healed > 0;
+        return true;
     }
 }

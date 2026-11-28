@@ -1,55 +1,109 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-// リオン 連撃: 攻撃回数+1(パッシブ)
+// リオン 連撃(戦技): 通常攻撃と同じ操作で、攻撃を2回行う
 public static class RionSkill
 {
     public const string Id = "rion.rengeki";
 
-    private const float FollowUpRate = 1f;   // TODO: 2撃目の倍率(プランナー確認)
+    // 攻撃回数
+    private const int AttackCount = 2;
 
-    // 2撃目の被弾エフェクト用(SkillBootstrapper が設定。未設定でも動作する)
-    public static BattleCombatEffectPlayer EffectPlayer;
+    // TODO: 2回目以降の倍率が通常と違う場合はプランナー確認(現状はどちらも等倍)
 
     public static void Register(SkillManager m)
     {
-        // パッシブ: execute を渡さない(IsActive = false)
         m.Register(new SkillData(
             Id,
             "連撃",
-            isAvailable: u => SkillIds.IsCharacter(u, SkillIds.Rion)));
+            isAvailable: u => SkillIds.IsCharacter(u, SkillIds.Rion),
+            canUse: CanUse,
+            execute: Execute));
+
+        SkillTargetRules.Register(Id, new SkillTargetRule
+        {
+            // 通常攻撃型: 対象選択・プレビュー・演出は SkillSelectionController が
+            // 通常攻撃と同じ流れで行い、この回数だけ攻撃する
+            AttackCount = AttackCount,
+
+            // 通常攻撃と同じ攻撃可能範囲
+            GetValidCells = (u, mgr) =>
+                AttackRangeCalculator.Calculate(
+                    mgr.Grid, u.State.Position, u.State.CombatStats),
+
+            GetAffectedCells = (u, c) =>
+                new HashSet<Vector2Int> { c },
+
+            ResolveTargets = (u, c, mgr) =>
+                SkillTargeting.InSquare(
+                    mgr.AllUnits, c, 0, t => IsEnemy(u, t))
+        });
     }
 
-    public static void OnAttackResolved(
-        SkillAttackContext ctx, BattleAttackPreview r)
+    private static bool IsEnemy(UnitView user, UnitView t) =>
+        t.State.Team != user.State.Team;
+
+    // 攻撃範囲内に敵が1体もいなければ使えない
+    private static bool CanUse(SkillContext c)
     {
-        // 追撃の連鎖防止(BattleAttackExecutor の resolvingDepth と二重の安全策)
-        if (ctx.IsPreview || ctx.IsFollowUp) return;
-        if (!SkillIds.IsCharacter(ctx.Attacker, SkillIds.Rion)) return;
+        HashSet<Vector2Int> cells = AttackRangeCalculator.Calculate(
+            c.Grid, c.User.State.Position, c.User.State.CombatStats);
 
-        // 庇う等で対象が変わった場合に対応
-        UnitView target = r.ActualDefender ?? ctx.Defender;
-
-        if (!SkillBattleAPI.IsAlive(ctx.Attacker) ||
-            !SkillBattleAPI.IsAlive(target))
+        foreach (UnitView t in c.AllUnits)
         {
-            return;
+            if (SkillBattleAPI.IsAlive(t) &&
+                IsEnemy(c.User, t) &&
+                AttackRangeCalculator.Contains(cells, t.State.Position))
+            {
+                return true;
+            }
         }
 
-        if (BattleAttackExecutor.TryExecute(
-                ctx.Attacker,
-                target,
-                out _,
-                FollowUpRate,
-                useSkillHooks: true,
-                isFollowUp: true))
+        return false;
+    }
+
+    // TryUse 経由で呼ばれた場合の同期実行(演出なし)。
+    // SkillSelectionController の通常操作では使われず、演出付きで別に実行される。
+    private static bool Execute(SkillContext c)
+    {
+        if (c.Targets.Count != 1 || !IsEnemy(c.User, c.Targets[0]))
         {
-            // 追撃は同期処理のため、演出は1撃目と同時になる
-            if (EffectPlayer != null)
+            return false;
+        }
+
+        UnitView target = c.Targets[0];
+
+        HashSet<Vector2Int> cells = AttackRangeCalculator.Calculate(
+            c.Grid, c.User.State.Position, c.User.State.CombatStats);
+
+        if (!AttackRangeCalculator.Contains(cells, target.State.Position))
+        {
+            return false;
+        }
+
+        int hits = 0;
+
+        for (int i = 0; i < AttackCount; i++)
+        {
+            if (!SkillBattleAPI.IsAlive(c.User) ||
+                !SkillBattleAPI.IsAlive(target))
             {
-                EffectPlayer.PlayHit(ctx.Attacker, target);
+                break;
             }
+
+            if (!BattleAttackExecutor.TryExecute(
+                    c.User, target, out BattleAttackPreview result))
+            {
+                break;
+            }
+
+            hits++;
+
+            target = result.ActualDefender ?? target;
 
             SkillBattleAPI.RefreshDefeatVisual(target);
         }
+
+        return hits > 0;
     }
 }
