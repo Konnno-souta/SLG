@@ -1,31 +1,30 @@
-
 using System;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// ‘æ27’iŠKFƒV[ƒ““‡ + ƒ}ƒbƒvƒZ[ƒu‘Î‰B
+/// ç¬¬27æ®µéšï¼šã‚·ãƒ¼ãƒ³çµ±åˆ + ãƒãƒƒãƒ—ã‚»ãƒ¼ãƒ–å¯¾å¿œã€‚
 ///
 /// NEW GAME
-/// ƒ^ƒCƒgƒ‹ ¨ ƒ}ƒbƒv
+/// ã‚¿ã‚¤ãƒˆãƒ« â†’ ãƒãƒƒãƒ—
 ///
 /// CONTINUE
-/// ƒ}ƒbƒvƒZ[ƒu‚ªÅV ¨ ƒ}ƒbƒv
-/// í“¬ƒZ[ƒu‚ªÅV   ¨ •Û‘¶‚³‚ê‚½í“¬ƒXƒe[ƒW
+/// ãƒãƒƒãƒ—ã‚»ãƒ¼ãƒ–ãŒæœ€æ–° â†’ ãƒãƒƒãƒ—
+/// æˆ¦é—˜ã‚»ãƒ¼ãƒ–ãŒæœ€æ–°   â†’ ä¿å­˜ã•ã‚ŒãŸæˆ¦é—˜ã‚¹ãƒ†ãƒ¼ã‚¸
 ///
-/// í“¬I—¹Œã‚Ì©“®‘JˆÚ‚Ís‚í‚È‚¢B
+/// æˆ¦é—˜çµ‚äº†å¾Œã®è‡ªå‹•é·ç§»ã¯è¡Œã‚ãªã„ã€‚
 /// </summary>
 public sealed class SceneFlowNavigator : MonoBehaviour
 {
-    [Header("Šî–{ƒV[ƒ“")]
+    [Header("åŸºæœ¬ã‚·ãƒ¼ãƒ³")]
     [SerializeField]
     private string titleSceneName = "";
 
     [SerializeField]
     private string mapSelectSceneName = "";
 
-    [Header("í“¬ƒV[ƒ“")]
+    [Header("æˆ¦é—˜ã‚·ãƒ¼ãƒ³")]
     [SerializeField]
     private string stage01SceneName = "";
 
@@ -44,7 +43,21 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     [SerializeField]
     private string stage06SceneName = "";
 
-    [Header("í“¬‘O‰ï˜bi”CˆÓj")]
+    // ã‚¹ãƒ†ãƒ¼ã‚¸6ã®2ãƒãƒƒãƒ—ç›®ï¼ˆæˆ¦é—˜ID:61ï¼‰ã€‚
+    [SerializeField]
+    private string stage61SceneName = "";
+
+    // ã‚¹ãƒ†ãƒ¼ã‚¸7ã®3ãƒãƒƒãƒ—ï¼ˆæˆ¦é—˜ID:7ã€8ã€9ï¼‰ã€‚
+    [SerializeField]
+    private string stage07SceneName = "";
+
+    [SerializeField]
+    private string stage08SceneName = "";
+
+    [SerializeField]
+    private string stage09SceneName = "";
+
+    [Header("æˆ¦é—˜å‰ä¼šè©±ï¼ˆä»»æ„ï¼‰")]
     [SerializeField]
     private bool useConversationBeforeBattle = false;
 
@@ -59,7 +72,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     }
 
     // ========================================
-    // Šî–{ƒV[ƒ“ˆÚ“®
+    // åŸºæœ¬ã‚·ãƒ¼ãƒ³ç§»å‹•
     // ========================================
 
     public void OpenTitle()
@@ -77,8 +90,8 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     // ========================================
 
     /// <summary>
-    /// ƒ^ƒCƒgƒ‹‚ÅNEW GAME‚ÌƒXƒƒbƒg‚ğ
-    /// Šm’è‚µ‚½‚ ‚Æ‚ÉŒÄ‚Î‚ê‚éB
+    /// ã‚¿ã‚¤ãƒˆãƒ«ã§NEW GAMEã®ã‚¹ãƒ­ãƒƒãƒˆã‚’
+    /// ç¢ºå®šã—ãŸã‚ã¨ã«å‘¼ã°ã‚Œã‚‹ã€‚
     /// </summary>
     public void OpenMapSelectFromSlot(int slotNumber)
     {
@@ -93,23 +106,23 @@ public sealed class SceneFlowNavigator : MonoBehaviour
             return;
         }
 
-        // ŒÃ‚¢í“¬ƒ[ƒh—v‹‚ğc‚³‚È‚¢B
+        // å¤ã„æˆ¦é—˜ãƒ­ãƒ¼ãƒ‰è¦æ±‚ã‚’æ®‹ã•ãªã„ã€‚
         PendingBattleContinueRequest.Clear();
 
-        // V‹KƒQ[ƒ€‚È‚Ì‚Åƒ}ƒbƒvis‚ğ‰Šú‰»B
+        // æ–°è¦ã‚²ãƒ¼ãƒ ãªã®ã§ãƒãƒƒãƒ—é€²è¡Œã‚’åˆæœŸåŒ–ã€‚
         if (!StageProgressSaveSystem
             .ResetSlotForNewGame(slotNumber))
         {
             Debug.LogError(
-                $"DATA{slotNumber}‚Ìƒ}ƒbƒv‰Šú‰»‚É¸”sB",
+                $"DATA{slotNumber}ã®ãƒãƒƒãƒ—åˆæœŸåŒ–ã«å¤±æ•—ã€‚",
                 this
             );
             return;
         }
 
         Debug.Log(
-            $"yNEW GAMEzDATA{slotNumber}" +
-            "\nƒ}ƒbƒvisî•ñ‚ğ‰Šú‰»‚µ‚Ü‚µ‚½B",
+            $"ã€NEW GAMEã€‘DATA{slotNumber}" +
+            "\nãƒãƒƒãƒ—é€²è¡Œæƒ…å ±ã‚’åˆæœŸåŒ–ã—ã¾ã—ãŸã€‚",
             this
         );
 
@@ -121,27 +134,27 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     // ========================================
 
     /// <summary>
-    /// ÅŒã‚É•Û‘¶‚³‚ê‚½êŠ‚É•œ‹A‚·‚éB
+    /// æœ€å¾Œã«ä¿å­˜ã•ã‚ŒãŸå ´æ‰€ã«å¾©å¸°ã™ã‚‹ã€‚
     ///
-    /// ƒ}ƒbƒv•Û‘¶‚ªÅV‚È‚çƒ}ƒbƒv‚ÖB
-    /// í“¬•Û‘¶‚ªÅV‚È‚ç‚»‚Ìí“¬ƒXƒe[ƒW‚ÖB
+    /// ãƒãƒƒãƒ—ä¿å­˜ãŒæœ€æ–°ãªã‚‰ãƒãƒƒãƒ—ã¸ã€‚
+    /// æˆ¦é—˜ä¿å­˜ãŒæœ€æ–°ãªã‚‰ãã®æˆ¦é—˜ã‚¹ãƒ†ãƒ¼ã‚¸ã¸ã€‚
     /// </summary>
     public void OpenContinueFromSlot(int slotNumber)
     {
         Debug.Log(
-            "yCONTINUEóMŠm”Fz" +
-            $"\nƒCƒxƒ“ƒgDATAF{slotNumber}" +
-            $"\n•ÛDATAF{BattleLaunchSession.CurrentSlot}" +
-            $"\nƒ‚[ƒhF{BattleLaunchSession.Mode}" +
-            $"\nPendingF{BattleLaunchSession.HasContinuePending}" +
-            $"\nStageIDF{BattleLaunchSession.StageId}",
+            "ã€CONTINUEå—ä¿¡ç¢ºèªã€‘" +
+            $"\nã‚¤ãƒ™ãƒ³ãƒˆDATAï¼š{slotNumber}" +
+            $"\nä¿æŒDATAï¼š{BattleLaunchSession.CurrentSlot}" +
+            $"\nãƒ¢ãƒ¼ãƒ‰ï¼š{BattleLaunchSession.Mode}" +
+            $"\nPendingï¼š{BattleLaunchSession.HasContinuePending}" +
+            $"\nStageIDï¼š{BattleLaunchSession.StageId}",
             this
         );
 
         if (slotNumber < 1 || slotNumber > 3)
         {
             Debug.LogError(
-                $"•s³‚ÈƒXƒƒbƒg”Ô†F{slotNumber}",
+                $"ä¸æ­£ãªã‚¹ãƒ­ãƒƒãƒˆç•ªå·ï¼š{slotNumber}",
                 this
             );
             return;
@@ -151,21 +164,21 @@ public sealed class SceneFlowNavigator : MonoBehaviour
             GetLatestSaveLocation(slotNumber);
 
         // ====================================
-        // ƒZ[ƒuƒf[ƒ^‚ª‘¶İ‚µ‚È‚¢
+        // ã‚»ãƒ¼ãƒ–ãƒ‡ãƒ¼ã‚¿ãŒå­˜åœ¨ã—ãªã„
         // ====================================
 
         if (location == SaveLocation.None)
         {
             Debug.LogWarning(
-                $"DATA{slotNumber}‚É" +
-                "ƒZ[ƒuƒtƒ@ƒCƒ‹‚ª‚ ‚è‚Ü‚¹‚ñB",
+                $"DATA{slotNumber}ã«" +
+                "ã‚»ãƒ¼ãƒ–ãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ã‚Šã¾ã›ã‚“ã€‚",
                 this
             );
             return;
         }
 
         // ====================================
-        // ƒ}ƒbƒv‚©‚çÄŠJ
+        // ãƒãƒƒãƒ—ã‹ã‚‰å†é–‹
         // ====================================
 
         if (location == SaveLocation.Map)
@@ -175,47 +188,47 @@ public sealed class SceneFlowNavigator : MonoBehaviour
                 return;
             }
 
-            // ƒ}ƒbƒvƒ[ƒh‚É‚Í
-            // í“¬ƒ[ƒh—v‹‚ğg—p‚µ‚È‚¢B
-            //
-            // BeginNewGame‚Í‚±‚±‚Å‚Í
-            // ‹N“®ƒ‚[ƒh‚ÌØ‚è‘Ö‚¦‚Ég—p‚·‚éB
-            // ƒ}ƒbƒvƒZ[ƒu‚Ì‰Šú‰»‚Í‚µ‚È‚¢B
-            if (!BattleLaunchSession.BeginNewGame(
-                slotNumber))
+            // ã‚¿ã‚¤ãƒˆãƒ«å´ã§ç™»éŒ²æ¸ˆã¿ã®DATAç•ªå·ã‚’ä½¿ç”¨ã™ã‚‹ã€‚
+            // BeginNewGameã¯ãƒãƒƒãƒ—é€²è¡Œã‚’åˆæœŸåŒ–ã™ã‚‹ãŸã‚ã€
+            // CONTINUEæ™‚ã«ã¯çµ¶å¯¾ã«å‘¼ã°ãªã„ã€‚
+            if (BattleLaunchSession.Mode != BattleLaunchMode.Continue ||
+                BattleLaunchSession.CurrentSlot != slotNumber)
             {
                 Debug.LogError(
-                    "ƒ}ƒbƒv•œ‹A—p‚ÌƒZƒbƒVƒ‡ƒ“İ’è‚É¸”sB",
+                    "ãƒãƒƒãƒ—å¾©å¸°ç”¨ã®ã‚»ãƒƒã‚·ãƒ§ãƒ³ãŒä¸€è‡´ã—ã¾ã›ã‚“ã€‚" +
+                    "\nã‚¿ã‚¤ãƒˆãƒ«å´ã®BeginContinueã‚’ç¢ºèªã€‚",
                     this
                 );
                 return;
             }
 
-            // ŒÃ‚¢í“¬•œ‹A—v‹‚ğ‰ğœB
+            // ã‚¹ãƒ­ãƒƒãƒˆç•ªå·ãƒ»é€²è¡Œæƒ…å ±ã¯ç¶­æŒã—ãŸã¾ã¾ã€
+            // æˆ¦é—˜å¾©å¸°è¦æ±‚ã ã‘ã‚’è§£é™¤ã™ã‚‹ã€‚
+            BattleLaunchSession.NotifyContinueRestored();
             PendingBattleContinueRequest.Clear();
 
             Debug.Log(
-                $"yCONTINUEzDATA{slotNumber}" +
-                "\nƒ}ƒbƒvƒV[ƒ“‚©‚çÄŠJ‚µ‚Ü‚·B",
+                $"ã€CONTINUEã€‘DATA{slotNumber}" +
+                "\nãƒãƒƒãƒ—ã‚·ãƒ¼ãƒ³ã‹ã‚‰å†é–‹ã—ã¾ã™ã€‚",
                 this
             );
 
-            // ƒ}ƒbƒv‚Ìisî•ñ‚Í
-            // StageSelectManager.Awake()‚Å•œŒ³‚·‚éB
+            // ãƒãƒƒãƒ—ã®é€²è¡Œæƒ…å ±ã¯
+            // StageSelectManager.Awake()ã§å¾©å…ƒã™ã‚‹ã€‚
             OpenMapSelect();
 
             return;
         }
 
         // ====================================
-        // í“¬‚©‚çÄŠJ
+        // æˆ¦é—˜ã‹ã‚‰å†é–‹
         // ====================================
 
         if (!BattleLaunchSession.HasContinuePending)
         {
             Debug.LogError(
-                "í“¬CONTINUE‚Ìˆø‚«Œp‚¬î•ñ‚ª‚ ‚è‚Ü‚¹‚ñB" +
-                "\nƒ^ƒCƒgƒ‹‘¤‚ÌBeginContinue‚ğŠm”FB",
+                "æˆ¦é—˜CONTINUEã®å¼•ãç¶™ãæƒ…å ±ãŒã‚ã‚Šã¾ã›ã‚“ã€‚" +
+                "\nã‚¿ã‚¤ãƒˆãƒ«å´ã®BeginContinueã‚’ç¢ºèªã€‚",
                 this
             );
             return;
@@ -225,7 +238,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
             slotNumber)
         {
             Debug.LogError(
-                "CONTINUE‚ÌDATA”Ô†‚ªˆê’v‚µ‚Ü‚¹‚ñB",
+                "CONTINUEã®DATAç•ªå·ãŒä¸€è‡´ã—ã¾ã›ã‚“ã€‚",
                 this
             );
             return;
@@ -239,10 +252,10 @@ public sealed class SceneFlowNavigator : MonoBehaviour
             out string sceneName))
         {
             Debug.LogWarning(
-                $"StageIDu{stageId}v‚Ì" +
-                "í“¬ƒV[ƒ“‚ª–¢İ’è‚Å‚·B" +
-                "\nSceneFlowNavigator‚ÌInspector‚ğ" +
-                "Šm”F‚µ‚Ä‚­‚¾‚³‚¢B",
+                $"StageIDã€Œ{stageId}ã€ã®" +
+                "æˆ¦é—˜ã‚·ãƒ¼ãƒ³ãŒæœªè¨­å®šã§ã™ã€‚" +
+                "\nSceneFlowNavigatorã®Inspectorã‚’" +
+                "ç¢ºèªã—ã¦ãã ã•ã„ã€‚",
                 this
             );
             return;
@@ -254,20 +267,20 @@ public sealed class SceneFlowNavigator : MonoBehaviour
         }
 
         Debug.Log(
-            $"yCONTINUEŠJnzDATA{slotNumber}" +
-            $"\nStageIDF{stageId}" +
-            $"\nSceneF{sceneName}",
+            $"ã€CONTINUEé–‹å§‹ã€‘DATA{slotNumber}" +
+            $"\nStageIDï¼š{stageId}" +
+            $"\nSceneï¼š{sceneName}",
             this
         );
 
-        // Šù‘¶‚ÌPending‚ğˆÛ‚µ‚½‚Ü‚ÜˆÚ“®B
-        // í“¬ƒV[ƒ“‘¤‚ÌBattleContinueStartup‚ª
-        // •Û‘¶ó‘Ô‚ğ•œŒ³‚·‚éB
+        // æ—¢å­˜ã®Pendingã‚’ç¶­æŒã—ãŸã¾ã¾ç§»å‹•ã€‚
+        // æˆ¦é—˜ã‚·ãƒ¼ãƒ³å´ã®BattleContinueStartupãŒ
+        // ä¿å­˜çŠ¶æ…‹ã‚’å¾©å…ƒã™ã‚‹ã€‚
         LoadScene(sceneName);
     }
 
     // ========================================
-    // ÅŒã‚É•Û‘¶‚µ‚½êŠ‚ğ”»’è
+    // æœ€å¾Œã«ä¿å­˜ã—ãŸå ´æ‰€ã‚’åˆ¤å®š
     // ========================================
 
     private SaveLocation GetLatestSaveLocation(
@@ -310,7 +323,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
             DateTime battleTime =
                 File.GetLastWriteTimeUtc(battlePath);
 
-            // “¯‚È‚çƒ}ƒbƒv‚ğ—DæB
+            // åŒæ™‚åˆ»ãªã‚‰ãƒãƒƒãƒ—ã‚’å„ªå…ˆã€‚
             return mapTime >= battleTime
                 ? SaveLocation.Map
                 : SaveLocation.Battle;
@@ -318,7 +331,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogError(
-                "ƒZ[ƒu“ú‚Ìæ“¾‚É¸”sF" +
+                "ã‚»ãƒ¼ãƒ–æ—¥æ™‚ã®å–å¾—ã«å¤±æ•—ï¼š" +
                 ex.Message,
                 this
             );
@@ -328,7 +341,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     }
 
     // ========================================
-    // StageID ¨ ƒV[ƒ“–¼
+    // StageID â†’ ã‚·ãƒ¼ãƒ³å
     // ========================================
 
     private bool TryGetStageSceneName(
@@ -344,7 +357,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
 
         string value = stageId.Trim();
 
-        // "ST03" ‚Ü‚½‚Í "3" ‚Ì—¼•û‚É‘Î‰B
+        // "ST03" ã¾ãŸã¯ "3" ã®ä¸¡æ–¹ã«å¯¾å¿œã€‚
         if (value.StartsWith(
             "ST",
             StringComparison.OrdinalIgnoreCase))
@@ -385,6 +398,22 @@ public sealed class SceneFlowNavigator : MonoBehaviour
                 sceneName = stage06SceneName;
                 break;
 
+            case 61:
+                sceneName = stage61SceneName;
+                break;
+
+            case 7:
+                sceneName = stage07SceneName;
+                break;
+
+            case 8:
+                sceneName = stage08SceneName;
+                break;
+
+            case 9:
+                sceneName = stage09SceneName;
+                break;
+
             default:
                 return false;
         }
@@ -393,12 +422,12 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     }
 
     // ========================================
-    // ƒ}ƒbƒv‚©‚çí“¬ƒV[ƒ“‚Ö
+    // ãƒãƒƒãƒ—ã‹ã‚‰æˆ¦é—˜ã‚·ãƒ¼ãƒ³ã¸
     // ========================================
 
     /// <summary>
-    /// ƒ}ƒbƒv‚ÅST01‚ğ‘I‚ñ‚¾‚Æ‚«B
-    /// Šù‘¶‚ÌUnityEvent‚Æ‚ÌŒİŠ·«‚ğˆÛB
+    /// ãƒãƒƒãƒ—ã§ST01ã‚’é¸ã‚“ã ã¨ãã€‚
+    /// æ—¢å­˜ã®UnityEventã¨ã®äº’æ›æ€§ã‚’ç¶­æŒã€‚
     /// </summary>
     public void OpenSelectedStage01()
     {
@@ -412,13 +441,13 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     }
 
     /// <summary>
-    /// ST01‚ÖˆÚ“®B
-    /// ‰ï˜bI—¹Œã‚©‚ç‚àŒÄ‚Ño‚¹‚éB
+    /// ST01ã¸ç§»å‹•ã€‚
+    /// ä¼šè©±çµ‚äº†å¾Œã‹ã‚‰ã‚‚å‘¼ã³å‡ºã›ã‚‹ã€‚
     /// </summary>
     public void OpenStage01()
     {
         Debug.Log(
-            "yƒV[ƒ““‡zƒXƒe[ƒW1‚ÖˆÚ“®",
+            "ã€ã‚·ãƒ¼ãƒ³çµ±åˆã€‘ã‚¹ãƒ†ãƒ¼ã‚¸1ã¸ç§»å‹•",
             this
         );
 
@@ -426,7 +455,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
     }
 
     // ========================================
-    // ƒV[ƒ““Ç‚İ‚İ
+    // ã‚·ãƒ¼ãƒ³èª­ã¿è¾¼ã¿
     // ========================================
 
     private bool CanLoadScene(string sceneName)
@@ -434,7 +463,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             Debug.LogWarning(
-                "ˆÚ“®æScene–¼‚ª–¢İ’è‚Å‚·B",
+                "ç§»å‹•å…ˆSceneåãŒæœªè¨­å®šã§ã™ã€‚",
                 this
             );
             return false;
@@ -444,9 +473,9 @@ public sealed class SceneFlowNavigator : MonoBehaviour
             sceneName))
         {
             Debug.LogError(
-                $"Sceneu{sceneName}v‚ğ“Ç‚İ‚ß‚Ü‚¹‚ñB" +
-                "\nBuild Profiles / Build Settings‚ğ" +
-                "Šm”F‚µ‚Ä‚­‚¾‚³‚¢B",
+                $"Sceneã€Œ{sceneName}ã€ã‚’èª­ã¿è¾¼ã‚ã¾ã›ã‚“ã€‚" +
+                "\nBuild Profiles / Build Settingsã‚’" +
+                "ç¢ºèªã—ã¦ãã ã•ã„ã€‚",
                 this
             );
             return false;
@@ -465,7 +494,7 @@ public sealed class SceneFlowNavigator : MonoBehaviour
         Time.timeScale = 1f;
 
         Debug.Log(
-            $"yƒV[ƒ“ˆÚ“®z{sceneName}",
+            $"ã€ã‚·ãƒ¼ãƒ³ç§»å‹•ã€‘{sceneName}",
             this
         );
 

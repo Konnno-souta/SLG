@@ -2049,6 +2049,15 @@ MonoBehaviour:
   titleSceneName: title_pre
   mapSelectSceneName: MapScene
   stage01SceneName: Main
+  stage02SceneName: Main
+  stage03SceneName: Main
+  stage04SceneName: Main
+  stage05SceneName: Main
+  stage06SceneName: Main
+  stage61SceneName: Main
+  stage07SceneName: Main
+  stage08SceneName: Main
+  stage09SceneName: Main
   useConversationBeforeBattle: 0
   conversationSceneName: 
 --- !u!1 &3637654172890303942
