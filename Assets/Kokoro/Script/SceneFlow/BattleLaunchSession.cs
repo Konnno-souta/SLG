@@ -54,6 +54,7 @@ public static class BattleLaunchSession
         Mode != BattleLaunchMode.NewGame ||
         savedAfterNewGame;
 
+
     public static bool BeginNewGame(int slot)
     {
         if (!IsValidSlot(slot))
@@ -61,6 +62,17 @@ public static class BattleLaunchSession
             return false;
         }
 
+        // 追加：新規DATAのマップ進行を初期化
+        if (!StageProgressSaveSystem.ResetSlotForNewGame(slot))
+        {
+            Debug.LogError(
+                $"【マップ進行初期化失敗】DATA{slot}"
+            );
+
+            return false;
+        }
+
+        // 以下は既存処理
         Mode = BattleLaunchMode.NewGame;
         CurrentSlot = slot;
         StageId = "";
