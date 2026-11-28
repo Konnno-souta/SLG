@@ -55,6 +55,13 @@ public class UISelectHighlight : MonoBehaviour
         image.enabled = false;
     }
 
+    // ウィンドウと一緒に非表示になったら、記憶を消して隠しておく（次に開いたときに前回の場所で一瞬光らないように）
+    void OnDisable()
+    {
+        lastSelected = null;
+        if (image != null) image.enabled = false;
+    }
+
     void LateUpdate()
     {
         GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;

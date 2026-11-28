@@ -72,6 +72,14 @@ public class UISparkleBurst : MonoBehaviour
 
             p.rect.localPosition = center;
             p.rect.localRotation = Quaternion.Euler(0f, 0f, sprite == null ? 45f : Random.Range(0f, 360f));
+
+            // 最初のフレームから「大きさ0・透明」で始める
+            // （作った直後の Image は 100×100 の白い四角なので、そのまま1フレーム映るのを防ぐ）
+            p.rect.sizeDelta = Vector2.zero;
+            Color start = p.color;
+            start.a = 0f;
+            p.image.color = start;
+
             active.Add(p);
         }
     }
@@ -89,6 +97,8 @@ public class UISparkleBurst : MonoBehaviour
         p.image.sprite = sprite;
         p.image.raycastTarget = false;
         p.rect.anchorMin = p.rect.anchorMax = new Vector2(0.5f, 0.5f);
+        p.rect.sizeDelta = Vector2.zero;       // 作った直後の大きさ（100×100）を消しておく
+        p.image.color = new Color(1f, 1f, 1f, 0f);
         return p;
     }
 

@@ -1,45 +1,54 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// 2‚Â‚ÌƒXƒe[ƒW‚ğ‚Â‚È‚®“¹
-// EFrom ‚ÌƒXƒe[ƒW‚ªƒNƒŠƒA‚³‚ê‚é‚Æ“¹‚ªŠJ‚­
-// E“¹‚Íu1ƒ}ƒX•ª‚ÌƒvƒŒƒnƒuv‚ğ•À‚×‚Äì‚é‚Ì‚ÅAŒ©‚½–Ú‚ÍƒvƒŒƒnƒu‚ğ·‚µ‘Ö‚¦‚é‚¾‚¯‚Å•Ï‚¦‚ç‚ê‚é
-// E’·‚³‚ÍƒXƒe[ƒW‚ÌˆÊ’u‚©‚ç©“®‚ÅŒvZ‚·‚é
-// EConnect ‚ğƒIƒ“‚É‚·‚é‚ÆAƒ}ƒX‚ğ“¹‚ÌŒü‚«‚ÉL‚Î‚µ‚ÄŒ„ŠÔ‚È‚­‚Â‚È‚°‚é
+// 2ã¤ã®ã‚¹ãƒ†ãƒ¼ã‚¸ã‚’ã¤ãªãé“
+// ãƒ»From ã®ã‚¹ãƒ†ãƒ¼ã‚¸ãŒã‚¯ãƒªã‚¢ã•ã‚Œã‚‹ã¨é“ãŒé–‹ã
+// ãƒ»é“ã¯ã€Œ1ãƒã‚¹åˆ†ã®ãƒ—ãƒ¬ãƒãƒ–ã€ã‚’ä¸¦ã¹ã¦ä½œã‚‹ã®ã§ã€è¦‹ãŸç›®ã¯ãƒ—ãƒ¬ãƒãƒ–ã‚’å·®ã—æ›¿ãˆã‚‹ã ã‘ã§å¤‰ãˆã‚‰ã‚Œã‚‹
+// ãƒ»é•·ã•ã¯ã‚¹ãƒ†ãƒ¼ã‚¸ã®ä½ç½®ã‹ã‚‰è‡ªå‹•ã§è¨ˆç®—ã™ã‚‹
+// ãƒ»Connect ã‚’ã‚ªãƒ³ã«ã™ã‚‹ã¨ã€ãƒã‚¹ã‚’é“ã®å‘ãã«ä¼¸ã°ã—ã¦éš™é–“ãªãã¤ãªã’ã‚‹
+// ãƒ»Bend Pointsï¼ˆæ›²ãŒã‚Šè§’ï¼‰ã‚’ç½®ãã¨ã€ãã“ã‚’é€šã‚‹ã‚ˆã†ã«é“ãŒæ›²ãŒã‚‹ï¼ˆPlayer ã‚‚ãã®é“ã«æ²¿ã£ã¦æ­©ãï¼‰
 public class StageRoad : MonoBehaviour
 {
-    [Header("‚Â‚È‚®ƒXƒe[ƒW")]
-    [SerializeField] StagePoint from;   // ‚±‚ÌƒXƒe[ƒW‚ğƒNƒŠƒA‚·‚é‚ÆŠJ‚­
+    [Header("ã¤ãªãã‚¹ãƒ†ãƒ¼ã‚¸")]
+    [SerializeField] StagePoint from;   // ã“ã®ã‚¹ãƒ†ãƒ¼ã‚¸ã‚’ã‚¯ãƒªã‚¢ã™ã‚‹ã¨é–‹ã
     [SerializeField] StagePoint to;
 
-    [Header("Œ©‚½–Ú")]
-    [Tooltip("ŠJ‚¢‚½“¹‚Ì1ƒ}ƒXiQuadACubeA‰æ‘œ‚ğ“\‚Á‚½”Â‚È‚Ç‰½‚Å‚àOKj")]
+    [Header("æ›²ãŒã‚Šè§’")]
+    [Tooltip("é“ãŒé€šã‚‹æ›²ãŒã‚Šè§’ï¼ˆFrom â†’ æ›²ãŒã‚Šè§’ â†’ To ã®é †ã«é€šã‚‹ï¼‰ã€‚Road ã®ã€Œï¸™ã€â†’ã€Œæ›²ãŒã‚Šè§’ã‚’è¿½åŠ ã€ã§ä½œã‚Œã‚‹")]
+    [SerializeField] List<Transform> bendPoints = new List<Transform>();
+    [Tooltip("ã‚ªãƒ³ã«ã™ã‚‹ã¨ã€æ›²ãŒã‚Šè§’ã‚’ãªã‚ã‚‰ã‹ãªã‚«ãƒ¼ãƒ–ã§ã¤ãªãã€‚ã‚ªãƒ•ãªã‚‰ã‚«ã‚¯ãƒƒã¨æ›²ãŒã‚‹")]
+    [SerializeField] bool smoothCurve = true;
+    [Tooltip("ã‚«ãƒ¼ãƒ–ã®ãªã‚ã‚‰ã‹ã•ï¼ˆå¤§ãã„ã»ã©ãªã‚ã‚‰ã‹ï¼‰")]
+    [SerializeField, Range(4, 32)] int curveResolution = 12;
+
+    [Header("è¦‹ãŸç›®")]
+    [Tooltip("é–‹ã„ãŸé“ã®1ãƒã‚¹ï¼ˆQuadã€Cubeã€ç”»åƒã‚’è²¼ã£ãŸæ¿ãªã©ä½•ã§ã‚‚OKï¼‰")]
     [SerializeField] GameObject segmentPrefab;
-    [Tooltip("‚Ü‚¾ŠJ‚¢‚Ä‚¢‚È‚¢“¹‚Ì1ƒ}ƒXB‹ó‚È‚ç–¢ŠJ•ú‚Ì‚Æ‚«‚Í‰½‚à•\¦‚µ‚È‚¢")]
+    [Tooltip("ã¾ã é–‹ã„ã¦ã„ãªã„é“ã®1ãƒã‚¹ã€‚ç©ºãªã‚‰æœªé–‹æ”¾ã®ã¨ãã¯ä½•ã‚‚è¡¨ç¤ºã—ãªã„")]
     [SerializeField] GameObject lockedSegmentPrefab;
-    [Tooltip("ƒ}ƒX‚ÌŠÔŠu")]
+    [Tooltip("ãƒã‚¹ã®é–“éš”")]
     [SerializeField] float spacing = 1f;
-    [Tooltip("ƒXƒe[ƒW‚©‚ç“¹‚ğ‚Ç‚ê‚¾‚¯—£‚µ‚Än‚ß‚é‚©")]
+    [Tooltip("ã‚¹ãƒ†ãƒ¼ã‚¸ã‹ã‚‰é“ã‚’ã©ã‚Œã ã‘é›¢ã—ã¦å§‹ã‚ã‚‹ã‹")]
     [SerializeField] float startOffset = 1f;
     [SerializeField] float endOffset = 1f;
-    [Tooltip("“¹‚Ì‚‚³i’n–Ê‚É–„‚Ü‚ç‚È‚¢‚æ‚¤­‚µ•‚‚©‚¹‚éj")]
+    [Tooltip("é“ã®é«˜ã•ï¼ˆåœ°é¢ã«åŸ‹ã¾ã‚‰ãªã„ã‚ˆã†å°‘ã—æµ®ã‹ã›ã‚‹ï¼‰")]
     [SerializeField] float roadY = 0.02f;
-    [Tooltip("ƒ}ƒX‚ğ“¹‚ÌŒü‚«‚É‡‚í‚¹‚Ä‰ñ“]‚³‚¹‚é")]
+    [Tooltip("ãƒã‚¹ã‚’é“ã®å‘ãã«åˆã‚ã›ã¦å›è»¢ã•ã›ã‚‹")]
     [SerializeField] bool alignToDirection = true;
 
-    [Header("‚Â‚È‚°‚é")]
-    [Tooltip("ƒIƒ“‚É‚·‚é‚ÆAƒ}ƒX‚ğ“¹‚ÌŒü‚«‚ÉL‚Î‚µ‚ÄŒ„ŠÔ‚È‚­‚Â‚È‚°‚é")]
+    [Header("ã¤ãªã’ã‚‹")]
+    [Tooltip("ã‚ªãƒ³ã«ã™ã‚‹ã¨ã€ãƒã‚¹ã‚’é“ã®å‘ãã«ä¼¸ã°ã—ã¦éš™é–“ãªãã¤ãªã’ã‚‹")]
     [SerializeField] bool connect = true;
-    [Tooltip("‚Â‚È‚¬–Ú‚Éü‚ªŒ©‚¦‚é‚Æ‚«‚É­‚µd‚Ë‚é—Êiƒ}ƒX‚Ì’·‚³‚É‘Î‚·‚éŠ„‡j")]
-    [SerializeField, Range(0f, 0.2f)] float overlap = 0.02f;
+    [Tooltip("ã¤ãªãç›®ã«ç·šãŒè¦‹ãˆã‚‹ã¨ãã«å°‘ã—é‡ã­ã‚‹é‡ï¼ˆãƒã‚¹ã®é•·ã•ã«å¯¾ã™ã‚‹å‰²åˆï¼‰ã€‚ã‚«ãƒ¼ãƒ–ã§ã¯å°‘ã—å¤§ãã‚ãŒãŠã™ã™ã‚")]
+    [SerializeField, Range(0f, 0.3f)] float overlap = 0.02f;
 
-    [Header("ŠJ•ú‰‰o")]
-    [SerializeField] float openDelay = 0.3f;       // ‰‰o‚ªn‚Ü‚é‚Ü‚Å‚Ì‘Ò‚¿
-    [SerializeField] float appearInterval = 0.08f; // 1ƒ}ƒX‚¸‚Âo‚éŠÔŠu
-    [SerializeField] float popDuration = 0.25f;    // 1ƒ}ƒX‚ªo‚«‚é‚Ü‚Å‚ÌŠÔ
+    [Header("é–‹æ”¾æ¼”å‡º")]
+    [SerializeField] float openDelay = 0.3f;       // æ¼”å‡ºãŒå§‹ã¾ã‚‹ã¾ã§ã®å¾…ã¡
+    [SerializeField] float appearInterval = 0.08f; // 1ãƒã‚¹ãšã¤å‡ºã‚‹é–“éš”
+    [SerializeField] float popDuration = 0.25f;    // 1ãƒã‚¹ãŒå‡ºãã‚‹ã¾ã§ã®æ™‚é–“
 
-    // ŠJ•ú‰‰o’†‚Ì“¹‚Ì”i‰‰o’†‚Í‘€ì‚ğ~‚ß‚é‚½‚ßj
+    // é–‹æ”¾æ¼”å‡ºä¸­ã®é“ã®æ•°ï¼ˆæ¼”å‡ºä¸­ã¯æ“ä½œã‚’æ­¢ã‚ã‚‹ãŸã‚ï¼‰
     public static int OpeningCount { get; private set; }
     public static bool AnyOpening => OpeningCount > 0;
 
@@ -52,6 +61,55 @@ public class StageRoad : MonoBehaviour
     string RoadKey => $"{from.stageId}_{to.stageId}";
     bool ShouldBeOpen => from != null && from.IsCleared;
 
+    // ã»ã‹ã®ã‚¹ã‚¯ãƒªãƒ—ãƒˆã‹ã‚‰é“ã®ã¤ãªãŒã‚Šã‚’èª¿ã¹ã‚‹ãŸã‚
+    public StagePoint From => from;
+    public StagePoint To => to;
+    public bool IsOpen => ShouldBeOpen;
+
+    // é“ã‚’é€šã‚Œã‚‹ã‹ï¼šä¸¡å´ã®ã‚¹ãƒ†ãƒ¼ã‚¸ãŒè§£æ”¾ã•ã‚Œã¦ã„ã‚Œã°é€šã‚Œã‚‹
+    // ï¼ˆã‚¯ãƒªã‚¢ä»¥å¤–ã®æ–¹æ³•ã§è§£æ”¾ã—ãŸå ´åˆã§ã‚‚ã€è¡Œãæ¥ã§ãã‚‹ã‚ˆã†ã«ã™ã‚‹ãŸã‚ï¼‰
+    public bool IsWalkable => from != null && to != null && from.IsUnlocked && to.IsUnlocked;
+
+    // stage ã‹ã‚‰ã€ã“ã®é“ã‚’é€šã£ã¦è¡Œã‘ã‚‹å…ˆï¼ˆé€šã‚Œãªã„ãƒ»ã¤ãªãŒã£ã¦ã„ãªã‘ã‚Œã° nullï¼‰
+    public StagePoint GetOtherSide(StagePoint stage)
+    {
+        if (!IsWalkable) return null;
+        if (stage == from) return to;
+        if (stage == to) return from;
+        return null;
+    }
+
+    // start ã®ã‚¹ãƒ†ãƒ¼ã‚¸ã‹ã‚‰é“ã«æ²¿ã£ã¦ distance ã ã‘é€²ã‚“ã ä½ç½®ï¼ˆé“ãŒã©ã¡ã‚‰ã¸ä¼¸ã³ã¦ã„ã‚‹ã‹ã‚’èª¿ã¹ã‚‹ãŸã‚ï¼‰
+    public Vector3 GetLeavePoint(StagePoint start, float distance)
+    {
+        List<Vector3> line = GetPathLine();
+        if (start == to) line.Reverse();
+
+        var cum = new List<float> { 0f };
+        for (int i = 1; i < line.Count; i++) cum.Add(cum[i - 1] + Vector3.Distance(line[i - 1], line[i]));
+
+        // é“ãŒçŸ­ã„ã¨ãã¯ã€é“ã®é•·ã•ã®åŠåˆ†ã¾ã§
+        float d = Mathf.Min(distance, cum[cum.Count - 1] * 0.5f);
+        Sample(line, cum, d, out Vector3 pos, out _);
+        return pos;
+    }
+
+    // start ã®ã‚¹ãƒ†ãƒ¼ã‚¸ã‹ã‚‰åå¯¾å´ã®ã‚¹ãƒ†ãƒ¼ã‚¸ã¾ã§ã€é“ã«æ²¿ã£ã¦æ­©ããŸã‚ã®é€šéç‚¹
+    // ï¼ˆæœ€å¾Œã®ç‚¹ã¯è¡Œãå…ˆã® Stand Positionï¼‰
+    public List<Vector3> GetWalkPath(StagePoint start)
+    {
+        var result = new List<Vector3>();
+        StagePoint goal = start == from ? to : from;
+
+        List<Vector3> line = GetPathLine();
+        if (start == to) line.Reverse();
+
+        // æœ€åˆï¼ˆå‡ºç™ºåœ°ç‚¹ï¼‰ã¨æœ€å¾Œï¼ˆåˆ°ç€åœ°ç‚¹ï¼‰ã‚’é™¤ã„ãŸã€é€”ä¸­ã®ç‚¹
+        for (int i = 1; i < line.Count - 1; i++) result.Add(line[i]);
+        result.Add(goal.StandPosition);
+        return result;
+    }
+
     void OnEnable() { StageProgress.OnCleared += HandleCleared; }
     void OnDisable() { StageProgress.OnCleared -= HandleCleared; }
 
@@ -59,7 +117,7 @@ public class StageRoad : MonoBehaviour
     {
         if (from == null || to == null || segmentPrefab == null)
         {
-            Debug.LogWarning($"[StageRoad] {name}: From / To / Segment Prefab ‚ğİ’è‚µ‚Ä‚­‚¾‚³‚¢", this);
+            Debug.LogWarning($"[StageRoad] {name}: From / To / Segment Prefab ã‚’è¨­å®šã—ã¦ãã ã•ã„", this);
             return;
         }
 
@@ -68,36 +126,133 @@ public class StageRoad : MonoBehaviour
         if (!ShouldBeOpen) return;
 
         if (StageProgress.IsRoadShown(RoadKey)) ShowOpenedImmediately();
-        else StartCoroutine(OpenAnimation());   // ƒNƒŠƒAŒã‚Í‚¶‚ß‚Äƒ}ƒbƒv‚É—ˆ‚½‚Æ‚«‚¾‚¯‰‰o
+        else StartCoroutine(OpenAnimation());   // ã‚¯ãƒªã‚¢å¾Œã¯ã˜ã‚ã¦ãƒãƒƒãƒ—ã«æ¥ãŸã¨ãã ã‘æ¼”å‡º
     }
 
-    // ƒvƒŒƒC’†‚ÉƒNƒŠƒA‚³‚ê‚½ê‡iƒfƒoƒbƒO—p‚ÌƒNƒŠƒA‚È‚Çj
+    // ãƒ—ãƒ¬ã‚¤ä¸­ã«ã‚¯ãƒªã‚¢ã•ã‚ŒãŸå ´åˆï¼ˆãƒ‡ãƒãƒƒã‚°ç”¨ã®ã‚¯ãƒªã‚¢ãªã©ï¼‰
     void HandleCleared(int stageId)
     {
         if (from != null && stageId == from.stageId && !opened && openSegments.Count > 0)
             StartCoroutine(OpenAnimation());
     }
 
-    // ---- “¹‚ğì‚é ----
+    // ---- é“ã®å½¢ ----
+
+    // From â†’ æ›²ãŒã‚Šè§’ â†’ To ã®ç‚¹ï¼ˆé«˜ã•ã¯ roadYï¼‰
+    List<Vector3> GetControlPoints()
+    {
+        var pts = new List<Vector3>();
+        pts.Add(Flat(from.transform.position));
+        foreach (var b in bendPoints) if (b != null) pts.Add(Flat(b.position));
+        pts.Add(Flat(to.transform.position));
+        return pts;
+    }
+
+    Vector3 Flat(Vector3 p) { p.y = roadY; return p; }
+
+    // é“ã®ä¸­å¿ƒç·šï¼ˆã‚«ãƒ¼ãƒ–ã®å ´åˆã¯ç´°ã‹ãåˆ†ã‘ãŸæŠ˜ã‚Œç·šï¼‰
+    List<Vector3> GetPathLine()
+    {
+        List<Vector3> cp = GetControlPoints();
+        if (!smoothCurve || cp.Count < 3) return cp;
+
+        // Catmull-Rom æ›²ç·šï¼šã™ã¹ã¦ã®æ›²ãŒã‚Šè§’ã‚’é€šã‚‹ã€ãªã‚ã‚‰ã‹ãªã‚«ãƒ¼ãƒ–
+        var line = new List<Vector3>();
+        for (int i = 0; i < cp.Count - 1; i++)
+        {
+            Vector3 p0 = i > 0 ? cp[i - 1] : cp[i] * 2f - cp[i + 1];
+            Vector3 p1 = cp[i];
+            Vector3 p2 = cp[i + 1];
+            Vector3 p3 = i + 2 < cp.Count ? cp[i + 2] : cp[i + 1] * 2f - cp[i];
+
+            for (int s = 0; s < curveResolution; s++)
+            {
+                float t = s / (float)curveResolution;
+                line.Add(CatmullRom(p0, p1, p2, p3, t));
+            }
+        }
+        line.Add(cp[cp.Count - 1]);
+        return line;
+    }
+
+    static Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+    {
+        float t2 = t * t, t3 = t2 * t;
+        return 0.5f * (2f * p1 + (-p0 + p2) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (-p0 + 3f * p1 - 3f * p2 + p3) * t3);
+    }
+
+    // ä¸­å¿ƒç·šä¸Šã§ã€å§‹ç‚¹ã‹ã‚‰ distance ã ã‘é€²ã‚“ã ä½ç½®ã¨å‘ã
+    static void Sample(List<Vector3> line, List<float> cum, float distance, out Vector3 pos, out Vector3 dir)
+    {
+        int i = 1;
+        while (i < line.Count - 1 && cum[i] < distance) i++;
+
+        float segLen = cum[i] - cum[i - 1];
+        float t = segLen > 0.0001f ? (distance - cum[i - 1]) / segLen : 0f;
+        pos = Vector3.Lerp(line[i - 1], line[i], Mathf.Clamp01(t));
+        dir = line[i] - line[i - 1];
+        dir = dir.sqrMagnitude > 0.000001f ? dir.normalized : Vector3.forward;
+    }
+
+    // ãƒã‚¹ã‚’ç½®ãä½ç½®ãƒ»å‘ãã‚’è¨ˆç®—ã™ã‚‹ï¼ˆä¸¡ç«¯ã®ä½™ç™½ã‚’é™¤ã„ãŸåŒºé–“ã«ã€é“ã«æ²¿ã£ã¦å‡ç­‰ã«ä¸¦ã¹ã‚‹ï¼‰
+    void GetSegments(List<Vector3> positions, List<Quaternion> rotations, out float step)
+    {
+        step = 0f;
+
+        List<Vector3> line = GetPathLine();
+        var cum = new List<float> { 0f };
+        for (int i = 1; i < line.Count; i++) cum.Add(cum[i - 1] + Vector3.Distance(line[i - 1], line[i]));
+        float total = cum[cum.Count - 1];
+
+        float usable = total - startOffset - endOffset;
+        if (usable < 0f || line.Count < 2) return;
+
+        int count;
+        float firstDist;
+        if (connect)
+        {
+            // ã¤ãªã’ã‚‹å ´åˆï¼šåŒºé–“ã‚’ã¡ã‚‡ã†ã©åŸ‹ã‚ã‚‹ã‚ˆã†ã«ã€ãƒã‚¹ã®ä¸­å¿ƒã‚’ä¸¦ã¹ã‚‹
+            count = Mathf.Max(1, Mathf.RoundToInt(usable / Mathf.Max(0.01f, spacing)));
+            step = usable / count;
+            firstDist = startOffset + step * 0.5f;
+        }
+        else
+        {
+            count = Mathf.Max(1, Mathf.FloorToInt(usable / Mathf.Max(0.01f, spacing)) + 1);
+            step = count > 1 ? usable / (count - 1) : 0f;
+            firstDist = count > 1 ? startOffset : total * 0.5f;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            Sample(line, cum, firstDist + step * i, out Vector3 pos, out Vector3 dir);
+            positions.Add(pos);
+            rotations.Add(alignToDirection ? Quaternion.LookRotation(dir, Vector3.up) : Quaternion.identity);
+        }
+    }
+
+    // ---- é“ã‚’ä½œã‚‹ ----
     void Build()
     {
-        List<Vector3> points = GetPoints(out Quaternion rot, out float step);
+        var positions = new List<Vector3>();
+        var rotations = new List<Quaternion>();
+        GetSegments(positions, rotations, out float step);
 
-        for (int i = 0; i < points.Count; i++)
+        for (int i = 0; i < positions.Count; i++)
         {
-            GameObject seg = CreateSegment(segmentPrefab, points[i], rot, step, $"Segment_{i}");
+            GameObject seg = CreateSegment(segmentPrefab, positions[i], rotations[i], step, $"Segment_{i}");
             baseScales.Add(seg.transform.localScale);
             seg.SetActive(false);
             openSegments.Add(seg);
 
             if (lockedSegmentPrefab != null)
-                lockedSegments.Add(CreateSegment(lockedSegmentPrefab, points[i], rot, step, $"Locked_{i}"));
+                lockedSegments.Add(CreateSegment(lockedSegmentPrefab, positions[i], rotations[i], step, $"Locked_{i}"));
         }
     }
 
-    // 1ƒ}ƒX‚ğì‚é
-    // “ü‚ê•¨iholderj‚Ì’†‚ÉƒvƒŒƒnƒu‚ğ“ü‚êA“ü‚ê•¨‚ğ“¹‚ÌŒü‚«‚ÉL‚Î‚·B
-    // ‚±‚¤‚·‚é‚ÆƒvƒŒƒnƒu‚ÌŒü‚«iQuad‚ğQ‚©‚¹‚Ä‚¢‚é‚È‚Çj‚ÉŠÖŒW‚È‚­A“¹‚Ì•ûŒü‚ÉL‚Î‚¹‚é
+    // 1ãƒã‚¹ã‚’ä½œã‚‹
+    // å…¥ã‚Œç‰©ï¼ˆholderï¼‰ã®ä¸­ã«ãƒ—ãƒ¬ãƒãƒ–ã‚’å…¥ã‚Œã€å…¥ã‚Œç‰©ã‚’é“ã®å‘ãã«ä¼¸ã°ã™ã€‚
+    // ã“ã†ã™ã‚‹ã¨ãƒ—ãƒ¬ãƒãƒ–ã®å‘ãï¼ˆQuadã‚’å¯ã‹ã›ã¦ã„ã‚‹ãªã©ï¼‰ã«é–¢ä¿‚ãªãã€é“ã®æ–¹å‘ã«ä¼¸ã°ã›ã‚‹
     GameObject CreateSegment(GameObject prefab, Vector3 pos, Quaternion rot, float step, string objName)
     {
         GameObject holder = new GameObject(objName);
@@ -111,7 +266,7 @@ public class StageRoad : MonoBehaviour
 
         if (connect && step > 0f)
         {
-            // “¹‚ÌŒü‚«iZj‚Ì’·‚³‚ğ‘ª‚Á‚ÄAƒ}ƒX‚ÌŠÔŠu‚Ò‚Á‚½‚è‚ÉL‚Î‚·
+            // é“ã®å‘ãï¼ˆZï¼‰ã®é•·ã•ã‚’æ¸¬ã£ã¦ã€ãƒã‚¹ã®é–“éš”ã´ã£ãŸã‚Šã«ä¼¸ã°ã™
             float length = MeasureLengthZ(holder);
             if (length > 0.0001f)
             {
@@ -125,7 +280,7 @@ public class StageRoad : MonoBehaviour
         return holder;
     }
 
-    // ‰ñ“]‚³‚¹‚é‘O‚Ìó‘Ô‚ÅAZ•ûŒü‚Ì’·‚³‚ğ‘ª‚é
+    // å›è»¢ã•ã›ã‚‹å‰ã®çŠ¶æ…‹ã§ã€Zæ–¹å‘ã®é•·ã•ã‚’æ¸¬ã‚‹
     static float MeasureLengthZ(GameObject root)
     {
         var renderers = root.GetComponentsInChildren<Renderer>();
@@ -136,44 +291,7 @@ public class StageRoad : MonoBehaviour
         return b.size.z;
     }
 
-    // ƒ}ƒX‚ğ’u‚­ˆÊ’u‚ğŒvZ‚·‚éi—¼’[‚Ì—]”’‚ğœ‚¢‚½‹æŠÔ‚É‹Ï“™‚É•À‚×‚éj
-    List<Vector3> GetPoints(out Quaternion rot, out float step)
-    {
-        var points = new List<Vector3>();
-        step = 0f;
-
-        Vector3 a = from.transform.position; a.y = roadY;
-        Vector3 b = to.transform.position; b.y = roadY;
-        Vector3 dir = b - a;
-        float length = dir.magnitude;
-        dir = length > 0.0001f ? dir / length : Vector3.forward;
-
-        rot = alignToDirection ? Quaternion.LookRotation(dir, Vector3.up) : Quaternion.identity;
-
-        float usable = length - startOffset - endOffset;
-        if (usable < 0f) return points;
-
-        if (connect)
-        {
-            // ‚Â‚È‚°‚éê‡F‹æŠÔ‚ğ‚¿‚å‚¤‚Ç–„‚ß‚é‚æ‚¤‚ÉAƒ}ƒX‚Ì’†S‚ğ•À‚×‚é
-            int count = Mathf.Max(1, Mathf.RoundToInt(usable / Mathf.Max(0.01f, spacing)));
-            step = usable / count;
-            for (int i = 0; i < count; i++)
-                points.Add(a + dir * (startOffset + step * (i + 0.5f)));
-        }
-        else
-        {
-            int count = Mathf.Max(1, Mathf.FloorToInt(usable / Mathf.Max(0.01f, spacing)) + 1);
-            step = count > 1 ? usable / (count - 1) : 0f;
-            float startT = count > 1 ? startOffset : length * 0.5f;
-            for (int i = 0; i < count; i++)
-                points.Add(a + dir * (startT + step * i));
-        }
-
-        return points;
-    }
-
-    // ---- •\¦ ----
+    // ---- è¡¨ç¤º ----
     void ShowOpenedImmediately()
     {
         opened = true;
@@ -187,12 +305,12 @@ public class StageRoad : MonoBehaviour
         animating = true;
         OpeningCount++;
 
-        // ƒJƒƒ‰‰‰o‚ªI‚í‚é‚Ì‚ğ‘Ò‚Á‚Ä‚©‚çn‚ß‚é
+        // ã‚«ãƒ¡ãƒ©æ¼”å‡ºãŒçµ‚ã‚ã‚‹ã®ã‚’å¾…ã£ã¦ã‹ã‚‰å§‹ã‚ã‚‹
         CameraIntro cam = FindFirstObjectByType<CameraIntro>();
         while (cam != null && cam.IsPlaying) yield return null;
         yield return new WaitForSeconds(openDelay);
 
-        // From ‘¤‚©‚ç1ƒ}ƒX‚¸‚Âo‚·
+        // From å´ã‹ã‚‰1ãƒã‚¹ãšã¤å‡ºã™
         for (int i = 0; i < openSegments.Count; i++)
         {
             if (i < lockedSegments.Count) lockedSegments[i].SetActive(false);
@@ -201,36 +319,9 @@ public class StageRoad : MonoBehaviour
         }
         yield return new WaitForSeconds(popDuration);
 
-
-        // ====================================
-        // ’Ç‰ÁF“¹‚Ì‰ğ•ú‰‰o‚ğ•Û‘¶
-        // ====================================
-
-        // ‚±‚Ì“¹‚Ì‰ğ•ú‰‰o‚ğŒ©‚½‚±‚Æ‚ğ‹L˜^
         StageProgress.SetRoadShown(RoadKey);
-
-        // ƒfƒoƒbƒO‹N“®‚Å‚ÍDATA1‚ğ•ÏX‚µ‚È‚¢
-        if (BattleLaunchSession.Mode.ToString() != "Direct")
-        {
-            int slot = BattleLaunchSession.CurrentSlot;
-
-            bool success =
-                StageProgressSaveSystem.SaveSlot(slot);
-
-            if (!success)
-            {
-                Debug.LogWarning(
-                    $"“¹ {RoadKey} ‚Ì‰ğ•ú—š—ğ‚ğ" +
-                    $"DATA{slot}‚É•Û‘¶‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½B",
-                    this
-                );
-            }
-        }
-
-        // Šù‘¶‚Ì‰‰oI—¹ˆ—
         animating = false;
         OpeningCount--;
-
     }
 
     IEnumerator Pop(GameObject seg, Vector3 baseScale)
@@ -241,7 +332,7 @@ public class StageRoad : MonoBehaviour
         {
             t += Time.deltaTime / popDuration;
             float x = Mathf.Clamp01(t);
-            // ­‚µ‘å‚«‚­‚È‚Á‚Ä‚©‚ç–ß‚éiƒ|ƒ“‚Á‚Æo‚éj
+            // å°‘ã—å¤§ãããªã£ã¦ã‹ã‚‰æˆ»ã‚‹ï¼ˆãƒãƒ³ã£ã¨å‡ºã‚‹ï¼‰
             float e = 1f + 2.7f * Mathf.Pow(x - 1f, 3f) + 1.7f * Mathf.Pow(x - 1f, 2f);
             seg.transform.localScale = baseScale * e;
             yield return null;
@@ -251,22 +342,72 @@ public class StageRoad : MonoBehaviour
 
     void OnDestroy()
     {
-        // ‰‰o“r’†‚ÅƒV[ƒ“‚ğ”²‚¯‚½‚Æ‚«‚ÉƒJƒEƒ“ƒg‚ªc‚ç‚È‚¢‚æ‚¤‚É‚·‚é
+        // æ¼”å‡ºé€”ä¸­ã§ã‚·ãƒ¼ãƒ³ã‚’æŠœã‘ãŸã¨ãã«ã‚«ã‚¦ãƒ³ãƒˆãŒæ®‹ã‚‰ãªã„ã‚ˆã†ã«ã™ã‚‹
         if (animating) OpeningCount--;
     }
 
-    // ---- Sceneƒrƒ…[‚Åƒ}ƒX‚ÌˆÊ’u‚ğŠm”F‚Å‚«‚é‚æ‚¤‚É‚·‚é ----
+#if UNITY_EDITOR
+    // é“ã®è¨­å®šã¨ã€è¡Œãå…ˆã®ã‚¹ãƒ†ãƒ¼ã‚¸ã® Required Stage ãŒé£Ÿã„é•ã£ã¦ã„ãªã„ã‹ç¢ºèªã™ã‚‹
+    // ï¼ˆé“ã¯é–‹ã„ãŸã®ã«ã‚¹ãƒ†ãƒ¼ã‚¸ãŒé–‹æ”¾ã•ã‚Œãªã„ã€ã¨ã„ã†ãšã‚Œã‚’é˜²ãï¼‰
+    void OnValidate()
+    {
+        if (from == null || to == null) return;
+
+        if (from == to)
+            Debug.LogWarning($"[StageRoad] {name}: From ã¨ To ãŒåŒã˜ã‚¹ãƒ†ãƒ¼ã‚¸ã«ãªã£ã¦ã„ã¾ã™", this);
+        else if (to.requiredStage != from)
+            Debug.LogWarning($"[StageRoad] {name}: é“ã¯ {from.name} â†’ {to.name} ã§ã™ãŒã€{to.name} ã® Required Stage ãŒ " +
+                             $"{(to.requiredStage != null ? to.requiredStage.name : "ç©º")} ã«ãªã£ã¦ã„ã¾ã™ã€‚{from.name} ã«ã—ã¦ãã ã•ã„", to);
+    }
+
+    // Inspector ã®ã€Œï¸™ã€ã‹ã‚‰å®Ÿè¡Œï¼šæ›²ãŒã‚Šè§’ã‚’1ã¤è¿½åŠ ã™ã‚‹ï¼ˆTo ã®æ‰‹å‰ã€æœ€å¾Œã®åŒºé–“ã®çœŸã‚“ä¸­ã«ä½œã‚‹ï¼‰
+    [ContextMenu("æ›²ãŒã‚Šè§’ã‚’è¿½åŠ ")]
+    void AddBendPoint()
+    {
+        if (from == null || to == null)
+        {
+            Debug.LogWarning("[StageRoad] å…ˆã« From ã¨ To ã‚’è¨­å®šã—ã¦ãã ã•ã„", this);
+            return;
+        }
+
+        bendPoints.RemoveAll(b => b == null);
+        Vector3 prev = bendPoints.Count > 0 ? bendPoints[bendPoints.Count - 1].position : from.transform.position;
+        Vector3 mid = (prev + to.transform.position) * 0.5f;
+
+        var go = new GameObject($"Bend_{bendPoints.Count + 1}");
+        UnityEditor.Undo.RegisterCreatedObjectUndo(go, "æ›²ãŒã‚Šè§’ã‚’è¿½åŠ ");
+        UnityEditor.Undo.RecordObject(this, "æ›²ãŒã‚Šè§’ã‚’è¿½åŠ ");
+        go.transform.SetParent(transform, true);
+        go.transform.position = mid;
+        bendPoints.Add(go.transform);
+        UnityEditor.Selection.activeGameObject = go; // ã™ãå‹•ã‹ã›ã‚‹ã‚ˆã†ã«é¸æŠã™ã‚‹
+    }
+#endif
+
+    // ---- Sceneãƒ“ãƒ¥ãƒ¼ã§é“ã®å½¢ã¨ãƒã‚¹ã®ä½ç½®ã‚’ç¢ºèªã§ãã‚‹ã‚ˆã†ã«ã™ã‚‹ ----
     void OnDrawGizmos()
     {
         if (from == null || to == null || Application.isPlaying) return;
 
-        Gizmos.color = Color.yellow;
-        List<Vector3> points = GetPoints(out Quaternion rot, out float step);
+        // ä¸­å¿ƒç·š
+        List<Vector3> line = GetPathLine();
+        Gizmos.color = Color.cyan;
+        for (int i = 1; i < line.Count; i++) Gizmos.DrawLine(line[i - 1], line[i]);
+
+        // æ›²ãŒã‚Šè§’
+        Gizmos.color = Color.magenta;
+        foreach (var b in bendPoints) if (b != null) Gizmos.DrawWireSphere(Flat(b.position), 0.15f);
+
+        // ãƒã‚¹
+        var positions = new List<Vector3>();
+        var rotations = new List<Quaternion>();
+        GetSegments(positions, rotations, out float step);
         float len = connect ? step : 0.4f;
 
-        foreach (Vector3 p in points)
+        Gizmos.color = Color.yellow;
+        for (int i = 0; i < positions.Count; i++)
         {
-            Gizmos.matrix = Matrix4x4.TRS(p, rot, Vector3.one);
+            Gizmos.matrix = Matrix4x4.TRS(positions[i], rotations[i], Vector3.one);
             Gizmos.DrawWireCube(Vector3.zero, new Vector3(0.4f, 0.05f, len));
         }
         Gizmos.matrix = Matrix4x4.identity;

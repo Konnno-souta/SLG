@@ -28,10 +28,16 @@ public class UISelectCursor : MonoBehaviour
     [Header("動き")]
     [Tooltip("別のボタンに移るときの速さ。0 で瞬間移動")]
     [SerializeField] float moveSpeed = 18f;
-    [Tooltip("ボタンをつつくように横に揺れる幅。0 で揺れない")]
+    [Tooltip("ボタンをつつくように揺れる幅。0 で揺れない")]
     [SerializeField] float bobAmount = 6f;
     [Tooltip("揺れる速さ")]
     [SerializeField] float bobSpeed = 5f;
+
+    public enum BobDirection { Horizontal, AlongCursor, CustomAngle }
+    [Tooltip("揺れる向き\nHorizontal：横\nAlongCursor：カーソルの傾き（Rotation Z）に合わせて、ペン先の向きに沿って斜めに揺れる\nCustomAngle：Bob Angle で決めた角度")]
+    [SerializeField] BobDirection bobDirection = BobDirection.AlongCursor;
+    [Tooltip("CustomAngle のときの揺れる角度（0 = 右、90 = 上、-90 = 下）")]
+    [SerializeField] float bobAngle = -45f;
 
     [Header("演出")]
     [Tooltip("カーソルが動いたときに、きらきらを出す UISparkleBurst（空なら出さない）")]
@@ -73,6 +79,15 @@ public class UISelectCursor : MonoBehaviour
         if (selectOnHover) AddHoverSelect();
     }
 
+    // ウィンドウと一緒に非表示になったら、指していたボタンの記憶を消す
+    // （次に開いたとき、前回の位置から移動してくるのが見えないように、その場に出す）
+    void OnDisable()
+    {
+        lastSelected = null;
+        smoothOffset = Vector3.zero;
+        SetVisible(false);
+    }
+
     // Scope 内のボタンに「マウスを乗せたら選択」を付ける
     // 実行中にボタンを増やしたときは、これを呼び直す
     public void AddHoverSelect()
@@ -111,7 +126,7 @@ public class UISelectCursor : MonoBehaviour
 
         // ボタンをつつくように揺れる
         float bob = bobAmount > 0f ? (Mathf.Sin(Time.unscaledTime * bobSpeed) * 0.5f + 0.5f) * bobAmount : 0f;
-        Vector3 bobVec = new Vector3(side == Side.Left ? -bob : bob, 0f, 0f);
+        Vector3 bobVec = BobOffset(bob);
 
         rect.localPosition = goal + smoothOffset + bobVec;
         SetVisible(true);
@@ -121,6 +136,28 @@ public class UISelectCursor : MonoBehaviour
         {
             Vector3 at = goal + (Vector3)sparkleOffset;
             sparkle.Burst(parentRect != null ? parentRect.TransformPoint(at) : at);
+        }
+    }
+
+    // 揺れのずれ（bob = 0 のときはボタンに一番近い位置、大きいほど離れる）
+    Vector3 BobOffset(float bob)
+    {
+        switch (bobDirection)
+        {
+            case BobDirection.AlongCursor:
+                {
+                    // ペン先の向き（画像の下方向を、カーソルの回転で傾けたもの）
+                    // その反対方向に引いて、またペン先の方へ戻る ＝ ペンでつつく動き
+                    Vector3 tip = rect.localRotation * Vector3.down;
+                    return -tip * bob;
+                }
+            case BobDirection.CustomAngle:
+                {
+                    float rad = bobAngle * Mathf.Deg2Rad;
+                    return new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f) * bob;
+                }
+            default:
+                return new Vector3(side == Side.Left ? -bob : bob, 0f, 0f);
         }
     }
 

@@ -60,6 +60,10 @@ public class StageSelectManager : MonoBehaviour
     [Tooltip("DiaLogPanel を開いたときに最初に選ぶボタン（「いいえ」がおすすめ）")]
     [SerializeField] UnityEngine.UI.Selectable dialogFirstSelected;
 
+    [Header("WASD の方向判定（道の向きで選ぶ追加）")]
+    [Tooltip("道がどちらへ伸びているかを調べるときに、道に沿って何マス分先を見るか（ワールドの距離）。曲がり角がステージのすぐ近くにあるときは小さくする")]
+    [SerializeField] float roadDirectionSample = 1f;
+
     [Header("確認ダイアログ（ダイアログ共通化の追加）")]
     [Tooltip("DiaLogPanel に付けた UIConfirmDialog。入れると、ステージ開始の確認にもこれを使う")]
     [SerializeField] UIConfirmDialog confirmDialog;
@@ -172,7 +176,7 @@ public class StageSelectManager : MonoBehaviour
     }
 
     // 今いるステージから見て、画面上で dir の方向にある一番近いステージを探す（WASDの追加）
-    // 開放されていないステージは候補にしない
+    // 開いている道でつながっているステージだけを候補にする（道のつながりの追加）
     StagePoint FindStageInDirection(Vector2 dir)
     {
         if (selectedStage == null || Camera.main == null) return null;
@@ -180,12 +184,40 @@ public class StageSelectManager : MonoBehaviour
         Camera cam = Camera.main;
         Vector2 from = cam.WorldToScreenPoint(selectedStage.StandPosition);
 
+        // 道がある場合：今いるステージから「道が伸びていく方向」で選ぶ（道の向きで選ぶ追加）
+        // 曲がった道でも、出発する向きで判定するので、見た目どおりの方向に進める
+        var roads = FindObjectsByType<StageRoad>(FindObjectsSortMode.None);
+        if (roads.Length > 0)
+        {
+            StagePoint bestByRoad = null;
+            float bestDot = 0.3f; // 押した方向から70度以上ずれている道は選ばない
+
+            foreach (var road in roads)
+            {
+                StagePoint other = road.GetOtherSide(selectedStage);
+                if (other == null) continue;
+
+                // 道に沿って少し進んだ位置への向き
+                Vector2 leave = cam.WorldToScreenPoint(road.GetLeavePoint(selectedStage, roadDirectionSample));
+                Vector2 diff = leave - from;
+                if (diff.sqrMagnitude < 1f) continue;
+
+                float dot = Vector2.Dot(diff.normalized, dir);
+                if (dot > bestDot)
+                {
+                    bestDot = dot;
+                    bestByRoad = other;
+                }
+            }
+            return bestByRoad;
+        }
+
         StagePoint best = null;
         float bestScore = float.MaxValue;
 
-        foreach (var s in FindObjectsByType<StagePoint>(FindObjectsSortMode.None))
+        foreach (var s in GetMoveCandidates())
         {
-            if (s == selectedStage || !s.IsUnlocked) continue;
+            if (s == null || s == selectedStage || !s.IsUnlocked) continue;
 
             Vector2 to = cam.WorldToScreenPoint(s.StandPosition);
             Vector2 diff = to - from;
@@ -193,7 +225,7 @@ public class StageSelectManager : MonoBehaviour
             if (dist < 1f) continue;
 
             float dot = Vector2.Dot(diff / dist, dir);
-            if (dot < 0.5f) continue; // 押した方向から60度以上ずれていたら対象外
+            if (dot < 0.3f) continue; // 押した方向から70度以上ずれていたら対象外（斜めの道も選べるように少し広め）
 
             // 近くて、押した方向にまっすぐなほど優先
             float score = dist * (2f - dot);
@@ -204,6 +236,28 @@ public class StageSelectManager : MonoBehaviour
             }
         }
         return best;
+    }
+
+    // WASD で移動できる候補（道のつながりの追加）
+    // 今いるステージから、開いている道でつながっているステージ
+    // シーンに道（StageRoad）が1本も無いときは、今まで通り全ステージを候補にする
+    List<StagePoint> GetMoveCandidates()
+    {
+        var result = new List<StagePoint>();
+        var roads = FindObjectsByType<StageRoad>(FindObjectsSortMode.None);
+
+        if (roads.Length == 0)
+        {
+            result.AddRange(FindObjectsByType<StagePoint>(FindObjectsSortMode.None));
+            return result;
+        }
+
+        foreach (var road in roads)
+        {
+            StagePoint other = road.GetOtherSide(selectedStage);
+            if (other != null && !result.Contains(other)) result.Add(other);
+        }
+        return result;
     }
 
     void SelectStage(StagePoint stage)
@@ -217,9 +271,69 @@ public class StageSelectManager : MonoBehaviour
             return;
         }
 
+        StagePoint previous = selectedStage;
         selectedStage = stage;
         SetPanels(false);
-        player.MoveTo(stage.StandPosition);
+        MovePlayer(previous, stage);   // 道に沿って歩く（道に沿って歩くの追加）
+    }
+
+    // Player を道に沿って移動させる（道に沿って歩くの追加）
+    // 開いている道をたどって行けるなら、その道の形（曲がり角）に沿って歩く。
+    // 道でつながっていないときは、今まで通りまっすぐ移動する
+    void MovePlayer(StagePoint fromStage, StagePoint toStage)
+    {
+        List<StageRoad> roads;
+        List<StagePoint> starts;
+        if (fromStage != null && FindRoute(fromStage, toStage, out roads, out starts))
+        {
+            var points = new List<Vector3>();
+            for (int i = 0; i < roads.Count; i++) points.AddRange(roads[i].GetWalkPath(starts[i]));
+            player.MoveAlong(points);
+        }
+        else
+        {
+            player.MoveTo(toStage.StandPosition);
+        }
+    }
+
+    // 開いている道だけを通って、start から goal までの道順を探す（道に沿って歩くの追加）
+    // roads[i] を starts[i] 側から通る、という順番で返す
+    bool FindRoute(StagePoint start, StagePoint goal, out List<StageRoad> roads, out List<StagePoint> starts)
+    {
+        roads = new List<StageRoad>();
+        starts = new List<StagePoint>();
+        if (start == goal) return false;
+
+        var allRoads = FindObjectsByType<StageRoad>(FindObjectsSortMode.None);
+        var cameFrom = new Dictionary<StagePoint, (StageRoad road, StagePoint prev)>();
+        var queue = new Queue<StagePoint>();
+        queue.Enqueue(start);
+        cameFrom[start] = (null, null);
+
+        // 近い順に広げていく（幅優先探索）
+        while (queue.Count > 0)
+        {
+            StagePoint current = queue.Dequeue();
+            if (current == goal) break;
+
+            foreach (var road in allRoads)
+            {
+                StagePoint next = road.GetOtherSide(current);
+                if (next == null || cameFrom.ContainsKey(next)) continue;
+                cameFrom[next] = (road, current);
+                queue.Enqueue(next);
+            }
+        }
+
+        if (!cameFrom.ContainsKey(goal)) return false;
+
+        // ゴールから逆にたどって、道順を作る
+        for (StagePoint s = goal; s != start; s = cameFrom[s].prev)
+        {
+            roads.Insert(0, cameFrom[s].road);
+            starts.Insert(0, cameFrom[s].prev);
+        }
+        return true;
     }
 
     void SetPanels(bool show)
