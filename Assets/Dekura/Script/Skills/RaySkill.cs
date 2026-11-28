@@ -6,7 +6,6 @@ public static class RaySkill
 {
     public const string Id = "ray.debuff";
 
-    // TODO: すべてプランナー確認(仮)
     private const int Range = 3;                  // 使用者からの射程
     private const int Radius = 1;                 // 影響範囲(1 = 3x3)
     private const float Amount = 3f;              // デバフ量
@@ -37,23 +36,20 @@ public static class RaySkill
         });
     }
 
-    private static bool IsEnemy(UnitView user, UnitView t) =>
-        t.State.Team != user.State.Team;
+    private static bool IsEnemy(UnitView user, UnitView t) => t.State.Team != user.State.Team;
 
     private static bool Execute(SkillContext c)
     {
         int applied = 0;
 
         // 同じ使用者の再使用は上書き、別の使用者とは重なる
-        string key =
-            $"ray.debuff.{c.User.State.CombatStats.CharacterId}";
+        string key = $"ray.debuff.{c.User.State.CombatStats.CharacterId}";
 
         foreach (var t in c.Targets)
         {
             if (!IsEnemy(c.User, t)) continue;
 
-            if (SkillBattleAPI.TrySetModifier(
-                    t, key, Stat, -Amount, c.Turn + Duration))
+            if (SkillBattleAPI.TrySetModifier(t, key, Stat, -Amount, c.Turn + Duration))
             {
                 applied++;
             }

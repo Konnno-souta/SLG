@@ -1571,7 +1571,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f57d020ef7edb94b88576fd4ba6e402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillBootstrapper
-  effectPlayer: {fileID: 0}
 --- !u!1 &792336023
 GameObject:
   m_ObjectHideFlags: 0
@@ -1780,6 +1779,10 @@ MonoBehaviour:
   gridInput: {fileID: 1607386811}
   commandPanel: {fileID: 1008976830}
   overlay: {fileID: 237458815}
+  attackPreviewPanel: {fileID: 2146361615}
+  effectPlayer: {fileID: 285367935}
+  combatCamera: {fileID: 431209990}
+  gridDebugView: {fileID: 555877682}
 --- !u!1 &880656992
 GameObject:
   m_ObjectHideFlags: 0
@@ -4965,7 +4968,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleStageLoader
   stageConfigCsv: {fileID: 4900000, guid: a69f430f55d696e4297428ad85603f01, type: 3}
   stageCharaLayoutCsv: {fileID: 4900000, guid: 01e73bc49a473ca48ad88c23ee490a9a, type: 3}
-  stageId: 1
+  stageId: 6
   grid: {fileID: 555877683}
   spawner: {fileID: 1610487110}
 --- !u!4 &1651776097
