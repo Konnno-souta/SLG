@@ -79,6 +79,17 @@ public sealed class CastleStageGenerator : EditorWindow
     [SerializeField] private float variationScale = 5f;
     [SerializeField] private string outputFolder = "Assets/Konno/CastleMaterials";
 
+    // 障害物の壁(盤面内。通行不可になる)
+    [System.Serializable]
+    private sealed class ObstacleSpec
+    {
+        [Tooltip("左下(手前・左)のマス")] public Vector2Int cell = new Vector2Int(2, 10);
+        [Tooltip("横(X)×縦(Z)のマス数")] public Vector2Int size = new Vector2Int(3, 2);
+        [Tooltip("壁の高さ(部屋の壁に対する倍率)")] public float heightMul = 1f;
+    }
+    [SerializeField] private List<ObstacleSpec> obstacles = new List<ObstacleSpec> { new ObstacleSpec() };
+    [SerializeField] private bool obstacleCollider = true;
+
     // 外周(カメラに映る部屋の外側)
     [SerializeField] private bool buildOuter = true;
     [SerializeField] private int outerMarginCells = 12;
@@ -178,6 +189,10 @@ public sealed class CastleStageGenerator : EditorWindow
         Prop(so, "variationScale", "ムラの大きさ(マス)");
         Prop(so, "outputFolder", "保存先フォルダ");
 
+        Header("障害物の壁(盤面内・通行不可)");
+        Prop(so, "obstacles", "障害物(マス・大きさ・高さ)");
+        Prop(so, "obstacleCollider", "コライダー(物理の当たり判定)も付ける");
+
         Header("外周(上からのカメラに映る部屋の外側)");
         Prop(so, "buildOuter", "外周を作る");
         Prop(so, "outerMarginCells", "外周の広さ(マス)");
@@ -253,6 +268,7 @@ public sealed class CastleStageGenerator : EditorWindow
         if (carpet) BuildCarpet(carpetParent);
         float wallThickness = BuildWalls(wallParent, propParent, rng);
         BuildPillars(pillarParent, wallThickness, log);
+        BuildObstacles(Child(root, "Obstacles"), log);
         if (buildOuter) BuildOuter(Child(root, "Outer"), wallThickness, rng);
 
         AssetDatabase.SaveAssets();
@@ -569,6 +585,112 @@ public sealed class CastleStageGenerator : EditorWindow
                     c.a = 1f;
                     Place(piece, group, pos, yaw, new Vector3(sx, Mathf.Min(sx, sz), sz), true,
                         tint ? $"Outer{variant}" : null, c);
+                }
+            }
+        }
+    }
+
+    // 盤面内に壁のかたまりを作る。四方を壁で囲み、上面をタイルでふさぎ、
+    // GridObstacle(覆うマスを通行不可にする)とコライダーを付ける。
+    private void BuildObstacles(Transform parent, StringBuilder log)
+    {
+        if (obstacles == null || obstacles.Count == 0) return;
+
+        Piece wall = wallPrefab != null ? Measure(wallPrefab, true) : null;
+        List<Piece> tops = new List<Piece>();
+        foreach (GameObject p in floorPrefabs)
+            if (p != null) tops.Add(Measure(p, false));
+        System.Random rng = new System.Random(seed + 101);
+        float flip = flipWall ? 180f : 0f;
+        int carpetLeft = (gridWidth - carpetWidthCells) / 2;
+
+        foreach (ObstacleSpec o in obstacles)
+        {
+            if (o == null) continue;
+            Vector2Int c = o.cell;
+            Vector2Int size = new Vector2Int(Mathf.Max(1, o.size.x), Mathf.Max(1, o.size.y));
+            if (c.x < 0 || c.y < 0 || c.x + size.x > gridWidth || c.y + size.y > gridHeight)
+            {
+                Debug.LogWarning($"Castle Stage Generator: 障害物 ({c.x},{c.y}) {size.x}x{size.y} が盤面からはみ出すので作りません。");
+                continue;
+            }
+            if (carpet && c.x < carpetLeft + carpetWidthCells && c.x + size.x > carpetLeft)
+                Debug.LogWarning($"Castle Stage Generator: 障害物 ({c.x},{c.y}) が絨毯の上に重なっています。");
+
+            GameObject block = new GameObject($"Obstacle_{c.x}_{c.y}_{size.x}x{size.y}");
+            block.transform.SetParent(parent, false);
+
+            float x0 = c.x * cellSize, x1 = (c.x + size.x) * cellSize;
+            float z0 = c.y * cellSize, z1 = (c.y + size.y) * cellSize;
+            float heightMul = Mathf.Max(0.05f, o.heightMul);
+            float height;
+
+            if (wall != null)
+            {
+                float baseScale = wallSegmentCells * cellSize / Mathf.Max(0.001f, wall.bounds.size.x);
+                height = wall.bounds.size.y * baseScale * wallHeightMul * heightMul;
+                // 4面。壁の正面(+Z)を外側へ向ける: 北=0 南=180 東=90 西=-90
+                Face(new Vector3(x0, 0f, z1), Vector3.right, x1 - x0, 0f, Vector3.back);
+                Face(new Vector3(x0, 0f, z0), Vector3.right, x1 - x0, 180f, Vector3.forward);
+                Face(new Vector3(x1, 0f, z0), Vector3.forward, z1 - z0, 90f, Vector3.left);
+                Face(new Vector3(x0, 0f, z0), Vector3.forward, z1 - z0, -90f, Vector3.right);
+            }
+            else
+            {
+                // 壁のプレハブが無いときは石の箱
+                height = 2f * cellSize * heightMul;
+                GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                box.name = "Block";
+                DestroyImmediate(box.GetComponent<Collider>());
+                box.transform.SetParent(block.transform, false);
+                box.transform.localPosition = new Vector3((x0 + x1) * 0.5f, floorTop + height * 0.5f, (z0 + z1) * 0.5f);
+                box.transform.localScale = new Vector3(x1 - x0, height, z1 - z0);
+                box.GetComponent<MeshRenderer>().sharedMaterial = GetFlatMaterial("ObstacleStone", outerTint * 0.7f);
+            }
+
+            // 上面をタイルでふさぐ(上からのカメラで中が空洞に見えないように)
+            if (tops.Count > 0)
+            {
+                Transform capGroup = new GameObject("Top").transform;
+                capGroup.SetParent(block.transform, false);
+                for (int x = 0; x < size.x; x++)
+                    for (int z = 0; z < size.y; z++)
+                    {
+                        Piece piece = tops[rng.Next(tops.Count)];
+                        float sx = cellSize / Mathf.Max(0.001f, piece.bounds.size.x);
+                        float sz = cellSize / Mathf.Max(0.001f, piece.bounds.size.z);
+                        Vector3 pos = new Vector3(x0 + (x + 0.5f) * cellSize, floorTop + height, z0 + (z + 0.5f) * cellSize);
+                        Color col = outerTint; col.a = 1f;
+                        Place(piece, capGroup, pos, rng.Next(4) * 90f, new Vector3(sx, Mathf.Min(sx, sz), sz), true,
+                            tint ? "Outer0" : null, col);
+                    }
+            }
+
+            if (obstacleCollider)
+            {
+                BoxCollider bc = block.AddComponent<BoxCollider>();
+                bc.center = new Vector3((x0 + x1) * 0.5f, floorTop + height * 0.5f, (z0 + z1) * 0.5f);
+                bc.size = new Vector3(x1 - x0, height, z1 - z0);
+            }
+            block.AddComponent<GridObstacle>().Configure(c, size);
+            log.Append($" 障害物=({c.x},{c.y})から{size.x}x{size.y}");
+
+            // edgeStart から dir 方向に len の長さの面を、壁を並べて作る。inward は内側(箱の中心側)
+            void Face(Vector3 edgeStart, Vector3 dir, float len, float yaw, Vector3 inward)
+            {
+                float wantSeg = wallSegmentCells * cellSize;
+                int count = Mathf.Max(1, Mathf.RoundToInt(len / wantSeg));
+                float seg = len / count;
+                float sc = seg / Mathf.Max(0.001f, wall.bounds.size.x);
+                float sy = height / Mathf.Max(0.001f, wall.bounds.size.y);
+                float th = wall.bounds.size.z * sc;
+                for (int i = 0; i < count; i++)
+                {
+                    // 壁の外側の面がマスの境目にそろうよう、厚みの半分だけ内側へ
+                    Vector3 pos = edgeStart + dir * ((i + 0.5f) * seg) + inward * (th * 0.5f);
+                    pos.y = floorTop;
+                    Place(wall, block.transform, pos, yaw + flip, new Vector3(sc, sy, sc), false,
+                        tint ? "Wall" : null, wallTint);
                 }
             }
         }
