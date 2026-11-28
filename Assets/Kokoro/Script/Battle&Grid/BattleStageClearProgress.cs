@@ -14,7 +14,7 @@ public sealed class BattleStageClearProgress : MonoBehaviour
 
     private bool recorded;
 
-    // Direct起動で勝利し、マップ選択へ戻る場合だけ進行を引き継ぐ。
+    // Direct起動で戦闘からマップ選択へ戻る場合だけ進行を引き継ぐ。
     // シーン移動を越えて保持し、マップ側で一度だけ消費する。
     private static bool directClearReturnPending;
 
@@ -22,6 +22,13 @@ public sealed class BattleStageClearProgress : MonoBehaviour
     private static void ResetDirectClearReturn()
     {
         directClearReturnPending = false;
+    }
+
+    // 勝利・敗北どちらの帰還でも使用。クリア記録は変更しない。
+    public static void MarkDirectMapReturn()
+    {
+        if (BattleLaunchSession.Mode == BattleLaunchMode.Direct)
+            directClearReturnPending = true;
     }
 
     public static bool ConsumeDirectClearReturn()
@@ -78,7 +85,7 @@ public sealed class BattleStageClearProgress : MonoBehaviour
             StageProgress.CurrentStageId = stageId;
             StageProgress.SetCleared(stageId);
 
-            directClearReturnPending = true;
+            MarkDirectMapReturn();
             recorded = true;
 
             Debug.Log($"【デバッグクリア記録】Stage{stageId}（ファイル保存なし）", this);

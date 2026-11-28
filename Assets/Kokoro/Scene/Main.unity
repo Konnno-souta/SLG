@@ -1254,8 +1254,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  m_sharedMaterial: {fileID: -4814440350528164609, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1756,6 +1756,7 @@ GameObject:
   - component: {fileID: 880656994}
   - component: {fileID: 880656993}
   - component: {fileID: 880656996}
+  - component: {fileID: 880656997}
   m_Layer: 5
   m_Name: GameOverPanel
   m_TagString: Untagged
@@ -1834,7 +1835,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameOverMenu
   gameOverText: {fileID: 612165875}
-  font: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  font: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   description: "\u4E3B\u4EBA\u516C\u304C\u6226\u95D8\u4E0D\u80FD\u306B\u306A\u308A\u307E\u3057\u305F"
   continueLabel: "\u30B3\u30F3\u30C6\u30CB\u30E5\u30FC\u3059\u308B"
   mapLabel: "\u30DE\u30C3\u30D7\u306B\u623B\u308B"
@@ -1843,10 +1844,34 @@ MonoBehaviour:
   decideDelay: 0.25
   onContinue:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 880656997}
+        m_TargetAssemblyTypeName: BattleGameOverActions, Assembly-CSharp
+        m_MethodName: ContinueBattle
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onReturnToMap:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 880656997}
+        m_TargetAssemblyTypeName: BattleGameOverActions, Assembly-CSharp
+        m_MethodName: ReturnToMap
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   panelSize: {x: 1000, y: 520}
   panelPosition: {x: 0, y: -80}
   panelColorTop: {r: 0.1, g: 0.3, b: 0.62, a: 0.95}
@@ -1862,6 +1887,23 @@ MonoBehaviour:
   cursorColor: {r: 0.85, g: 0.95, b: 1, a: 1}
   showTime: 0.3
   sortingOrder: 210
+--- !u!114 &880656997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880656992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1539164990734934a89773d449e63d20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleGameOverActions
+  turnManager: {fileID: 1169402818}
+  saveManager: {fileID: 2013331648}
+  stageLoader: {fileID: 1651776096}
+  resumeSavedBattle: 1
+  mapSceneName: MapScene
 --- !u!1 &893203514
 GameObject:
   m_ObjectHideFlags: 0
@@ -3505,7 +3547,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1222821562}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 487e41c0be6ddc4429b1aa0033e9fba0, type: 3}
+  m_Script: {fileID: 11500000, guid: 19beffdc52ae1004f87db681a57c2ab5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleStageClearProgress
   turnManager: {fileID: 1169402818}

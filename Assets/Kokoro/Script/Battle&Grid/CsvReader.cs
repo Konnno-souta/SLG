@@ -114,6 +114,22 @@ public static class CsvReader
         for (int i = headerIndex + 1; i < records.Count; i++)
         {
             RawRecord record = records[i];
+
+            // Character / Class の正式CSVには、IDが空欄のまま
+            // 計算式や参考用の数値だけが書かれている行がある。
+            // これらはゲームのマスターデータではないため読み飛ばす。
+            // 他のCSVには既存の判定をそのまま適用する。
+            bool isMasterTable =
+                string.Equals(primaryKeyColumn, "Character_ID", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(primaryKeyColumn, "CL_ID", StringComparison.OrdinalIgnoreCase);
+
+            if (isMasterTable &&
+                record.Fields.Length > 0 &&
+                string.IsNullOrWhiteSpace(record.Fields[0]))
+            {
+                continue;
+            }
+
             bool empty = true;
             foreach (string value in record.Fields)
             {
