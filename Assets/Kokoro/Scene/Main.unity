@@ -1612,8 +1612,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u6226\u6280"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
-  m_sharedMaterial: {fileID: -6988463057194476638, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  m_sharedMaterial: {fileID: -4814440350528164609, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1921,8 +1921,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u623B\u308B"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
-  m_sharedMaterial: {fileID: -6988463057194476638, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  m_sharedMaterial: {fileID: -4814440350528164609, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2250,7 +2250,7 @@ MonoBehaviour:
   autoShowSpeakers: 1
   referenceResolution: {x: 1920, y: 1080}
   sortingOrder: 100
-  font: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  font: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   windowSprite: {fileID: 0}
   windowColor: {r: 1, g: 1, b: 1, a: 1}
   boxHeight: 400
@@ -3249,8 +3249,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u5F85\u6A5F"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
-  m_sharedMaterial: {fileID: -6988463057194476638, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  m_sharedMaterial: {fileID: -4814440350528164609, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3337,6 +3337,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1222821564}
   - component: {fileID: 1222821563}
+  - component: {fileID: 1222821565}
   m_Layer: 0
   m_Name: StageClearDirector
   m_TagString: Untagged
@@ -3364,8 +3365,8 @@ MonoBehaviour:
   buildInto: {fileID: 1558792747}
   hidePanelOnClose: 1
   sortingOrder: 220
-  titleFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
-  textFont: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  titleFont: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  textFont: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   dimColor: {r: 0.12, g: 0.08, b: 0.03, a: 0.55}
   smoke: 1
   smokeColor: {r: 0.25, g: 0.2, b: 0.08, a: 0.7}
@@ -3433,7 +3434,7 @@ MonoBehaviour:
   showTestButton: 1
   testButtonScale: 1.5
   showNextButton: 1
-  nextSceneName: 
+  nextSceneName: MapScene
   nextLabel: "\u9589\u3058\u308B"
   nextKeyLabel: A
   nextButtonIcon: {fileID: 0}
@@ -3463,7 +3464,19 @@ MonoBehaviour:
       m_Calls: []
   onNext:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1222821565}
+        m_TargetAssemblyTypeName: BattleStageClearProgress, Assembly-CSharp
+        m_MethodName: RecordClear
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onConversationFinished:
     m_PersistentCalls:
       m_Calls: []
@@ -3483,6 +3496,20 @@ Transform:
   - {fileID: 959303124}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1222821565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222821562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 487e41c0be6ddc4429b1aa0033e9fba0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleStageClearProgress
+  turnManager: {fileID: 1169402818}
+  stageLoader: {fileID: 1651776096}
 --- !u!1 &1228553774
 GameObject:
   m_ObjectHideFlags: 0
@@ -3542,8 +3569,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
-  m_sharedMaterial: {fileID: -6988463057194476638, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  m_sharedMaterial: {fileID: -4814440350528164609, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3776,8 +3803,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
-  m_sharedMaterial: {fileID: -6988463057194476638, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  m_sharedMaterial: {fileID: -4814440350528164609, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4951,8 +4978,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u653B\u6483"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
-  m_sharedMaterial: {fileID: -6988463057194476638, guid: 8a310127899e66a4c87ffa480872feca, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
+  m_sharedMaterial: {fileID: -4814440350528164609, guid: 194a4c8eadf0f564ba21df03c315ff00, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

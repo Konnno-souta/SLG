@@ -85,13 +85,25 @@ public class StageSelectManager : MonoBehaviour
         // DATA1の保存データを勝手に使用しない。
         if (BattleLaunchSession.Mode.ToString() == "Direct")
         {
-            StageProgress.ResetAll();
+            // 戦闘クリア後の帰還時は進行情報を維持する。
+            if (BattleStageClearProgress.ConsumeDirectClearReturn())
+            {
+                Debug.Log(
+                    "[StageSelectManager] デバッグクリア後の帰還：" +
+                    "マップ進行情報を引き継ぎます。",
+                    this
+                );
+            }
+            else
+            {
+                StageProgress.ResetAll();
 
-            Debug.Log(
-                "[StageSelectManager] デバッグ起動：" +
-                "マップ進行情報は初期状態です。",
-                this
-            );
+                Debug.Log(
+                    "[StageSelectManager] デバッグ起動：" +
+                    "マップ進行情報は初期状態です。",
+                    this
+                );
+            }
         }
         else
         {

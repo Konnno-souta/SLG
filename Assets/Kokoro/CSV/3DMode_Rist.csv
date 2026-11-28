@@ -1,4 +1,7 @@
-﻿3DModel_ID,Name,Design_Name,Use
+﻿3DModel,,,
+,,,
+3DモデルID,モデル名,デザイン名,使用用途
+3DModel_ID,Name,Design_Name,Use
 3D01,主人公モデル,Hero_Model,主人公駒
 3D02,ネームドモデル(仲間),Named_Model,ネームド駒(仲間)
 3D03,ネームドモデル(敵),Enemy_Named_Model,ネームド駒(敵)
